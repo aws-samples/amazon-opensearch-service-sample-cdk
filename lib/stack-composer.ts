@@ -10,13 +10,17 @@ import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import * as defaultValuesJson from "../default-values.json"
 import {NetworkStack} from "./network-stack";
 
+export interface StackPropsExt extends StackProps {
+    readonly stage: string
+}
+
 export class StackComposer {
     public stacks: Stack[] = [];
 
-    constructor(scope: Construct, props: StackProps) {
+    constructor(scope: Construct, props: StackPropsExt) {
 
         let networkStack: NetworkStack|undefined
-        const stage = process.env.CDK_DEPLOYMENT_STAGE
+        const stage = props.stage
         const account = props.env?.account
         const region = props.env?.region
 
