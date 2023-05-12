@@ -26,7 +26,7 @@ export class StackComposer {
 
         let version: EngineVersion
         let accessPolicies: PolicyStatement[]|undefined
-        const defaultValues: { [x: string]: (string); } = defaultValuesJson
+        const defaultValues: { [x: string]: (any); } = defaultValuesJson
         const domainName = getContextForType('domainName', 'string')
         const dataNodeType = getContextForType('dataNodeType', 'string')
         const dataNodeCount = getContextForType('dataNodeCount', 'number')
@@ -46,6 +46,8 @@ export class StackComposer {
         const encryptionAtRestKmsKeyARN = getContextForType("encryptionAtRestKmsKeyARN", 'string')
         const loggingAppLogEnabled = getContextForType('loggingAppLogEnabled', 'boolean')
         const loggingAppLogGroupARN = getContextForType('loggingAppLogGroupARN', 'string')
+        const loggingAuditLogEnabled = getContextForType('loggingAuditLogEnabled', 'boolean')
+        const loggingAuditLogGroupARN = getContextForType('loggingAuditLogGroupARN', 'string')
         const noneToNodeEncryptionEnabled = getContextForType('nodeToNodeEncryptionEnabled', 'boolean')
         const vpcId = getContextForType('vpcId', 'string')
         const vpcEnabled = getContextForType('vpcEnabled', 'boolean')
@@ -135,8 +137,10 @@ export class StackComposer {
             ebsVolumeType: ebsVolumeType,
             encryptionAtRestEnabled: encryptionAtRestEnabled,
             encryptionAtRestKmsKeyARN: encryptionAtRestKmsKeyARN,
-            appLogEnabled: loggingAppLogEnabled,
-            appLogGroup: loggingAppLogGroupARN,
+            loggingAppLogEnabled: loggingAppLogEnabled,
+            loggingAppLogGroupARN: loggingAppLogGroupARN,
+            loggingAuditLogEnabled: loggingAuditLogEnabled,
+            loggingAuditLogGroupARN: loggingAuditLogGroupARN,
             nodeToNodeEncryptionEnabled: noneToNodeEncryptionEnabled,
             vpc: networkStack ? networkStack.vpc : undefined,
             vpcSubnets: networkStack ? networkStack.domainSubnets : undefined,

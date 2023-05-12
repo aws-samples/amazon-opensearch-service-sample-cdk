@@ -36,7 +36,9 @@ test('Test primary context options are mapped with standard data type', () => {
             encryptionAtRestEnabled: true,
             encryptionAtRestKmsKeyARN: "arn:aws:kms:us-east-1:123456789123:key/abc123de-4888-4fa7-a508-3811e2d49fc3",
             loggingAppLogEnabled: true,
-            loggingAppLogGroupARN: "arn:aws:logs:us-east-1:123456789123:log-group:test-log-group:*",
+            loggingAppLogGroupARN: "arn:aws:logs:us-east-1:123456789123:log-group:app-log-group:*",
+            loggingAuditLogEnabled: true,
+            loggingAuditLogGroupARN: "arn:aws:logs:us-east-1:123456789123:log-group:audit-log-group:*",
             nodeToNodeEncryptionEnabled: true,
             vpcEnabled: true,
             vpcId: "vpc-123456789abcdefgh",
@@ -84,7 +86,9 @@ test('Test primary context options are mapped with only string data type', () =>
             encryptionAtRestEnabled: "true",
             encryptionAtRestKmsKeyARN: "arn:aws:kms:us-east-1:123456789123:key/abc123de-4888-4fa7-a508-3811e2d49fc3",
             loggingAppLogEnabled: "true",
-            loggingAppLogGroupARN: "arn:aws:logs:us-east-1:123456789123:log-group:test-log-group:*",
+            loggingAppLogGroupARN: "arn:aws:logs:us-east-1:123456789123:log-group:app-log-group:*",
+            loggingAuditLogEnabled: "true",
+            loggingAuditLogGroupARN: "arn:aws:logs:us-east-1:123456789123:log-group:audit-log-group:*",
             nodeToNodeEncryptionEnabled: "true",
             vpcEnabled: "true",
             vpcId: "vpc-123456789abcdefgh",
@@ -251,6 +255,8 @@ test( 'Test default stack is created when empty context options are provided for
             encryptionAtRestKmsKeyARN: "",
             loggingAppLogEnabled: "",
             loggingAppLogGroupARN: "",
+            loggingAuditLogEnabled: "",
+            loggingAuditLogGroupARN: "",
             nodeToNodeEncryptionEnabled: "",
             vpcEnabled: "",
             vpcId: "",
@@ -318,7 +324,11 @@ function assertPrimaryDomainStackTemplate(template: Template) {
         },
         LogPublishingOptions: {
             ES_APPLICATION_LOGS: {
-                CloudWatchLogsLogGroupArn: "arn:aws:logs:us-east-1:123456789123:log-group:test-log-group:*",
+                CloudWatchLogsLogGroupArn: "arn:aws:logs:us-east-1:123456789123:log-group:app-log-group:*",
+                Enabled: true
+            },
+            AUDIT_LOGS: {
+                CloudWatchLogsLogGroupArn: "arn:aws:logs:us-east-1:123456789123:log-group:audit-log-group:*",
                 Enabled: true
             }
         },

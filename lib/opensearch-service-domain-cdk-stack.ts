@@ -34,8 +34,10 @@ export interface opensearchServiceDomainCdkProps extends StackPropsExt {
   readonly ebsVolumeType?: EbsDeviceVolumeType,
   readonly encryptionAtRestEnabled?: boolean,
   readonly encryptionAtRestKmsKeyARN?: string,
-  readonly appLogEnabled?: boolean,
-  readonly appLogGroup?: string,
+  readonly loggingAppLogEnabled?: boolean,
+  readonly loggingAppLogGroupARN?: string,
+  readonly loggingAuditLogEnabled?: boolean,
+  readonly loggingAuditLogGroupARN?: string,
   readonly nodeToNodeEncryptionEnabled?: boolean,
   readonly vpc?: IVpc,
   readonly vpcSubnets?: SubnetSelection[],
@@ -60,8 +62,11 @@ export class OpensearchServiceDomainCdkStack extends Stack {
     const managerUserSecret: SecretValue|undefined = props.fineGrainedManagerUserSecretManagerKeyARN ?
         Secret.fromSecretCompleteArn(this, "managerSecret", props.fineGrainedManagerUserSecretManagerKeyARN).secretValue : undefined
 
-    const appLG: ILogGroup|undefined = props.appLogGroup && props.appLogEnabled ?
-        LogGroup.fromLogGroupArn(this, "appLogGroup", props.appLogGroup) : undefined
+    const appLG: ILogGroup|undefined = props.loggingAppLogGroupARN && props.loggingAppLogEnabled ?
+        LogGroup.fromLogGroupArn(this, "appLogGroup", props.loggingAppLogGroupARN) : undefined
+
+    const auditLG: ILogGroup|undefined = props.loggingAuditLogGroupARN && props.loggingAuditLogEnabled ?
+        LogGroup.fromLogGroupArn(this, "auditLogGroup", props.loggingAuditLogGroupARN) : undefined
 
     // Map objects from props
     const zoneAwarenessConfig: ZoneAwarenessConfig|undefined = props.availabilityZoneCount ?
@@ -99,8 +104,10 @@ export class OpensearchServiceDomainCdkStack extends Stack {
         volumeType: props.ebsVolumeType
       },
       logging: {
-        appLogEnabled: props.appLogEnabled,
-        appLogGroup: appLG
+        appLogEnabled: props.loggingAppLogEnabled,
+        appLogGroup: appLG,
+        auditLogEnabled: props.loggingAuditLogEnabled,
+        auditLogGroup: auditLG
       },
       vpc: props.vpc,
       vpcSubnets: props.vpcSubnets,

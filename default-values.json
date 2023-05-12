@@ -1,4 +1,9 @@
 {
   "engineVersion": "OS_2.5",
-  "domainName": "os-service-domain"
+  "domainName": "os-service-domain",
+  "useUnsignedBasicAuth": false,
+  "enforceHTTPS": true,
+  "tlsSecurityPolicy": "TLS_1_2",
+  "encryptionAtRestEnabled": true,
+  "nodeToNodeEncryptionEnabled": true
 }
