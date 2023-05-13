@@ -3,7 +3,7 @@ import {StackComposer} from "../lib/stack-composer";
 import {Template} from "aws-cdk-lib/assertions";
 import {OpensearchServiceDomainCdkStack} from "../lib/opensearch-service-domain-cdk-stack";
 
-test('Test missing domain name throws error', () => {
+test('Test empty string for a default value, uses the default value', () => {
 
     const app = new App({
         context: {
@@ -11,26 +11,13 @@ test('Test missing domain name throws error', () => {
         }
     })
 
-    const createStackFunc = () => new StackComposer(app, {
-       env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
-
-    expect(createStackFunc).toThrowError()
-})
-
-test('Test missing engine version throws error', () => {
-
-    const app = new App({
-        context: {
-            engineVersion: ""
-        }
-    })
-
-    const createStackFunc = () => new StackComposer(app, {
+    const openSearchStacks =  new StackComposer(app, {
         env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
     })
 
-    expect(createStackFunc).toThrowError()
+    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpensearchServiceDomainCdkStack)[0]
+    const domainTemplate = Template.fromStack(domainStack)
+    domainTemplate.resourceCountIs("AWS::OpenSearchService::Domain", 1)
 })
 
 test('Test invalid engine version format throws error', () => {

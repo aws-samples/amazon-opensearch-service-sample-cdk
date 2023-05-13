@@ -160,8 +160,8 @@ export class StackComposer {
         function getContextForType(optionName: string, expectedType: string): any {
             const option = scope.node.tryGetContext(optionName)
 
-            // If no context is provided and a default value exists, use it
-            if (option === undefined && defaultValues[optionName]) {
+            // If no context is provided (undefined or empty string) and a default value exists, use it
+            if ((option === undefined || option === "") && defaultValues[optionName]) {
                 return defaultValues[optionName]
             }
 
