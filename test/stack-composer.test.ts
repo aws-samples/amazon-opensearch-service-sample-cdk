@@ -3,7 +3,7 @@ import {StackComposer} from "../lib/stack-composer";
 import {Template} from "aws-cdk-lib/assertions";
 import {OpensearchServiceDomainCdkStack} from "../lib/opensearch-service-domain-cdk-stack";
 
-test('Test empty string for a default value, uses the default value', () => {
+test('Test empty string provided for a parameter which has a default value, uses the default value', () => {
 
     const app = new App({
         context: {
