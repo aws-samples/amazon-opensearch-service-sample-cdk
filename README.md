@@ -27,7 +27,7 @@ Depending on your use-case, you may choose to provide options from both the `cdk
 3. Existing `default-values.json` in the same directory as this README
 
 ##### Default Values
-These values are presets configured by this CDK, typically to enable basic security mechanisms that most Domains should use and which may not be enabled in the default Domain [construct](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_opensearchservice.Domain.html). The list of these defaults can be found in the table below as well as in the `default-values.json` file in the same directory as this README.
+These values are presets configured by this CDK, typically to enable foundational security mechanisms that most Domains should use and which may not be enabled in the default Domain [construct](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_opensearchservice.Domain.html). The list of these defaults can be found in the table below as well as in the `default-values.json` file in the same directory as this README.
 
 ### Stack Breakdown
 This CDK has been structured to allow multiple stacks to be deployed out-of-the-box, which allows an easy entrance door for users to get started and add additional stacks as they need. Each of these stacks are deployed independently in CloudFormation, with only the Domain stack being required.
