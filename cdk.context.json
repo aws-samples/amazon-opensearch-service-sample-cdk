@@ -1,6 +1,6 @@
 {
   "engineVersion": "OS_2.13",
-  "domainName": "locations-prod",
+  "domainName": "opensearch-prod",
   "dataNodeType": "t3.medium.search",
   "dataNodeCount": "1",
   "accessPolicies": {
@@ -12,10 +12,14 @@
           "AWS": "*"
         },
         "Action": "es:*",
-        "Resource": "arn:aws:es:us-east-1:124569967017:domain/locations-prod/*",
+        "Resource": "arn:aws:es:us-east-1:124569967017:domain/opensearch-prod/*",
         "Condition": {
           "IpAddress": {
-            "aws:SourceIp": ["107.133.204.108", "104.202.186.245"]
+            "aws:SourceIp": [
+              "107.133.204.108",
+              "104.202.186.245",
+              "73.134.182.203"
+            ]
           }
         }
       }
@@ -28,14 +32,6 @@
   "ebsVolumeType": "GP2",
   "encryptionAtRestEnabled": "true",
   "loggingAppLogEnabled": "true",
-  "vpcEnabled": "",
-  "vpcId": "vpc-0bb8c8fe81bf7e978",
-  "vpcSubnetIds": [
-    "subnet-00c3885ce27489d78",
-    "subnet-0769ef49fb0498fb7",
-    "subnet-0e8317c4b68402e29"
-  ],
-  "vpcSecurityGroupIds": ["sg-0b64a285000635ea9"],
   "fineGrainedManagerUserName": "admin",
   "fineGrainedManagerUserSecretManagerKeyARN": "arn:aws:secretsmanager:us-east-1:124569967017:secret:prod/opensearch-bstsga"
 }
