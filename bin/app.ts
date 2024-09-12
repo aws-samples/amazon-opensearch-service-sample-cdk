@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import "source-map-support/register";
-import { App } from "aws-cdk-lib";
+import { App, Tags } from "aws-cdk-lib";
 import { StackComposer } from "../lib/stack-composer";
 import { locationReplication } from "../lib/locationReplication";
+import { locationDevReplication } from "../lib/locationDevReplication";
 
 const app = new App();
 const account = process.env.CDK_DEFAULT_ACCOUNT;
@@ -16,9 +17,18 @@ if (!stage) {
 
 new StackComposer(app, {
   env: { account: account, region: region },
-  stage: stage,
+  stage: stage
 });
 
 new locationReplication(app, "locationReplication", {
-  env: { account: account, region: region },
+  env: { account: account, region: region }
 });
+
+const locationDevReplicationStack = new locationDevReplication(
+  app,
+  "locationDevReplication",
+  {
+    env: { account: account, region: region }
+  }
+);
+Tags.of(locationDevReplicationStack).add("product", "OpenSearch");

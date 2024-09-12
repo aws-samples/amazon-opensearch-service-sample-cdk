@@ -2,7 +2,6 @@ import { Construct } from "constructs";
 import * as dms from "aws-cdk-lib/aws-dms";
 import * as sm from "aws-cdk-lib/aws-secretsmanager";
 import * as cdk from "aws-cdk-lib";
-import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 
 export class locationReplication extends cdk.Stack {
@@ -20,14 +19,14 @@ export class locationReplication extends cdk.Stack {
         publiclyAccessible: true,
         vpcSecurityGroupIds: ["sg-08371b3f90332b39f"], // TODO: PUT INTO CONFIG
         availabilityZone: "us-east-1a",
-        replicationSubnetGroupIdentifier: "prodsubnetgroup",
+        replicationSubnetGroupIdentifier: "prodsubnetgroup"
       }
     );
     // get secret from secret manager arn arn:aws:secretsmanager:us-east-1:124569967017:secret:locationDBSecretB06A5C46-tXBWnALn3J4O-RBRLqM
 
     const secret = sm.Secret.fromSecretAttributes(this, "ImportedSecret", {
       secretCompleteArn:
-        "arn:aws:secretsmanager:us-east-1:124569967017:secret:locationDBSecretB06A5C46-tXBWnALn3J4O-RBRLqM", //TODO: PUT INTO CONFIG
+        "arn:aws:secretsmanager:us-east-1:124569967017:secret:locationDBSecretB06A5C46-tXBWnALn3J4O-RBRLqM" //TODO: PUT INTO CONFIG
     });
 
     const sourceEndpoint = new dms.CfnEndpoint(this, "SourceEndpoint", {
@@ -38,7 +37,7 @@ export class locationReplication extends cdk.Stack {
       password: secret.secretValueFromJson("password").unsafeUnwrap(), // Retrieve password from secret
       serverName: secret.secretValueFromJson("host").unsafeUnwrap(), // Retrieve host from secret
       port: parseInt(secret.secretValueFromJson("port").unsafeUnwrap()) || 3306, // Retrieve port from secret
-      databaseName: secret.secretValueFromJson("dbname").unsafeUnwrap(), // Retrieve database name from secret
+      databaseName: secret.secretValueFromJson("dbname").unsafeUnwrap() // Retrieve database name from secret
     });
 
     // WARN:     "UseNewMappingType": true isnt supported in the CDK you must manually add it to create indexes
@@ -50,13 +49,14 @@ export class locationReplication extends cdk.Stack {
       elasticsearchSettings: {
         endpointUri:
           "https://search-opensearch-prod-dt7sf4dduxyhwmyhlxs57ua2sy.us-east-1.es.amazonaws.com",
-        serviceAccessRoleArn: "arn:aws:iam::124569967017:role/LocationDMSRole",
-      },
+        serviceAccessRoleArn: "arn:aws:iam::124569967017:role/LocationDMSRole"
+      }
     });
+
     // Create the log group
     const logGroup = new logs.LogGroup(this, "DMSLogGroup", {
       logGroupName: "dms-tasks-locations-prod-replica",
-      removalPolicy: cdk.RemovalPolicy.DESTROY, // Change as needed
+      removalPolicy: cdk.RemovalPolicy.DESTROY // Change as needed
     });
 
     const replicationTask = new dms.CfnReplicationTask(
@@ -103,23 +103,23 @@ export class locationReplication extends cdk.Stack {
             LogComponents: [
               {
                 Id: "TRANSFORMATION",
-                Severity: "LOGGER_SEVERITY_DEFAULT",
+                Severity: "LOGGER_SEVERITY_DEFAULT"
               },
               {
                 Id: "SOURCE_UNLOAD",
-                Severity: "LOGGER_SEVERITY_DEFAULT",
+                Severity: "LOGGER_SEVERITY_DEFAULT"
               },
               {
                 Id: "TARGET_LOAD",
-                Severity: "LOGGER_SEVERITY_DEFAULT",
+                Severity: "LOGGER_SEVERITY_DEFAULT"
               },
               {
                 Id: "PERFORMANCE",
-                Severity: "LOGGER_SEVERITY_DEFAULT",
-              },
-            ],
-          },
-        }),
+                Severity: "LOGGER_SEVERITY_DEFAULT"
+              }
+            ]
+          }
+        })
       }
     );
     replicationTask.node.addDependency(replicationInstance);
