@@ -1,6 +1,5 @@
 {
-  "engineVersion": "OS_2.5",
-  "domainName": "os-service-domain",
+  "vpcAZCount": 2,
   "useUnsignedBasicAuth": false,
   "enforceHTTPS": true,
   "tlsSecurityPolicy": "TLS_1_2",

@@ -1,209 +1,155 @@
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: MIT-0
-
 import {Construct} from "constructs";
-import {RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
-import {OpensearchServiceDomainCdkStack} from "./opensearch-service-domain-cdk-stack";
-import {EngineVersion, TLSSecurityPolicy} from "aws-cdk-lib/aws-opensearchservice";
-import {EbsDeviceVolumeType} from "aws-cdk-lib/aws-ec2";
-import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
+import {Stack, StackProps} from "aws-cdk-lib";
+import {OpenSearchDomainStack} from "./opensearch-domain-stack";
+import {TLSSecurityPolicy} from "aws-cdk-lib/aws-opensearchservice";
 import * as defaultValuesJson from "../default-values.json"
 import {NetworkStack} from "./network-stack";
+import {
+    MAX_STAGE_NAME_LENGTH,
+    MAX_CLUSTER_ID_LENGTH,
+    parseRemovalPolicy, getEngineVersion, LATEST_AOS_VERSION,
+} from "./common-utilities";
+import {
+    getContextForType, 
+    parseContextJson,
+} from "./context-parsing"
+import {CdkLogger} from "./cdk-logger";
 
 export interface StackPropsExt extends StackProps {
-    readonly stage: string
+    readonly stage: string,
 }
 
 export class StackComposer {
     public stacks: Stack[] = [];
 
-    constructor(scope: Construct, props: StackPropsExt) {
+    constructor(scope: Construct, props: StackProps) {
 
-        let networkStack: NetworkStack|undefined
-        const stage = props.stage
-        const account = props.env?.account
-        const region = props.env?.region
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const defaultValues: Record<string, any> = defaultValuesJson
+        if (!props.env?.region) {
+            throw new Error('Missing at least one of required fields [region] in props.env. ' +
+                'Has AWS been configured for this environment?');
+        }
+        const region = props.env.region
 
-        let version: EngineVersion
-        let accessPolicies: PolicyStatement[]|undefined
-        const defaultValues: { [x: string]: (any); } = defaultValuesJson
-        const domainName = getContextForType('domainName', 'string')
-        const dataNodeType = getContextForType('dataNodeType', 'string')
-        const dataNodeCount = getContextForType('dataNodeCount', 'number')
-        const dedicatedManagerNodeType = getContextForType('dedicatedManagerNodeType', 'string')
-        const dedicatedManagerNodeCount = getContextForType('dedicatedManagerNodeCount', 'number')
-        const warmNodeType = getContextForType('warmNodeType', 'string')
-        const warmNodeCount = getContextForType('warmNodeCount', 'number')
-        const useUnsignedBasicAuth = getContextForType('useUnsignedBasicAuth', 'boolean')
-        const fineGrainedManagerUserARN = getContextForType('fineGrainedManagerUserARN', 'string')
-        const fineGrainedManagerUserName = getContextForType('fineGrainedManagerUserName', 'string')
-        const fineGrainedManagerUserSecretManagerKeyARN = getContextForType('fineGrainedManagerUserSecretManagerKeyARN', 'string')
-        const enforceHTTPS = getContextForType('enforceHTTPS', 'boolean')
-        const ebsEnabled = getContextForType('ebsEnabled', 'boolean')
-        const ebsIops = getContextForType('ebsIops', 'number')
-        const ebsVolumeSize = getContextForType('ebsVolumeSize', 'number')
-        const encryptionAtRestEnabled = getContextForType('encryptionAtRestEnabled', 'boolean')
-        const encryptionAtRestKmsKeyARN = getContextForType("encryptionAtRestKmsKeyARN", 'string')
-        const loggingAppLogEnabled = getContextForType('loggingAppLogEnabled', 'boolean')
-        const loggingAppLogGroupARN = getContextForType('loggingAppLogGroupARN', 'string')
-        const loggingAuditLogEnabled = getContextForType('loggingAuditLogEnabled', 'boolean')
-        const loggingAuditLogGroupARN = getContextForType('loggingAuditLogGroupARN', 'string')
-        const noneToNodeEncryptionEnabled = getContextForType('nodeToNodeEncryptionEnabled', 'boolean')
-        const vpcId = getContextForType('vpcId', 'string')
-        const vpcEnabled = getContextForType('vpcEnabled', 'boolean')
-        const vpcSecurityGroupIds = getContextForType('vpcSecurityGroupIds', 'object')
-        const vpcSubnetIds = getContextForType('vpcSubnetIds', 'object')
-        const openAccessPolicyEnabled = getContextForType('openAccessPolicyEnabled', 'boolean')
-        const availabilityZoneCount = getContextForType('availabilityZoneCount', 'number')
+        const contextJSON = parseContextJson(scope)
+        CdkLogger.info(`Using context options:\n---\n${JSON.stringify(contextJSON, null, 3)}\n---`);
 
-        if (!domainName) {
-            throw new Error("Domain name is not present and is a required field")
+        // General options
+        const stage = getContextForType('stage', 'string', defaultValues, contextJSON)
+
+        // VPC options
+        const vpcId = getContextForType('vpcId', 'string', defaultValues, contextJSON)
+        const vpcAZCount = getContextForType('vpcAZCount', 'number', defaultValues, contextJSON)
+
+        // Cluster Options
+        const clusterId = getContextForType('clusterId', 'string', defaultValues, contextJSON)
+        const clusterName = getContextForType('clusterName', 'string', defaultValues, contextJSON)
+        const clusterVersion = getContextForType('clusterVersion', 'string', defaultValues, contextJSON)
+        const clusterType = getContextForType('clusterType', 'string', defaultValues, contextJSON)
+
+        // OpenSearch Domain Options
+        const dataNodeType = getContextForType('dataNodeType', 'string', defaultValues, contextJSON)
+        const dataNodeCount = getContextForType('dataNodeCount', 'number', defaultValues, contextJSON)
+        const dedicatedManagerNodeType = getContextForType('dedicatedManagerNodeType', 'string', defaultValues, contextJSON)
+        const dedicatedManagerNodeCount = getContextForType('dedicatedManagerNodeCount', 'number', defaultValues, contextJSON)
+        const warmNodeType = getContextForType('warmNodeType', 'string', defaultValues, contextJSON)
+        const warmNodeCount = getContextForType('warmNodeCount', 'number', defaultValues, contextJSON)
+        const useUnsignedBasicAuth = getContextForType('useUnsignedBasicAuth', 'boolean', defaultValues, contextJSON)
+        const fineGrainedManagerUserARN = getContextForType('fineGrainedManagerUserARN', 'string', defaultValues, contextJSON)
+        const fineGrainedManagerUserSecretARN = getContextForType('fineGrainedManagerUserSecretARN', 'string', defaultValues, contextJSON)
+        const enableDemoAdmin = getContextForType('enableDemoAdmin', 'boolean', defaultValues, contextJSON)
+        const enforceHTTPS = getContextForType('enforceHTTPS', 'boolean', defaultValues, contextJSON)
+        const ebsEnabled = getContextForType('ebsEnabled', 'boolean', defaultValues, contextJSON)
+        const ebsIops = getContextForType('ebsIops', 'number', defaultValues, contextJSON)
+        const ebsVolumeTypeName = getContextForType('ebsVolumeType', 'string', defaultValues, contextJSON)
+        const ebsVolumeSize = getContextForType('ebsVolumeSize', 'number', defaultValues, contextJSON)
+        const encryptionAtRestEnabled = getContextForType('encryptionAtRestEnabled', 'boolean', defaultValues, contextJSON)
+        const encryptionAtRestKmsKeyARN = getContextForType("encryptionAtRestKmsKeyARN", 'string', defaultValues, contextJSON)
+        const loggingAppLogEnabled = getContextForType('loggingAppLogEnabled', 'boolean', defaultValues, contextJSON)
+        const loggingAppLogGroupARN = getContextForType('loggingAppLogGroupARN', 'string', defaultValues, contextJSON)
+        const noneToNodeEncryptionEnabled = getContextForType('nodeToNodeEncryptionEnabled', 'boolean', defaultValues, contextJSON)
+        const vpcSecurityGroupIds = getContextForType('vpcSecurityGroupIds', 'object', defaultValues, contextJSON)
+        const vpcSubnetIds = getContextForType('vpcSubnetIds', 'object', defaultValues, contextJSON)
+        const openAccessPolicyEnabled = getContextForType('openAccessPolicyEnabled', 'boolean', defaultValues, contextJSON)
+        const accessPolicyJson = getContextForType('accessPolicies', 'object', defaultValues, contextJSON)
+        const domainRemovalPolicyName = getContextForType('domainRemovalPolicy', 'string', defaultValues, contextJSON)
+        const tlsSecurityPolicyName = getContextForType('tlsSecurityPolicy', 'string', defaultValues, contextJSON)
+
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // TODO move this to cluster block
+        const requiredFields: Record<string, any> = {"stage":stage, "clusterId": clusterId, "clusterType": clusterType}
+        for (const key in requiredFields) {
+            if (!requiredFields[key]) {
+                throw new Error(`Required CDK context field ${key} is not present`)
+            }
         }
 
-        const engineVersion = getContextForType('engineVersion', 'string')
-        if (engineVersion && engineVersion.startsWith("OS_")) {
-            // Will accept a period delimited version string (i.e. 1.3) and return a proper EngineVersion
-            version = EngineVersion.openSearch(engineVersion.substring(3))
-        } else if (engineVersion && engineVersion.startsWith("ES_")) {
-            version = EngineVersion.elasticsearch(engineVersion.substring(3))
-        } else {
-            throw new Error("Engine version is not present or does not match the expected format, i.e. OS_1.3 or ES_7.9")
+        if (stage.length > MAX_STAGE_NAME_LENGTH) {
+            throw new Error(`Maximum allowed stage name length is ${MAX_STAGE_NAME_LENGTH} characters but received ${stage}`)
+        }
+        if (clusterId.length > MAX_CLUSTER_ID_LENGTH ) {
+            throw new Error(`Maximum allowed cluster id length is ${MAX_CLUSTER_ID_LENGTH} characters but received ${clusterId}`)
         }
 
-        if (openAccessPolicyEnabled) {
-            const openPolicy = new PolicyStatement({
-                effect: Effect.ALLOW,
-                principals: [new AnyPrincipal()],
-                actions: ["es:*"],
-                resources: [`arn:aws:es:${region}:${account}:domain/${domainName}/*`]
-            })
-            accessPolicies = [openPolicy]
-        } else {
-            const accessPolicyJson = getContextForType('accessPolicies', 'object')
-            accessPolicies = accessPolicyJson ? parseAccessPolicies(accessPolicyJson) : undefined
-        }
 
-        const tlsSecurityPolicyName = getContextForType('tlsSecurityPolicy', 'string')
+        const resolvedClusterName = clusterName ?? `cluster-${stage}-${clusterId}`
+        // TODO get cluster type parsed
+        const engineVersionValue = clusterVersion ? getEngineVersion(clusterVersion) : getEngineVersion(LATEST_AOS_VERSION)
+        const domainRemovalPolicy = parseRemovalPolicy("domainRemovalPolicy", domainRemovalPolicyName)
         const tlsSecurityPolicy: TLSSecurityPolicy|undefined = tlsSecurityPolicyName ? TLSSecurityPolicy[tlsSecurityPolicyName as keyof typeof TLSSecurityPolicy] : undefined
         if (tlsSecurityPolicyName && !tlsSecurityPolicy) {
             throw new Error("Provided tlsSecurityPolicy does not match a selectable option, for reference https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_opensearchservice.TLSSecurityPolicy.html")
         }
 
-        const ebsVolumeTypeName = getContextForType('ebsVolumeType', 'string')
-        const ebsVolumeType: EbsDeviceVolumeType|undefined = ebsVolumeTypeName ? EbsDeviceVolumeType[ebsVolumeTypeName as keyof typeof EbsDeviceVolumeType] : undefined
-        if (ebsVolumeTypeName && !ebsVolumeType) {
-            throw new Error("Provided ebsVolumeType does not match a selectable option, for reference https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.EbsDeviceVolumeType.html")
-        }
+        let networkStack: NetworkStack
+        networkStack = new NetworkStack(scope, `networkStack`, {
+            vpcId: vpcId,
+            vpcSubnetIds: vpcSubnetIds,
+            vpcAZCount: vpcAZCount,
+            stackName: `NetworkInfra-${stage}-${region}`,
+            description: "This stack contains resources to create/manage VPC networking",
+            stage: stage,
+            env: props.env,
+        })
+        this.stacks.push(networkStack)
 
-        const domainRemovalPolicyName = getContextForType('domainRemovalPolicy', 'string')
-        const domainRemovalPolicy = domainRemovalPolicyName ? RemovalPolicy[domainRemovalPolicyName as keyof typeof RemovalPolicy] : undefined
-        if (domainRemovalPolicyName && !domainRemovalPolicy) {
-            throw new Error("Provided domainRemovalPolicy does not match a selectable option, for reference https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.RemovalPolicy.html")
-        }
-
-        // If enabled re-use existing VPC and/or associated resources or create new
-        if (vpcEnabled) {
-            networkStack = new NetworkStack(scope, 'networkStack', {
-                vpcId: vpcId,
-                vpcSubnetIds: vpcSubnetIds,
-                vpcSecurityGroupIds: vpcSecurityGroupIds,
-                availabilityZoneCount: availabilityZoneCount,
-                stackName: `OSServiceNetworkCDKStack-${stage}-${region}`,
-                description: "This stack contains resources to create/manage networking for an OpenSearch Service domain",
-                ...props,
-            })
-            this.stacks.push(networkStack)
-        }
-
-        const opensearchStack = new OpensearchServiceDomainCdkStack(scope, 'opensearchDomainStack', {
-            version: version,
-            domainName: domainName,
+        let openSearchStack
+        openSearchStack = new OpenSearchDomainStack(scope, `openSearchDomainStack`, {
+            version: engineVersionValue,
+            domainName: resolvedClusterName,
             dataNodeInstanceType: dataNodeType,
             dataNodes: dataNodeCount,
             dedicatedManagerNodeType: dedicatedManagerNodeType,
             dedicatedManagerNodeCount: dedicatedManagerNodeCount,
             warmInstanceType: warmNodeType,
             warmNodes: warmNodeCount,
-            accessPolicies: accessPolicies,
+            accessPolicyJson: accessPolicyJson,
+            openAccessPolicyEnabled: openAccessPolicyEnabled,
             useUnsignedBasicAuth: useUnsignedBasicAuth,
             fineGrainedManagerUserARN: fineGrainedManagerUserARN,
-            fineGrainedManagerUserName: fineGrainedManagerUserName,
-            fineGrainedManagerUserSecretManagerKeyARN: fineGrainedManagerUserSecretManagerKeyARN,
+            fineGrainedManagerUserSecretARN: fineGrainedManagerUserSecretARN,
+            enableDemoAdmin: enableDemoAdmin,
             enforceHTTPS: enforceHTTPS,
             tlsSecurityPolicy: tlsSecurityPolicy,
             ebsEnabled: ebsEnabled,
             ebsIops: ebsIops,
             ebsVolumeSize: ebsVolumeSize,
-            ebsVolumeType: ebsVolumeType,
+            ebsVolumeTypeName: ebsVolumeTypeName,
             encryptionAtRestEnabled: encryptionAtRestEnabled,
             encryptionAtRestKmsKeyARN: encryptionAtRestKmsKeyARN,
-            loggingAppLogEnabled: loggingAppLogEnabled,
-            loggingAppLogGroupARN: loggingAppLogGroupARN,
-            loggingAuditLogEnabled: loggingAuditLogEnabled,
-            loggingAuditLogGroupARN: loggingAuditLogGroupARN,
+            appLogEnabled: loggingAppLogEnabled,
+            appLogGroup: loggingAppLogGroupARN,
             nodeToNodeEncryptionEnabled: noneToNodeEncryptionEnabled,
-            vpc: networkStack ? networkStack.vpc : undefined,
-            vpcSubnets: networkStack ? networkStack.domainSubnets : undefined,
-            vpcSecurityGroups: networkStack ? networkStack.domainSecurityGroups : undefined,
-            availabilityZoneCount: availabilityZoneCount,
+            vpcDetails: networkStack ? networkStack.vpcDetails : undefined,
+            vpcSecurityGroupIds: vpcSecurityGroupIds,
             domainRemovalPolicy: domainRemovalPolicy,
-            stackName: `OSServiceDomainCDKStack-${stage}-${region}`,
+            stackName: `OpenSearchDomain-${stage}-${region}`,
             description: "This stack contains resources to create/manage an OpenSearch Service domain",
-            ...props,
+            stage: stage,
+            env: props.env
         });
-
-        if (networkStack) {
-            opensearchStack.addDependency(networkStack)
-        }
-        this.stacks.push(opensearchStack)
-
-        function getContextForType(optionName: string, expectedType: string): any {
-            const option = scope.node.tryGetContext(optionName)
-
-            // If no context is provided (undefined or empty string) and a default value exists, use it
-            if ((option === undefined || option === "") && defaultValues[optionName]) {
-                return defaultValues[optionName]
-            }
-
-            // Filter out invalid or missing options by setting undefined (empty strings, null, undefined, NaN)
-            if (option !== false && option !== 0 && !option) {
-                return undefined
-            }
-            // Values provided by the CLI will always be represented as a string and need to be parsed
-            if (typeof option === 'string') {
-                if (expectedType === 'number') {
-                    return parseInt(option)
-                }
-                if (expectedType === 'boolean' || expectedType === 'object') {
-                    return JSON.parse(option)
-                }
-            }
-            // Values provided by the cdk.context.json should be of the desired type
-            if (typeof option !== expectedType) {
-                throw new Error(`Type provided by cdk.context.json for ${optionName} was ${typeof option} but expected ${expectedType}`)
-            }
-            return option
-        }
-
-        function parseAccessPolicies(jsonObject: { [x: string]: any; }): PolicyStatement[] {
-            let accessPolicies: PolicyStatement[] = []
-            const statements = jsonObject['Statement']
-            if (!statements || statements.length < 1) {
-                throw new Error ("Provided accessPolicies JSON must have the 'Statement' element present and not be empty, for reference https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_statement.html")
-            }
-            // Access policies can provide a single Statement block or an array of Statement blocks
-            if (Array.isArray(statements)) {
-                for (let i = 0; i < statements.length; i++) {
-                    const statement = PolicyStatement.fromJson(statements[i])
-                    accessPolicies.push(statement)
-                }
-            }
-            else {
-                const statement = PolicyStatement.fromJson(statements)
-                accessPolicies.push(statement)
-            }
-            return accessPolicies
-        }
-        
+        this.stacks.push(openSearchStack)
     }
 }
