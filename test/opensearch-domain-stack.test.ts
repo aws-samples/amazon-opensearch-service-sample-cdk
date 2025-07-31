@@ -2,7 +2,7 @@ import { Template } from 'aws-cdk-lib/assertions';
 import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
 import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
 import { describe, afterEach, test, jest} from '@jest/globals';
-import {ClusterType} from "../lib/common-utilities";
+import {ClusterType} from "../lib/utils/common-utilities";
 
 describe('OpenSearch Domain Stack Tests', () => {
   afterEach(() => {
@@ -22,9 +22,9 @@ describe('OpenSearch Domain Stack Tests', () => {
           clusterVersion: "OS_2.3",
           domainName: "test-os-domain",
           dataNodeType: "r6.large.search",
-          dataNodeCount: 5,
+          dataNodeCount: 2,
           dedicatedManagerNodeType: "r6g.large.search",
-          dedicatedManagerNodeCount: 3,
+          dedicatedManagerNodeCount: 2,
           warmNodeType: "ultrawarm1.medium.search",
           warmNodeCount: 2,
           accessPolicies: {
@@ -48,7 +48,6 @@ describe('OpenSearch Domain Stack Tests', () => {
           loggingAppLogEnabled: true,
           loggingAppLogGroupARN: "arn:aws:logs:us-east-1:12345678912:log-group:test-log-group:*",
           nodeToNodeEncryptionEnabled: true,
-          vpcSecurityGroupIds: ["sg-123456789abcdefgh", "sg-223456789abcdefgh"],
           domainRemovalPolicy: "DESTROY",
         }
       ]
@@ -72,9 +71,9 @@ describe('OpenSearch Domain Stack Tests', () => {
           clusterVersion: "OS_2.3",
           domainName: "test-os-domain",
           dataNodeType: "r6.large.search",
-          dataNodeCount: "5",
+          dataNodeCount: "2",
           dedicatedManagerNodeType: "r6g.large.search",
-          dedicatedManagerNodeCount: "3",
+          dedicatedManagerNodeCount: "2",
           warmNodeType: "ultrawarm1.medium.search",
           warmNodeCount: "2",
           accessPolicies: "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::12345678912:user/test-user\"},\"Action\":\"es:ESHttp*\",\"Resource\":\"arn:aws:es:us-east-1:12345678912:domain/cdk-os-service-domain/*\"}]}",
@@ -90,7 +89,6 @@ describe('OpenSearch Domain Stack Tests', () => {
           loggingAppLogEnabled: "true",
           loggingAppLogGroupARN: "arn:aws:logs:us-east-1:12345678912:log-group:test-log-group:*",
           nodeToNodeEncryptionEnabled: "true",
-          vpcSecurityGroupIds: "[\"sg-123456789abcdefgh\", \"sg-223456789abcdefgh\"]",
           domainRemovalPolicy: "DESTROY",
         }
       ]
@@ -201,7 +199,7 @@ describe('OpenSearch Domain Stack Tests', () => {
       loggingAppLogGroupARN: "",
       nodeToNodeEncryptionEnabled: "",
       clusterSubnetIds: "",
-      vpcSecurityGroupIds: "",
+      clusterSecurityGroupIds: "",
       openAccessPolicyEnabled: "",
       domainRemovalPolicy: "",
     }
@@ -233,10 +231,10 @@ function assertPrimaryDomainStackTemplate(template: Template) {
       }
     },
     ClusterConfig: {
-      DedicatedMasterCount: 3,
+      DedicatedMasterCount: 2,
       DedicatedMasterEnabled: true,
       DedicatedMasterType: "r6g.large.search",
-      InstanceCount: 5,
+      InstanceCount: 2,
       InstanceType: "r6.large.search",
       WarmCount: 2,
       WarmType: "ultrawarm1.medium.search",

@@ -185,7 +185,6 @@ describe('Stack Composer Tests', () => {
   test('Test that loading context via a file is successful', () => {
     const contextOptions = {
       contextFile: './test/resources/sample-context-file.json',
-      contextId: 'unit-test-1'
     }
     const stacks = createStackComposer(contextOptions)
     const networkStack = stacks.stacks.filter((s) => s instanceof NetworkStack)
@@ -195,7 +194,6 @@ describe('Stack Composer Tests', () => {
   test('Test that loading context via a file errors if file does not exist', () => {
     const contextOptions = {
       contextFile: './test/resources/missing-file.json',
-      contextId: 'unit-test-1'
     }
 
     const createStackFunc = () => createStackComposer(contextOptions)
@@ -206,7 +204,6 @@ describe('Stack Composer Tests', () => {
   test('Test that loading context via a file errors if file is not proper json', () => {
     const contextOptions = {
       contextFile: './test/resources/invalid-context-file.json',
-      contextId: 'unit-test-1'
     }
 
     const createStackFunc = () => createStackComposer(contextOptions)

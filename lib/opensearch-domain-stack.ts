@@ -7,8 +7,15 @@ import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
 import {ISecret, Secret} from "aws-cdk-lib/aws-secretsmanager";
 import {StackPropsExt} from "./stack-composer";
-import {VpcDetails} from "./vpc-details";
-import {createBasicAuthSecret} from "./common-utilities";
+import {VpcDetails} from "./utils/vpc-details";
+import {
+  createBasicAuthSecret,
+  generateClusterExports,
+  getEngineVersion,
+  LATEST_AOS_VERSION,
+} from "./utils/common-utilities";
+import {ClusterConfig} from "./utils/cluster-config";
+import {Environment} from "aws-cdk-lib/core/lib/environment";
 
 
 export interface OpensearchDomainStackProps extends StackPropsExt {
@@ -85,10 +92,22 @@ export class OpenSearchDomainStack extends Stack {
     return accessPolicies
   }
 
+  validateNodeCounts(numAZs: number, props: OpensearchDomainStackProps) {
+    if (props.dataNodes && props.dataNodes % numAZs != 0) {
+      throw new Error(`The number of data nodes must be a multiple of the number of Availability Zones. Received 'dataNodeCount' of ${props.dataNodes} with AZ count of ${numAZs}`)
+    }
+    if (props.dedicatedManagerNodeCount && props.dedicatedManagerNodeCount % numAZs != 0) {
+      throw new Error(`The number of manager nodes must be a multiple of the number of Availability Zones. Received 'dedicatedManagerNodeCount' of ${props.dedicatedManagerNodeCount} with AZ count of ${numAZs}`)
+    }
+    if (props.warmNodes && props.warmNodes % numAZs != 0) {
+      throw new Error(`The number of warm nodes must be a multiple of the number of Availability Zones. Received 'warmNodesCount' of ${props.warmNodes} with AZ count of ${numAZs}`)
+    }
+  }
+
   constructor(scope: Construct, id: string, props: OpensearchDomainStackProps) {
     super(scope, id, props);
 
-    props.vpcDetails.initialize(this)
+    props.vpcDetails.initialize(this, props.clusterId)
 
     // Retrieve existing account resources if defined
     const earKmsKey: IKey|undefined = props.encryptionAtRestKmsKeyARN && props.encryptionAtRestEnabled ?
@@ -107,8 +126,11 @@ export class OpenSearchDomainStack extends Stack {
     if (!numSubnets || numSubnets.length < 1) {
       throw new Error("Internal error: There should always be at least 1 subnet in the VpcDetails subnet selection")
     }
-    const zoneAwarenessConfig: ZoneAwarenessConfig|undefined = numSubnets.length > 1 ?
-        {enabled: true, availabilityZoneCount: numSubnets.length} : undefined;
+    // We enforce that only one subnet is provided per AZ
+    const numAZs = numSubnets.length
+    this.validateNodeCounts(numAZs, props)
+    const zoneAwarenessConfig: ZoneAwarenessConfig|undefined = numAZs > 1 ?
+        {enabled: true, availabilityZoneCount: numAZs} : undefined;
 
     // If specified, these subnets will be selected to place the Domain nodes in. Otherwise, this is not provided
     // to the Domain as it has existing behavior to select private subnets from a given VPC
@@ -137,14 +159,14 @@ export class OpenSearchDomainStack extends Stack {
       accessPolicies = props.accessPolicyJson ? this.parseAccessPolicies(props.accessPolicyJson) : undefined
     }
 
-    new Domain(this, 'Domain', {
+    const domain = new Domain(this, 'Domain', {
       version: props.version,
       domainName: props.domainName,
       accessPolicies: accessPolicies,
       useUnsignedBasicAuth: props.useUnsignedBasicAuth,
       capacity: {
         dataNodeInstanceType: props.dataNodeInstanceType,
-        dataNodes: props.dataNodes,
+        dataNodes: props.dataNodes ?? numAZs,
         masterNodeInstanceType: props.dedicatedManagerNodeType,
         masterNodes: props.dedicatedManagerNodeCount,
         warmInstanceType: props.warmInstanceType,
@@ -178,5 +200,49 @@ export class OpenSearchDomainStack extends Stack {
       zoneAwareness: zoneAwarenessConfig,
       removalPolicy: props.domainRemovalPolicy
     });
+    generateClusterExports(this, domain.domainEndpoint, props.clusterId, props.stage, props.vpcDetails.defaultSecurityGroup?.securityGroupId)
   }
+}
+
+export function createOpenSearchStack(scope: Construct, config: ClusterConfig, vpcDetails: VpcDetails, stage: string, region: string, env?: Environment): Stack {
+
+  const version = config.clusterVersion
+      ? getEngineVersion(config.clusterVersion)
+      : getEngineVersion(LATEST_AOS_VERSION);
+
+  return new OpenSearchDomainStack(scope, `openSearchDomainStack-${config.clusterId}`, {
+      version: version,
+      domainName: config.clusterName,
+      clusterId: config.clusterId,
+      dataNodeInstanceType: config.dataNodeType,
+      dataNodes: config.dataNodeCount,
+      dedicatedManagerNodeType: config.dedicatedManagerNodeType,
+      dedicatedManagerNodeCount: config.dedicatedManagerNodeCount,
+      warmInstanceType: config.warmNodeType,
+      warmNodes: config.warmNodeCount,
+      accessPolicyJson: config.accessPolicies,
+      openAccessPolicyEnabled: config.openAccessPolicyEnabled,
+      useUnsignedBasicAuth: config.useUnsignedBasicAuth,
+      fineGrainedManagerUserARN: config.fineGrainedManagerUserARN,
+      fineGrainedManagerUserSecretARN: config.fineGrainedManagerUserSecretARN,
+      enableDemoAdmin: config.enableDemoAdmin,
+      enforceHTTPS: config.enforceHTTPS,
+      tlsSecurityPolicy: config.tlsSecurityPolicy,
+      ebsEnabled: config.ebsEnabled,
+      ebsIops: config.ebsIops,
+      ebsVolumeSize: config.ebsVolumeSize,
+      ebsVolumeTypeName: config.ebsVolumeType,
+      encryptionAtRestEnabled: config.encryptionAtRestEnabled,
+      encryptionAtRestKmsKeyARN: config.encryptionAtRestKmsKeyARN,
+      appLogEnabled: config.loggingAppLogEnabled,
+      appLogGroup: config.loggingAppLogGroupARN,
+      nodeToNodeEncryptionEnabled: config.nodeToNodeEncryptionEnabled,
+      vpcDetails: vpcDetails,
+      vpcSecurityGroupIds: config.clusterSecurityGroupIds,
+      domainRemovalPolicy: config.domainRemovalPolicy,
+      stackName: `OpenSearchDomain-${config.clusterId}-${stage}-${region}`,
+      description: 'This stack contains resources to create/manage an OpenSearch Service domain',
+      stage,
+      env: env,
+    });
 }

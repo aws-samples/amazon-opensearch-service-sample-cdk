@@ -1,6 +1,6 @@
 import {StackComposer} from "../lib/stack-composer";
 import {App} from "aws-cdk-lib";
-import {ClusterType} from "../lib/common-utilities";
+import {ClusterType} from "../lib/utils/common-utilities";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createStackComposer(context: Record<string, any>) {

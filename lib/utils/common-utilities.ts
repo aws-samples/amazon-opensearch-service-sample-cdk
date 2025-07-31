@@ -1,4 +1,4 @@
-import {RemovalPolicy, SecretValue} from "aws-cdk-lib";
+import {CfnOutput, RemovalPolicy, SecretValue} from "aws-cdk-lib";
 import {EngineVersion} from "aws-cdk-lib/aws-opensearchservice";
 import {Secret} from "aws-cdk-lib/aws-secretsmanager";
 import {CdkLogger} from "./cdk-logger";
@@ -13,6 +13,9 @@ export enum ClusterType {
 }
 
 export function parseClusterType(input: string, clusterId: string): ClusterType {
+    if (!input) {
+        throw new Error(`The 'clusterType' option must be provided for the '${clusterId}' cluster configuration. The available options are [${Object.values(ClusterType)}]`);
+    }
     if (Object.values(ClusterType).includes(input as ClusterType)) {
         return input as ClusterType;
     }
@@ -27,7 +30,7 @@ export function getEngineVersion(engineVersionString: string) : EngineVersion {
     } else if (engineVersionString?.startsWith("ES_")) {
         version = EngineVersion.elasticsearch(engineVersionString.substring(3))
     } else {
-        throw new Error(`Engine version (${engineVersionString}) is not present or does not match the expected format, i.e. OS_1.3 or ES_7.9`)
+        throw new Error(`Engine version (${engineVersionString}) is not present or does not match the expected format, e.g. OS_1.3 or ES_7.9`)
     }
     return version
 }
@@ -49,4 +52,19 @@ export function createBasicAuthSecret(scope: Construct, username: string, passwo
             password: SecretValue.unsafePlainText(password)
         }
     })
+}
+
+export function generateClusterExports(scope: Construct, clusterEndpoint: string, clusterId: string, stage: string, defaultSecurityGroupId?: string) {
+    new CfnOutput(scope, `ClusterEndpointExport-${stage}-${clusterId}`, {
+        exportName: `ClusterEndpoint-${stage}-${clusterId}`,
+        value: clusterEndpoint,
+        description: 'The endpoint URL of the cluster',
+    });
+    if (defaultSecurityGroupId) {
+        new CfnOutput(scope, `ClusterDefaultSecurityGroupIdExport-${stage}-${clusterId}`, {
+            exportName: `ClusterDefaultSecurityGroupId-${stage}-${clusterId}`,
+            value: defaultSecurityGroupId,
+            description: 'The default security group id of the cluster',
+        });
+    }
 }

@@ -72,7 +72,7 @@ export class VpcDetails {
         }
     }
 
-    initialize(scope: Construct) {
+    initialize(scope: Construct, clusterId: string) {
         const vpcId = this.vpcId
         const createdVpc = this.createdVpc
         const vpcSubnetIds = this.vpcSubnetIds
@@ -84,7 +84,7 @@ export class VpcDetails {
         if (resolvedVpc.vpcId == "vpc-12345") {
             return
         } else {
-            CdkLogger.info(`Detected VPC with ${resolvedVpc.privateSubnets.length} private subnets, ${resolvedVpc.publicSubnets.length} public subnets, and ${resolvedVpc.isolatedSubnets.length} isolated subnets`)
+            CdkLogger.info(`[Cluster ID: ${clusterId}] Detected VPC with ${resolvedVpc.privateSubnets.length} private subnets, ${resolvedVpc.publicSubnets.length} public subnets, and ${resolvedVpc.isolatedSubnets.length} isolated subnets`)
         }
 
         // If we have created the VPC, select private subnets
