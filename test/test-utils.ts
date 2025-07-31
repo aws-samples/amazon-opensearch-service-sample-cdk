@@ -5,7 +5,6 @@ import {ClusterType} from "../lib/utils/common-utilities";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createStackComposer(context: Record<string, any>) {
     context.stage = context.stage ?? "unit-test"
-    console.error(context)
     const app = new App({
         context: context
     })
