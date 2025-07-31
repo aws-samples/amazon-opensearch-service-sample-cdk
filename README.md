@@ -34,7 +34,7 @@ Create a `cdk.context.json` with your desired cluster configuration. See the sam
   "vpcAZCount": 2,
   "clusters": [
     {
-      "clusterId": "dev-search",
+      "clusterId": "app-logs",
       "clusterVersion": "OS_2.19",
       "clusterType": "OPENSEARCH_MANAGED_SERVICE"
     }
