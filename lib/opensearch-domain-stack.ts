@@ -1,5 +1,4 @@
 import {Construct} from "constructs";
-import {VpcDetails} from "./network-stack";
 import {EbsDeviceVolumeType, ISecurityGroup, SecurityGroup, SubnetSelection} from "aws-cdk-lib/aws-ec2";
 import {Domain, EngineVersion, TLSSecurityPolicy, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
 import {RemovalPolicy, Stack} from "aws-cdk-lib";
@@ -8,14 +7,14 @@ import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
 import {ISecret, Secret} from "aws-cdk-lib/aws-secretsmanager";
 import {StackPropsExt} from "./stack-composer";
-import {
-  ClusterType,
-} from "./common-utilities";
+import {VpcDetails} from "./vpc-details";
+import {createBasicAuthSecret} from "./common-utilities";
 
 
 export interface OpensearchDomainStackProps extends StackPropsExt {
   readonly version: EngineVersion,
   readonly domainName: string,
+  readonly clusterId: string,
   readonly dataNodeInstanceType?: string,
   readonly dataNodes?: number,
   readonly dedicatedManagerNodeType?: string,
@@ -39,7 +38,7 @@ export interface OpensearchDomainStackProps extends StackPropsExt {
   readonly appLogEnabled?: boolean,
   readonly appLogGroup?: string,
   readonly nodeToNodeEncryptionEnabled?: boolean,
-  readonly vpcDetails?: VpcDetails,
+  readonly vpcDetails: VpcDetails,
   readonly vpcSecurityGroupIds?: string[],
   readonly domainRemovalPolicy?: RemovalPolicy,
   readonly domainAccessSecurityGroupParameter?: string
@@ -89,6 +88,8 @@ export class OpenSearchDomainStack extends Stack {
   constructor(scope: Construct, id: string, props: OpensearchDomainStackProps) {
     super(scope, id, props);
 
+    props.vpcDetails.initialize(this)
+
     // Retrieve existing account resources if defined
     const earKmsKey: IKey|undefined = props.encryptionAtRestKmsKeyARN && props.encryptionAtRestEnabled ?
         Key.fromKeyArn(this, "earKey", props.encryptionAtRestKmsKeyARN) : undefined
@@ -98,11 +99,16 @@ export class OpenSearchDomainStack extends Stack {
 
     let adminUserSecret: ISecret|undefined = props.fineGrainedManagerUserSecretARN ?
         Secret.fromSecretCompleteArn(this, "managerSecret", props.fineGrainedManagerUserSecretARN) : undefined
-    if (props.enableDemoAdmin) { // Enable demo mode setting
-      adminUserSecret = createBasicAuthSecret("admin", "myStrongPassword123!", ClusterType.TARGET, this, props.stage, deployId)
+    if (props.enableDemoAdmin) {
+      adminUserSecret = createBasicAuthSecret(scope, "admin", "myStrongPassword123!", props.stage, props.clusterId)
     }
-    const zoneAwarenessConfig: ZoneAwarenessConfig|undefined = props.vpcDetails?.azCount && props.vpcDetails.azCount > 1 ?
-        {enabled: true, availabilityZoneCount: props.vpcDetails.azCount} : undefined;
+
+    const numSubnets = props.vpcDetails.subnetSelection.subnets
+    if (!numSubnets || numSubnets.length < 1) {
+      throw new Error("Internal error: There should always be at least 1 subnet in the VpcDetails subnet selection")
+    }
+    const zoneAwarenessConfig: ZoneAwarenessConfig|undefined = numSubnets.length > 1 ?
+        {enabled: true, availabilityZoneCount: numSubnets.length} : undefined;
 
     // If specified, these subnets will be selected to place the Domain nodes in. Otherwise, this is not provided
     // to the Domain as it has existing behavior to select private subnets from a given VPC
@@ -113,7 +119,9 @@ export class OpenSearchDomainStack extends Stack {
 
     // Retrieve existing SGs to apply to VPC Domain endpoints
     const securityGroups: ISecurityGroup[] = []
-    securityGroups.push(defaultOSClusterAccessGroup)
+    if (props.vpcDetails.defaultSecurityGroup) {
+      securityGroups.push(props.vpcDetails.defaultSecurityGroup)
+    }
     if (props.vpcSecurityGroupIds) {
       for (let i = 0; i < props.vpcSecurityGroupIds.length; i++) {
         securityGroups.push(SecurityGroup.fromLookupById(this, "domainSecurityGroup-" + i, props.vpcSecurityGroupIds[i]))
@@ -129,7 +137,7 @@ export class OpenSearchDomainStack extends Stack {
       accessPolicies = props.accessPolicyJson ? this.parseAccessPolicies(props.accessPolicyJson) : undefined
     }
 
-    const domain = new Domain(this, 'Domain', {
+    new Domain(this, 'Domain', {
       version: props.version,
       domainName: props.domainName,
       accessPolicies: accessPolicies,

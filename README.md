@@ -31,7 +31,12 @@ Create a `cdk.context.json` with your desired cluster configuration. See the sam
 ```json
 {
   "stage": "dev",
-  "clusters": []
+  "clusters": [
+    {
+      "clusterId": "dev-search",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE"
+    }
+  ]
 }
 ```
 

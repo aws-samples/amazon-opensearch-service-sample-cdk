@@ -1,16 +1,10 @@
 import { Template } from 'aws-cdk-lib/assertions';
 import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
-import { NetworkStack } from "../lib/network-stack";
-import { createStackComposer } from "./test-utils";
-import { ClusterYaml } from '../lib/migration-services-yaml';
-import { ContainerImage } from "aws-cdk-lib/aws-ecs";
-import { describe, beforeEach, afterEach, test, expect, jest} from '@jest/globals';
+import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
+import { describe, afterEach, test, jest} from '@jest/globals';
+import {ClusterType} from "../lib/common-utilities";
 
 describe('OpenSearch Domain Stack Tests', () => {
-  beforeEach(() => {
-    jest.spyOn(ContainerImage, 'fromDockerImageAsset').mockImplementation(() => ContainerImage.fromRegistry("ServiceImage"));
-  });
-
   afterEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
@@ -20,121 +14,93 @@ describe('OpenSearch Domain Stack Tests', () => {
   test('Test primary context options are mapped with standard data type', () => {
     // The cdk.context.json and default-values.json files allow multiple data types
     const contextOptions = {
-      engineVersion: "OS_2.3",
-      domainName: "test-os-domain",
-      dataNodeType: "r6.large.search",
-      dataNodeCount: 5,
-      dedicatedManagerNodeType: "r6g.large.search",
-      dedicatedManagerNodeCount: 3,
-      warmNodeType: "ultrawarm1.medium.search",
-      warmNodeCount: 2,
-      accessPolicies: {
-        "Version": "2012-10-17",
-        "Statement": [{
-          "Effect": "Allow",
-          "Principal": { "AWS": "arn:aws:iam::12345678912:user/test-user" },
-          "Action": "es:ESHttp*",
-          "Resource": "arn:aws:es:us-east-1:12345678912:domain/cdk-os-service-domain/*"
-        }]
-      },
-      fineGrainedManagerUserARN: "arn:aws:iam::12345678912:user/test-user",
-      enforceHTTPS: true,
-      tlsSecurityPolicy: "TLS_1_2",
-      ebsEnabled: true,
-      ebsIops: 4000,
-      ebsVolumeSize: 15,
-      ebsVolumeType: "GP3",
-      encryptionAtRestEnabled: true,
-      encryptionAtRestKmsKeyARN: "arn:aws:kms:us-east-1:12345678912:key/abc123de-4888-4fa7-a508-3811e2d49fc3",
-      loggingAppLogEnabled: true,
-      loggingAppLogGroupARN: "arn:aws:logs:us-east-1:12345678912:log-group:test-log-group:*",
-      nodeToNodeEncryptionEnabled: true,
-      vpcEnabled: true,
-      vpcId: "vpc-123456789abcdefgh",
-      vpcSecurityGroupIds: ["sg-123456789abcdefgh", "sg-223456789abcdefgh"],
-      vpcAZCount: 3,
-      domainRemovalPolicy: "DESTROY",
-      sourceCluster: {
-        "endpoint": "https://test-cluster",
-        "auth": {"type": "none"},
-        "version": "ES_7.10"
-      }
+      stage: "unittest",
+      clusters: [
+        {
+          clusterId: "dev-search",
+          clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE,
+          clusterVersion: "OS_2.3",
+          domainName: "test-os-domain",
+          dataNodeType: "r6.large.search",
+          dataNodeCount: 5,
+          dedicatedManagerNodeType: "r6g.large.search",
+          dedicatedManagerNodeCount: 3,
+          warmNodeType: "ultrawarm1.medium.search",
+          warmNodeCount: 2,
+          accessPolicies: {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Principal": {"AWS": "arn:aws:iam::12345678912:user/test-user"},
+              "Action": "es:ESHttp*",
+              "Resource": "arn:aws:es:us-east-1:12345678912:domain/cdk-os-service-domain/*"
+            }]
+          },
+          fineGrainedManagerUserARN: "arn:aws:iam::12345678912:user/test-user",
+          enforceHTTPS: true,
+          tlsSecurityPolicy: "TLS_1_2",
+          ebsEnabled: true,
+          ebsIops: 4000,
+          ebsVolumeSize: 15,
+          ebsVolumeType: "GP3",
+          encryptionAtRestEnabled: true,
+          encryptionAtRestKmsKeyARN: "arn:aws:kms:us-east-1:12345678912:key/abc123de-4888-4fa7-a508-3811e2d49fc3",
+          loggingAppLogEnabled: true,
+          loggingAppLogGroupARN: "arn:aws:logs:us-east-1:12345678912:log-group:test-log-group:*",
+          nodeToNodeEncryptionEnabled: true,
+          vpcSecurityGroupIds: ["sg-123456789abcdefgh", "sg-223456789abcdefgh"],
+          domainRemovalPolicy: "DESTROY",
+        }
+      ]
     }
 
     const openSearchStacks = createStackComposer(contextOptions)
 
     const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
-    const networkStack = openSearchStacks.stacks.filter((s) => s instanceof NetworkStack)[0]
-    const networkTemplate = Template.fromStack(networkStack)
     assertPrimaryDomainStackTemplate(domainTemplate)
-    // When existing resources are provided, the network stack should only create SSM parameters or osClusterAccessSG
-    const resources = networkTemplate.toJSON().Resources;
-    expect(resources).toBeDefined();
-    for (const resourceKey in resources) {
-      const resourceType = resources[resourceKey].Type;
-      if (resourceType === 'AWS::EC2::SecurityGroup' || resourceType === 'AWS::EC2::SecurityGroupIngress') {
-        expect(resourceKey).toMatch(/^osClusterAccessSG/);
-      } else {
-        expect(resourceType).toBe('AWS::SSM::Parameter');
-      }
-    }
   });
 
   test('Test primary context options are mapped with only string data type', () => {
     // CDK CLI commands pass all context values as strings
     const contextOptions = {
-      engineVersion: "OS_2.3",
-      domainName: "test-os-domain",
-      dataNodeType: "r6.large.search",
-      dataNodeCount: "5",
-      dedicatedManagerNodeType: "r6g.large.search",
-      dedicatedManagerNodeCount: "3",
-      warmNodeType: "ultrawarm1.medium.search",
-      warmNodeCount: "2",
-      accessPolicies: "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::12345678912:user/test-user\"},\"Action\":\"es:ESHttp*\",\"Resource\":\"arn:aws:es:us-east-1:12345678912:domain/cdk-os-service-domain/*\"}]}",
-      fineGrainedManagerUserARN: "arn:aws:iam::12345678912:user/test-user",
-      enforceHTTPS: "true",
-      tlsSecurityPolicy: "TLS_1_2",
-      ebsEnabled: "true",
-      ebsIops: "4000",
-      ebsVolumeSize: "15",
-      ebsVolumeType: "GP3",
-      encryptionAtRestEnabled: "true",
-      encryptionAtRestKmsKeyARN: "arn:aws:kms:us-east-1:12345678912:key/abc123de-4888-4fa7-a508-3811e2d49fc3",
-      loggingAppLogEnabled: "true",
-      loggingAppLogGroupARN: "arn:aws:logs:us-east-1:12345678912:log-group:test-log-group:*",
-      nodeToNodeEncryptionEnabled: "true",
-      vpcEnabled: "true",
-      vpcId: "vpc-123456789abcdefgh",
-      vpcSecurityGroupIds: "[\"sg-123456789abcdefgh\", \"sg-223456789abcdefgh\"]",
-      vpcAZCount: "3",
-      domainRemovalPolicy: "DESTROY",
-      sourceCluster: {
-        "endpoint": "https://test-cluster",
-        "auth": {"type": "none"},
-        "version": "ES_7.10"
-      }
+      stage: "unittest",
+      clusters: [
+        {
+          clusterId: "dev-search",
+          clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE,
+          clusterVersion: "OS_2.3",
+          domainName: "test-os-domain",
+          dataNodeType: "r6.large.search",
+          dataNodeCount: "5",
+          dedicatedManagerNodeType: "r6g.large.search",
+          dedicatedManagerNodeCount: "3",
+          warmNodeType: "ultrawarm1.medium.search",
+          warmNodeCount: "2",
+          accessPolicies: "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::12345678912:user/test-user\"},\"Action\":\"es:ESHttp*\",\"Resource\":\"arn:aws:es:us-east-1:12345678912:domain/cdk-os-service-domain/*\"}]}",
+          fineGrainedManagerUserARN: "arn:aws:iam::12345678912:user/test-user",
+          enforceHTTPS: "true",
+          tlsSecurityPolicy: "TLS_1_2",
+          ebsEnabled: "true",
+          ebsIops: "4000",
+          ebsVolumeSize: "15",
+          ebsVolumeType: "GP3",
+          encryptionAtRestEnabled: "true",
+          encryptionAtRestKmsKeyARN: "arn:aws:kms:us-east-1:12345678912:key/abc123de-4888-4fa7-a508-3811e2d49fc3",
+          loggingAppLogEnabled: "true",
+          loggingAppLogGroupARN: "arn:aws:logs:us-east-1:12345678912:log-group:test-log-group:*",
+          nodeToNodeEncryptionEnabled: "true",
+          vpcSecurityGroupIds: "[\"sg-123456789abcdefgh\", \"sg-223456789abcdefgh\"]",
+          domainRemovalPolicy: "DESTROY",
+        }
+      ]
     }
 
     const openSearchStacks = createStackComposer(contextOptions)
 
     const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
-    const networkStack = openSearchStacks.stacks.filter((s) => s instanceof NetworkStack)[0]
-    const networkTemplate = Template.fromStack(networkStack)
     assertPrimaryDomainStackTemplate(domainTemplate)
-    // When existing resources are provided, the network stack should only create SSM parameters or osClusterAccessSG
-    const resources = networkTemplate.toJSON().Resources;
-    expect(resources).toBeDefined();
-    for (const resourceKey in resources) {
-      const resourceType = resources[resourceKey].Type;
-      if (resourceType === 'AWS::EC2::SecurityGroup' || resourceType === 'AWS::EC2::SecurityGroupIngress') {
-        expect(resourceKey).toMatch(/^osClusterAccessSG/);
-      } else {
-        expect(resourceType).toBe('AWS::SSM::Parameter');
-      }
-    }
   });
 
   test('Test alternate context options are mapped with standard data type', () => {
@@ -146,14 +112,9 @@ describe('OpenSearch Domain Stack Tests', () => {
       enforceHTTPS: true,
       encryptionAtRestEnabled: true,
       nodeToNodeEncryptionEnabled: true,
-      sourceCluster: {
-        "endpoint": "https://test-cluster",
-        "auth": {"type": "none"},
-        "version": "ES_7.10"
-      }
     }
 
-    const openSearchStacks = createStackComposer(contextOptions)
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
 
     const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
@@ -169,14 +130,9 @@ describe('OpenSearch Domain Stack Tests', () => {
       enforceHTTPS: "true",
       encryptionAtRestEnabled: "true",
       nodeToNodeEncryptionEnabled: "true",
-      sourceCluster: {
-        "endpoint": "https://test-cluster",
-        "auth": {"type": "none"},
-        "version": "ES_7.10"
-      }
     }
 
-    const openSearchStacks = createStackComposer(contextOptions)
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
 
     const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
@@ -186,14 +142,9 @@ describe('OpenSearch Domain Stack Tests', () => {
   test('Test openAccessPolicy setting creates access policy when enabled', () => {
     const contextOptions = {
       openAccessPolicyEnabled: true,
-      sourceCluster: {
-        "endpoint": "https://test-cluster",
-        "auth": {"type": "none"},
-        "version": "OS_2.19"
-      }
     }
 
-    const openSearchStacks = createStackComposer(contextOptions)
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
 
     const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
@@ -204,14 +155,9 @@ describe('OpenSearch Domain Stack Tests', () => {
   test('Test openAccessPolicy setting does not create access policy when disabled', () => {
     const contextOptions = {
       openAccessPolicyEnabled: false,
-      sourceCluster: {
-        "endpoint": "https://test-cluster",
-        "auth": {"type": "none"},
-        "version": "OS_2.19"
-      }
     }
 
-    const openSearchStacks = createStackComposer(contextOptions)
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
 
     const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
@@ -222,14 +168,9 @@ describe('OpenSearch Domain Stack Tests', () => {
   test('Test openAccessPolicy setting is mapped with string data type', () => {
     const contextOptions = {
       openAccessPolicyEnabled: true,
-      sourceCluster: {
-        "endpoint": "https://test-cluster",
-        "auth": {"type": "none"},
-        "version": "OS_2.19"
-      }
     }
 
-    const openSearchStacks = createStackComposer(contextOptions)
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
 
     const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
@@ -259,43 +200,19 @@ describe('OpenSearch Domain Stack Tests', () => {
       loggingAppLogEnabled: "",
       loggingAppLogGroupARN: "",
       nodeToNodeEncryptionEnabled: "",
-      vpcEnabled: "",
-      vpcId: "",
-      vpcSubnetIds: "",
+      clusterSubnetIds: "",
       vpcSecurityGroupIds: "",
-      vpcAZCount: "",
       openAccessPolicyEnabled: "",
       domainRemovalPolicy: "",
-      sourceCluster: {
-        "endpoint": "https://test-cluster",
-        "auth": {"type": "none"},
-        "version": "OS_2.19"
-      }
     }
 
-    const openSearchStacks = createStackComposer(contextOptions)
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
 
     const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
     domainTemplate.resourceCountIs("AWS::OpenSearchService::Domain", 1)
   })
 
-  test('Test targetClusterYaml is populated', () => {
-    const contextOptions = {
-      sourceCluster: {
-        "endpoint": "https://test-cluster",
-        "auth": {"type": "none"},
-        "version": "OS_2.19"
-      }
-    }
-    const openSearchStacks = createStackComposer(contextOptions)
-
-    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0] as OpenSearchDomainStack
-    const yaml = domainStack.targetClusterYaml
-    expect(yaml).toBeDefined()
-    expect(yaml).toBeInstanceOf(ClusterYaml)
-    expect(yaml.endpoint).toBeDefined()
-  })
 })
 
 /*
@@ -308,7 +225,7 @@ function assertPrimaryDomainStackTemplate(template: Template) {
   template.resourceCountIs("AWS::OpenSearchService::Domain", 1)
   template.hasResourceProperties("AWS::OpenSearchService::Domain", {
     EngineVersion: "OpenSearch_2.3",
-    DomainName: "test-os-domain",
+    DomainName: "cluster-unittest-dev-search",
     AdvancedSecurityOptions: {
       Enabled: true,
       MasterUserOptions: {
@@ -324,7 +241,7 @@ function assertPrimaryDomainStackTemplate(template: Template) {
       WarmCount: 2,
       WarmType: "ultrawarm1.medium.search",
       ZoneAwarenessConfig: {
-        AvailabilityZoneCount: 3
+        AvailabilityZoneCount: 2
       },
       ZoneAwarenessEnabled: true
     },

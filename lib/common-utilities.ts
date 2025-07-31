@@ -1,5 +1,8 @@
-import {RemovalPolicy} from "aws-cdk-lib";
+import {RemovalPolicy, SecretValue} from "aws-cdk-lib";
 import {EngineVersion} from "aws-cdk-lib/aws-opensearchservice";
+import {Secret} from "aws-cdk-lib/aws-secretsmanager";
+import {CdkLogger} from "./cdk-logger";
+import {Construct} from "constructs";
 
 export const MAX_STAGE_NAME_LENGTH = 15;
 export const MAX_CLUSTER_ID_LENGTH = 15;
@@ -9,6 +12,12 @@ export enum ClusterType {
     OPENSEARCH_MANAGED_SERVICE = 'OPENSEARCH_MANAGED_SERVICE',
 }
 
+export function parseClusterType(input: string, clusterId: string): ClusterType {
+    if (Object.values(ClusterType).includes(input as ClusterType)) {
+        return input as ClusterType;
+    }
+    throw new Error(`Invalid 'clusterType' provided in '${clusterId}' cluster configuration: ${input}. The available options are ${Object.values(ClusterType)}`);
+}
 
 export function getEngineVersion(engineVersionString: string) : EngineVersion {
     let version: EngineVersion
@@ -29,4 +38,15 @@ export function parseRemovalPolicy(optionName: string, policyNameString?: string
         throw new Error(`Provided '${optionName}' with value '${policyNameString}' does not match a selectable option, for reference https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.RemovalPolicy.html`)
     }
     return policy
+}
+
+export function createBasicAuthSecret(scope: Construct, username: string, password: string, stage: string, clusterId: string): Secret {
+    CdkLogger.warn(`Password passed in plain text for ${clusterId} cluster, this is insecure and will leave your password exposed.`)
+    return new Secret(scope, `${clusterId}ClusterBasicAuthSecret`, {
+        secretName: `${clusterId}-cluster-basic-auth-secret-${stage}`,
+        secretObjectValue: {
+            username: SecretValue.unsafePlainText(username),
+            password: SecretValue.unsafePlainText(password)
+        }
+    })
 }
