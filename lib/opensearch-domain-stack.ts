@@ -108,6 +108,10 @@ export class OpenSearchDomainStack extends Stack {
     super(scope, id, props);
 
     props.vpcDetails.initialize(this, props.clusterId)
+      // Skip accessing VPC for first synthesis stage which hasn't yet loaded in the VPC details from lookup
+    if (props.vpcDetails.vpc.vpcId == "vpc-12345") {
+        return
+    }
 
     // Retrieve existing account resources if defined
     const earKmsKey: IKey|undefined = props.encryptionAtRestKmsKeyARN && props.encryptionAtRestEnabled ?

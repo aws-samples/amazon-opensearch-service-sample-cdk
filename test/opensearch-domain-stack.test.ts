@@ -1,7 +1,7 @@
 import { Template } from 'aws-cdk-lib/assertions';
 import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
 import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
-import { describe, afterEach, test, jest} from '@jest/globals';
+import {describe, afterEach, test, jest} from '@jest/globals';
 import {ClusterType} from "../lib/components/common-utilities";
 
 describe('OpenSearch Domain Stack Tests', () => {
@@ -10,6 +10,23 @@ describe('OpenSearch Domain Stack Tests', () => {
     jest.resetModules();
     jest.restoreAllMocks();
   });
+
+  test('Test empty string provided for a parameter which has a default value, uses the default value', () => {
+    const contextOptions = {
+      encryptionAtRestEnabled: "",
+    }
+
+    const stackComposer = createStackComposerWithSingleDomainContext(contextOptions)
+
+    const domainStack = stackComposer.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
+    const domainTemplate = Template.fromStack(domainStack)
+    domainTemplate.resourceCountIs("AWS::OpenSearchService::Domain", 1)
+    domainTemplate.hasResourceProperties("AWS::OpenSearchService::Domain", {
+      EncryptionAtRestOptions: {
+        Enabled: true
+      }
+    })
+  })
 
   test('Test primary context options are mapped with standard data type', () => {
     // The cdk.context.json and default-values.json files allow multiple data types

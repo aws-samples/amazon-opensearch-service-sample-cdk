@@ -49,7 +49,7 @@ export class NetworkStack extends Stack {
         });
         this.defaultSecurityGroup.addIngressRule(this.defaultSecurityGroup, Port.allTraffic());
 
-        new CfnOutput(scope, `VpcIdExport-${props.stage}`, {
+        new CfnOutput(this, `VpcIdExport-${props.stage}`, {
             exportName: `VpcId-${props.stage}`,
             value: this.vpc.vpcId,
             description: 'The VPC id of the created VPC',

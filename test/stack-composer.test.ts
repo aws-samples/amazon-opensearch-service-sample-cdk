@@ -3,6 +3,7 @@ import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
 import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
 import { describe, afterEach, test, expect, jest } from '@jest/globals';
 import {NetworkStack} from "../lib/network-stack";
+import {ClusterType} from "../lib/components/common-utilities";
 
 describe('Stack Composer Tests', () => {
   afterEach(() => {
@@ -10,19 +11,6 @@ describe('Stack Composer Tests', () => {
     jest.resetModules();
     jest.restoreAllMocks();
   });
-
-  test('Test empty string provided for a parameter which has a default value, uses the default value', () => {
-    const contextOptions = {
-      vpcAzCount: "",
-    }
-
-    const openSearchStacks = createStackComposer(contextOptions)
-
-    const networkStack: NetworkStack = (openSearchStacks.stacks.filter((s) => s instanceof NetworkStack)[0]) as NetworkStack
-    const networkTemplate = Template.fromStack(networkStack)
-    // For each AZ, a private and public subnet is created
-    networkTemplate.resourceCountIs("AWS::EC2::Subnet", 4)
-  })
 
   test('Test invalid engine version format throws error', () => {
     const contextOptions = {
@@ -209,6 +197,23 @@ describe('Stack Composer Tests', () => {
     const createStackFunc = () => createStackComposer(contextOptions)
 
     expect(createStackFunc).toThrow()
+  })
+
+  test('Test importing VPC does not create a Network Stack', () => {
+    const contextOptions = {
+      vpcId: "vpc-345ljlsfkj232423",
+      clusters: [
+        {
+          clusterId: "unittest",
+          clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE
+        }
+      ]
+    }
+
+    const stackComposer = createStackComposer(contextOptions)
+
+    const networkStacks = stackComposer.stacks.filter((s) => s instanceof NetworkStack)
+    expect(networkStacks.length).toBe(0)
   })
 
 })
