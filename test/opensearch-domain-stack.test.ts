@@ -2,7 +2,7 @@ import { Template } from 'aws-cdk-lib/assertions';
 import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
 import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
 import { describe, afterEach, test, jest} from '@jest/globals';
-import {ClusterType} from "../lib/utils/common-utilities";
+import {ClusterType} from "../lib/components/common-utilities";
 
 describe('OpenSearch Domain Stack Tests', () => {
   afterEach(() => {

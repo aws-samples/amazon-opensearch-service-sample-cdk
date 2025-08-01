@@ -8,13 +8,13 @@ import {
     MAX_STAGE_NAME_LENGTH,
     ClusterType,
     parseClusterType,
-} from "./utils/common-utilities";
+} from "./components/common-utilities";
 import {
     getContextForType, parseClusterConfig,
     parseContextJson,
-} from "./utils/context-parsing"
-import {CdkLogger} from "./utils/cdk-logger";
-import {VpcDetails} from "./utils/vpc-details";
+} from "./components/context-parsing"
+import {CdkLogger} from "./components/cdk-logger";
+import {VpcDetails} from "./components/vpc-details";
 
 export interface StackPropsExt extends StackProps {
     readonly stage: string,

@@ -7,14 +7,14 @@ import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
 import {ISecret, Secret} from "aws-cdk-lib/aws-secretsmanager";
 import {StackPropsExt} from "./stack-composer";
-import {VpcDetails} from "./utils/vpc-details";
+import {VpcDetails} from "./components/vpc-details";
 import {
   createBasicAuthSecret,
   generateClusterExports,
   getEngineVersion,
   LATEST_AOS_VERSION,
-} from "./utils/common-utilities";
-import {ClusterConfig} from "./utils/cluster-config";
+} from "./components/common-utilities";
+import {ClusterConfig} from "./components/cluster-config";
 import {Environment} from "aws-cdk-lib/core/lib/environment";
 
 

@@ -4,7 +4,7 @@ import {
     Vpc
 } from "aws-cdk-lib/aws-ec2";
 import {Construct} from "constructs";
-import {Stack, Tags} from "aws-cdk-lib";
+import {CfnOutput, Stack, Tags} from "aws-cdk-lib";
 
 import {StackPropsExt} from "./stack-composer";
 
@@ -48,5 +48,11 @@ export class NetworkStack extends Stack {
             allowAllIpv6Outbound: false,
         });
         this.defaultSecurityGroup.addIngressRule(this.defaultSecurityGroup, Port.allTraffic());
+
+        new CfnOutput(scope, `VpcIdExport-${props.stage}`, {
+            exportName: `VpcId-${props.stage}`,
+            value: this.vpc.vpcId,
+            description: 'The VPC id of the created VPC',
+        });
     }
 }
