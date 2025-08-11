@@ -44,6 +44,7 @@ export class StackComposer {
         // VPC options
         const vpcId = getContextForType('vpcId', 'string', defaultValues, contextJSON)
         const vpcAZCount = getContextForType('vpcAZCount', 'number', defaultValues, contextJSON)
+        const vpcCidr = getContextForType('vpcCidr', 'string', defaultValues, contextJSON)
 
         if (!stage) {
             throw new Error(`Required CDK context field 'stage' is not present`)
@@ -54,11 +55,15 @@ export class StackComposer {
         if (vpcAZCount && vpcId) {
             throw new Error("The 'vpcAZCount' option cannot be used with an imported VPC via 'vpcId'")
         }
+        if (vpcCidr && vpcId) {
+            throw new Error("The 'vpcCidr' option cannot be used with an imported VPC via 'vpcId'")
+        }
 
         let networkStack: NetworkStack|undefined
         if (!vpcId) {
             networkStack = new NetworkStack(scope, `networkStack`, {
                 vpcAZCount: vpcAZCount,
+                vpcCidr: vpcCidr,
                 stackName: `NetworkInfra-${stage}-${region}`,
                 description: "This stack contains resources to create/manage VPC networking",
                 stage: stage,
@@ -75,12 +80,15 @@ export class StackComposer {
         for (const rawConfig of clusters) {
             const config = parseClusterConfig(rawConfig, defaultClusterValues, stage)
             const resolvedType = parseClusterType(config.clusterType, config.clusterId)
-            const clusterVpcDetails = new VpcDetails(vpcId, networkStack?.vpc, config.clusterSubnetIds, networkStack?.defaultSecurityGroup)
+            const clusterVpcDetails = new VpcDetails(vpcId, networkStack?.vpc, config.clusterSubnetIds, networkStack?.clusterAccessSecurityGroup)
 
             switch (resolvedType) {
                 case ClusterType.OPENSEARCH_MANAGED_SERVICE: {
-                    const stack = createOpenSearchStack(scope, config, clusterVpcDetails, stage, region, props.env)
-                    this.stacks.push(stack);
+                    const clusterStack = createOpenSearchStack(scope, config, clusterVpcDetails, stage, region, props.env)
+                    if (networkStack) {
+                        clusterStack.addDependency(networkStack)
+                    }
+                    this.stacks.push(clusterStack);
                     break;
                 }
             }

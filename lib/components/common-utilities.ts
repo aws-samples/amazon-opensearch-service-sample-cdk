@@ -54,17 +54,17 @@ export function createBasicAuthSecret(scope: Construct, username: string, passwo
     })
 }
 
-export function generateClusterExports(scope: Construct, clusterEndpoint: string, clusterId: string, stage: string, defaultSecurityGroupId?: string) {
+export function generateClusterExports(scope: Construct, clusterEndpoint: string, clusterId: string, stage: string, clusterAccessSecurityGroupId?: string) {
     new CfnOutput(scope, `ClusterEndpointExport-${stage}-${clusterId}`, {
         exportName: `ClusterEndpoint-${stage}-${clusterId}`,
         value: clusterEndpoint,
         description: 'The endpoint URL of the cluster',
     });
-    if (defaultSecurityGroupId) {
-        new CfnOutput(scope, `ClusterDefaultSecurityGroupIdExport-${stage}-${clusterId}`, {
-            exportName: `ClusterDefaultSecurityGroupId-${stage}-${clusterId}`,
-            value: defaultSecurityGroupId,
-            description: 'The default security group id of the cluster',
+    if (clusterAccessSecurityGroupId) {
+        new CfnOutput(scope, `ClusterAccessSecurityGroupIdExport-${stage}-${clusterId}`, {
+            exportName: `ClusterAccessSecurityGroupId-${stage}-${clusterId}`,
+            value: clusterAccessSecurityGroupId,
+            description: 'The cluster access security group id',
         });
     }
 }

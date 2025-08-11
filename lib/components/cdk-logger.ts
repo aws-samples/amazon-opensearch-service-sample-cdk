@@ -9,10 +9,10 @@ export class CdkLogger {
     }
 
     static warn(message: string) {
-        console.log(message);
+        console.warn(message);
     }
 
     static error(message: string) {
-        console.log(message);
+        console.error(message);
     }
 }

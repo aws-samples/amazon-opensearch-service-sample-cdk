@@ -10,12 +10,15 @@ import {StackPropsExt} from "./stack-composer";
 
 export interface NetworkStackProps extends StackPropsExt {
     readonly vpcAZCount?: number;
+    readonly vpcCidr?: string;
 }
 
-
 export class NetworkStack extends Stack {
+    // Using 10.212.0.0/16 to avoid default VPC CIDR range conflicts when using VPC peering
+    public static readonly DEFAULT_VPC_CIDR = '10.212.0.0/16';
+
     public readonly vpc: IVpc;
-    public readonly defaultSecurityGroup: ISecurityGroup;
+    public readonly clusterAccessSecurityGroup: ISecurityGroup;
 
     constructor(scope: Construct, id: string, props: NetworkStackProps) {
         super(scope, id, props);
@@ -25,9 +28,9 @@ export class NetworkStack extends Stack {
             throw new Error(`The 'vpcAZCount' option must be a number between 1 - 3, but received an AZ count of ${zoneCount}`)
         }
 
+        const cidr = props.vpcCidr ?? NetworkStack.DEFAULT_VPC_CIDR
         this.vpc = new Vpc(this, `Vpc`, {
-            // Using 10.212.0.0/16 to avoid default VPC CIDR range conflicts when using VPC peering
-            ipAddresses: IpAddresses.cidr('10.212.0.0/16'),
+            ipAddresses: IpAddresses.cidr(cidr),
             ipProtocol: IpProtocol.DUAL_STACK,
             vpcName: `vpc-${props.stage}`,
             maxAzs: zoneCount
@@ -42,12 +45,13 @@ export class NetworkStack extends Stack {
                 .add("Name", `vpc-private-subnet-${index + 1}-${props.stage}`);
         });
 
-        this.defaultSecurityGroup = new SecurityGroup(this, 'defaultVpcSecurityGroup', {
+        this.clusterAccessSecurityGroup = new SecurityGroup(this, 'clusterAccessVpcSecurityGroup', {
             vpc: this.vpc,
             allowAllOutbound: false,
             allowAllIpv6Outbound: false,
+            securityGroupName: `cluster-access-security-group-${props.stage}`
         });
-        this.defaultSecurityGroup.addIngressRule(this.defaultSecurityGroup, Port.allTraffic());
+        this.clusterAccessSecurityGroup.addIngressRule(this.clusterAccessSecurityGroup, Port.allTraffic());
 
         new CfnOutput(this, `VpcIdExport-${props.stage}`, {
             exportName: `VpcId-${props.stage}`,

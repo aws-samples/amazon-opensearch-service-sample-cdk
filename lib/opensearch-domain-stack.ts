@@ -72,11 +72,11 @@ export class OpenSearchDomainStack extends Stack {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  parseAccessPolicies(jsonObject: Record<string, any>): PolicyStatement[] {
+  parseAccessPolicies(jsonObject: Record<string, any>, clusterId: string): PolicyStatement[] {
     const accessPolicies: PolicyStatement[] = []
     const statements = jsonObject['Statement']
     if (!statements || statements.length < 1) {
-        throw new Error ("Provided accessPolicies JSON must have the 'Statement' element present and not be empty, for reference https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_statement.html")
+        throw new Error (`Invalid accessPolicies for cluster '${clusterId}': JSON must have a non-empty 'Statement' element. See AWS IAM policy documentation for proper format: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_statement.html`)
     }
     // Access policies can provide a single Statement block or an array of Statement blocks
     if (Array.isArray(statements)) {
@@ -145,8 +145,8 @@ export class OpenSearchDomainStack extends Stack {
 
     // Retrieve existing SGs to apply to VPC Domain endpoints
     const securityGroups: ISecurityGroup[] = []
-    if (props.vpcDetails.defaultSecurityGroup) {
-      securityGroups.push(props.vpcDetails.defaultSecurityGroup)
+    if (props.vpcDetails.clusterAccessSecurityGroup) {
+      securityGroups.push(props.vpcDetails.clusterAccessSecurityGroup)
     }
     if (props.vpcSecurityGroupIds) {
       for (let i = 0; i < props.vpcSecurityGroupIds.length; i++) {
@@ -160,7 +160,7 @@ export class OpenSearchDomainStack extends Stack {
     if (props.openAccessPolicyEnabled) {
       accessPolicies = [this.createOpenAccessPolicy(props.domainName)]
     } else {
-      accessPolicies = props.accessPolicyJson ? this.parseAccessPolicies(props.accessPolicyJson) : undefined
+      accessPolicies = props.accessPolicyJson ? this.parseAccessPolicies(props.accessPolicyJson, props.clusterId) : undefined
     }
 
     const domain = new Domain(this, 'Domain', {
@@ -204,7 +204,7 @@ export class OpenSearchDomainStack extends Stack {
       zoneAwareness: zoneAwarenessConfig,
       removalPolicy: props.domainRemovalPolicy
     });
-    generateClusterExports(this, domain.domainEndpoint, props.clusterId, props.stage, props.vpcDetails.defaultSecurityGroup?.securityGroupId)
+    generateClusterExports(this, domain.domainEndpoint, props.clusterId, props.stage, props.vpcDetails.clusterAccessSecurityGroup?.securityGroupId)
   }
 }
 

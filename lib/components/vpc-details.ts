@@ -5,7 +5,7 @@ import {Construct} from "constructs";
 export class VpcDetails {
     public subnetSelection: SubnetSelection;
     public vpc: IVpc;
-    public readonly defaultSecurityGroup?: ISecurityGroup;
+    public readonly clusterAccessSecurityGroup?: ISecurityGroup;
     private readonly createdVpc?: IVpc;
     private readonly vpcId?: string;
     private readonly vpcSubnetIds?: string[];
@@ -58,11 +58,11 @@ export class VpcDetails {
         return uniqueAzSubnets
     }
 
-    constructor(vpcId?: string, vpc?: IVpc, vpcSubnetIds?: string[], defaultSecurityGroup?: ISecurityGroup) {
+    constructor(vpcId?: string, vpc?: IVpc, vpcSubnetIds?: string[], clusterAccessSecurityGroup?: ISecurityGroup) {
         this.vpcId = vpcId
         this.createdVpc = vpc
         this.vpcSubnetIds = vpcSubnetIds
-        this.defaultSecurityGroup = defaultSecurityGroup
+        this.clusterAccessSecurityGroup = clusterAccessSecurityGroup
 
         const hasVpcId = !!this.vpcId;
         const hasVpc = !!this.createdVpc;

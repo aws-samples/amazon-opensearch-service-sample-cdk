@@ -58,10 +58,11 @@ cdk deploy "*" --require-approval never --concurrency 3
 
 ### VPC Options
 
-| Name         | Type         | Example                                                  | Description                                                                                                                                                                                |
-|--------------|--------------|----------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| vpcId        | string       | "vpc-123456789abcdefgh"                                  | Specify an existing VPC to deploy clusters into                                                                                                                                            |
-| vpcAZCount   | number       | 2                                                        | The number of Availability Zones to use for a created VPC. One public and one private subnet will be created for each AZ. This option should not be provided for imported VPCs via `vpcId` |
+| Name       | Type   | Example                 | Description                                                                                                                                                                                |
+|------------|--------|-------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vpcId      | string | "vpc-123456789abcdefgh" | Specify an existing VPC to deploy clusters into                                                                                                                                            |
+| vpcAZCount | number | 2                       | The number of Availability Zones to use for a created VPC. One public and one private subnet will be created for each AZ. This option should not be provided for imported VPCs via `vpcId` |
+| vpcCidr    | string | "10.212.0.0/16"         | A custom CIDR range to use for the created VPC. This option should not be provided for imported VPCs via `vpcId`                                                                           |
 
 ### General Cluster Options
 
