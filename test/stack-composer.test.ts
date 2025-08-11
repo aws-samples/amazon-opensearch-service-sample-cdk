@@ -1,238 +1,219 @@
-import {App} from "aws-cdk-lib";
-import {StackComposer} from "../lib/stack-composer";
-import {Template} from "aws-cdk-lib/assertions";
-import {OpensearchServiceDomainCdkStack} from "../lib/opensearch-service-domain-cdk-stack";
+import { Template } from "aws-cdk-lib/assertions";
+import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
+import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
+import { describe, afterEach, test, expect, jest } from '@jest/globals';
+import {NetworkStack} from "../lib/network-stack";
+import {ClusterType} from "../lib/components/common-utilities";
 
-test('Test empty string provided for a parameter which has a default value, uses the default value', () => {
+describe('Stack Composer Tests', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.resetModules();
+    jest.restoreAllMocks();
+  });
 
-    const app = new App({
-        context: {
-            domainName: ""
-        }
-    })
+  test('Test invalid engine version format throws error', () => {
+    const contextOptions = {
+      // Should be OS_1.3
+      clusterVersion: "OpenSearch_1.3"
+    }
 
-    const openSearchStacks =  new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
+    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
 
-    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpensearchServiceDomainCdkStack)[0]
+    expect(createStackFunc).toThrow()
+  })
+
+  test('Test ES_7.10 engine version format is parsed', () => {
+    const contextOptions = {
+      clusterVersion: "ES_7.10",
+    }
+
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
+
+    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
     domainTemplate.resourceCountIs("AWS::OpenSearchService::Domain", 1)
-})
+  })
 
-test('Test invalid engine version format throws error', () => {
+  test('Test OS 1.3 engine version format is parsed', () => {
+    const contextOptions = {
+      clusterVersion: "OS_1.3",
+    }
 
-    const app = new App({
-        context: {
-            // Should be OS_1.3
-            engineVersion: "OpenSearch_1.3"
-        }
-    })
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
 
-    const createStackFunc = () => new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
-
-    expect(createStackFunc).toThrowError()
-})
-
-test('Test ES 7.10 engine version format is parsed', () => {
-
-    const app = new App({
-        context: {
-            engineVersion: "ES_7.10"
-        }
-    })
-
-    const openSearchStacks =  new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
-
-    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpensearchServiceDomainCdkStack)[0]
+    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
     domainTemplate.resourceCountIs("AWS::OpenSearchService::Domain", 1)
-})
+  })
 
-test('Test OS 1.3 engine version format is parsed', () => {
-
-    const app = new App({
-        context: {
-            engineVersion: "OS_1.3"
+  test('Test access policy is parsed for proper array format', () => {
+    const contextOptions = {
+      accessPolicies:
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {"AWS": "arn:aws:iam::12345678912:user/test-user"},
+              "Action": "es:ESHttp*",
+              "Resource": "arn:aws:es:us-east-1:12345678912:domain/test-os-domain/*"
+            },
+            {
+              "Effect": "Allow",
+              "Principal": {"AWS": "arn:aws:iam::12345678912:user/test-user2"},
+              "Action": "es:ESHttp*",
+              "Resource": "arn:aws:es:us-east-1:12345678912:domain/test-os-domain/*"
+            }]
         }
-    })
+    }
 
-    const openSearchStacks =  new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
 
-    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpensearchServiceDomainCdkStack)[0]
-    const domainTemplate = Template.fromStack(domainStack)
-    domainTemplate.resourceCountIs("AWS::OpenSearchService::Domain", 1)
-})
-
-test('Test access policy is parsed for proper array format', () => {
-
-    const app = new App({
-        context: {
-            accessPolicies:
-                {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                        "Effect": "Allow",
-                        "Principal": {"AWS": "arn:aws:iam::123456789123:user/test-user"},
-                        "Action": "es:ESHttp*",
-                        "Resource": "arn:aws:es:us-east-1:123456789123:domain/test-os-domain/*"
-                        },
-                        {
-                            "Effect": "Allow",
-                            "Principal": {"AWS": "arn:aws:iam::123456789123:user/test-user2"},
-                            "Action": "es:ESHttp*",
-                            "Resource": "arn:aws:es:us-east-1:123456789123:domain/test-os-domain/*"
-                        }]
-                }
-        }
-    })
-
-    const openSearchStacks =  new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
-
-    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpensearchServiceDomainCdkStack)[0]
+    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
     // Check that accessPolicies policy is created
     domainTemplate.resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
-})
+  })
 
-test('Test access policy is parsed for proper block format', () => {
-
-    const app = new App({
-        context: {
-            accessPolicies:
-                {
-                    "Version": "2012-10-17",
-                    "Statement": {
-                        "Effect": "Allow",
-                        "Principal": {"AWS": "*"},
-                        "Action": "es:ESHttp*",
-                        "Resource": "arn:aws:es:us-east-1:123456789123:domain/test-os-domain/*"
-                    }
-                }
+  test('Test access policy is parsed for proper block format', () => {
+    const contextOptions = {
+      accessPolicies:
+        {
+          "Version": "2012-10-17",
+          "Statement": {
+            "Effect": "Allow",
+            "Principal": {"AWS": "*"},
+            "Action": "es:ESHttp*",
+            "Resource": "arn:aws:es:us-east-1:12345678912:domain/test-os-domain/*"
+          }
         }
-    })
+    }
 
-    const openSearchStacks =  new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
 
-    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpensearchServiceDomainCdkStack)[0]
+    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
     const domainTemplate = Template.fromStack(domainStack)
     // Check that accessPolicies policy is created
     domainTemplate.resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
-})
+  })
 
-test('Test access policy missing Statement throws error', () => {
+  test('Test access policy missing Statement throws error', () => {
+    const contextOptions = {
+      accessPolicies: {"Version": "2012-10-17"}
+    }
 
-    const app = new App({
-        context: {
-            accessPolicies: {"Version":"2012-10-17"}
+    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
+
+    expect(createStackFunc).toThrow()
+  })
+
+  test('Test access policy with empty Statement array throws error', () => {
+    const contextOptions = {
+      accessPolicies: {"Version": "2012-10-17", "Statement": []}
+    }
+
+    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
+
+    expect(createStackFunc).toThrow()
+  })
+
+  test('Test access policy with empty Statement block throws error', () => {
+    const contextOptions = {
+      accessPolicies: {"Version": "2012-10-17", "Statement": {}}
+    }
+
+    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
+
+    expect(createStackFunc).toThrow()
+  })
+
+  test('Test access policy with improper Statement throws error', () => {
+    const contextOptions = {
+      // Missing required fields in Statement
+      accessPolicies: {"Version": "2012-10-17", "Statement": [{"Effect": "Allow"}]}
+    }
+
+    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
+
+    expect(createStackFunc).toThrow()
+  })
+
+  test('Test invalid TLS security policy throws error', () => {
+    const contextOptions = {
+      tlsSecurityPolicy: "TLS_0_9"
+    }
+
+    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
+
+    expect(createStackFunc).toThrow()
+  })
+
+  test('Test invalid EBS volume type throws error', () => {
+    const contextOptions = {
+      ebsVolumeType: "GP0",
+    }
+
+    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
+
+    expect(createStackFunc).toThrow()
+  })
+
+  test('Test invalid domain removal policy type throws error', () => {
+    const contextOptions = {
+      domainRemovalPolicy: "DELETE",
+    }
+
+    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
+
+    expect(createStackFunc).toThrow()
+  })
+
+
+  test('Test that loading context via a file is successful', () => {
+    const contextOptions = {
+      contextFile: './test/resources/sample-context-file.json',
+    }
+    const stacks = createStackComposer(contextOptions)
+    const networkStack = stacks.stacks.filter((s) => s instanceof NetworkStack)
+    expect(networkStack.length).toEqual(1)
+  })
+
+  test('Test that loading context via a file errors if file does not exist', () => {
+    const contextOptions = {
+      contextFile: './test/resources/missing-file.json',
+    }
+
+    const createStackFunc = () => createStackComposer(contextOptions)
+
+    expect(createStackFunc).toThrow()
+  })
+
+  test('Test that loading context via a file errors if file is not proper json', () => {
+    const contextOptions = {
+      contextFile: './test/resources/invalid-context-file.json',
+    }
+
+    const createStackFunc = () => createStackComposer(contextOptions)
+
+    expect(createStackFunc).toThrow()
+  })
+
+  test('Test importing VPC does not create a Network Stack', () => {
+    const contextOptions = {
+      vpcId: "vpc-345ljlsfkj232423",
+      clusters: [
+        {
+          clusterId: "unittest",
+          clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE
         }
-    })
+      ]
+    }
 
-    const createStackFunc = () => new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
+    const stackComposer = createStackComposer(contextOptions)
 
-    expect(createStackFunc).toThrowError()
-})
+    const networkStacks = stackComposer.stacks.filter((s) => s instanceof NetworkStack)
+    expect(networkStacks.length).toBe(0)
+  })
 
-test('Test access policy with empty Statement array throws error', () => {
-
-    const app = new App({
-        context: {
-            accessPolicies: {"Version":"2012-10-17", "Statement":[]}
-        }
-    })
-
-    const createStackFunc = () => new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
-
-    expect(createStackFunc).toThrowError()
-})
-
-test('Test access policy with empty Statement block throws error', () => {
-
-    const app = new App({
-        context: {
-            accessPolicies: {"Version":"2012-10-17", "Statement":{}}
-        }
-    })
-
-    const createStackFunc = () => new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
-
-    expect(createStackFunc).toThrowError()
-})
-
-test('Test access policy with improper Statement throws error', () => {
-
-    const app = new App({
-        context: {
-            // Missing required fields in Statement
-            accessPolicies: {"Version":"2012-10-17", "Statement":[{"Effect": "Allow"}]}
-        }
-    })
-
-    const createStackFunc = () => new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
-
-    expect(createStackFunc).toThrowError()
-})
-
-test('Test invalid TLS security policy throws error', () => {
-
-    const app = new App({
-        context: {
-            tlsSecurityPolicy: "TLS_0_9"
-        }
-    })
-
-    const createStackFunc = () => new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
-
-    expect(createStackFunc).toThrowError()
-})
-
-test('Test invalid EBS volume type throws error', () => {
-
-    const app = new App({
-        context: {
-            ebsVolumeType: "GP0",
-        }
-    })
-
-    const createStackFunc = () => new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
-
-    expect(createStackFunc).toThrowError()
-})
-
-test('Test invalid domain removal policy type throws error', () => {
-
-    const app = new App({
-        context: {
-            domainRemovalPolicy: "DELETE",
-        }
-    })
-
-    const createStackFunc = () => new StackComposer(app, {
-        env: {account: "test-account", region: "us-east-1"}, stage: "unittest"
-    })
-
-    expect(createStackFunc).toThrowError()
 })

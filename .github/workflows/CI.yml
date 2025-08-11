@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  node-version: '18.x'
+
+jobs:
+  node-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        npm-project:
+          - '.'
+    defaults:
+      run:
+        working-directory: ${{ matrix.npm-project }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node-version }}
+      - name: Install NPM dependencies
+        run: npm ci
+      - name: Run CDK Jest Tests
+        run: npm run test
+
+  link-checker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: lychee Link Checker
+        id: lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --verbose --accept=200,403,429  "**/*.html" "**/*.md" "**/*.txt" "**/*.json"
+            --offline
+            --exclude "file:///github/workspace/*"
+            --exclude "http://localhost*"
+            --exclude "https://localhost*"
+            --exclude-mail
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+
+  all-ci-checks-pass:
+    needs:
+      - link-checker
+      - node-tests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - if: ${{ contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'failure') || contains(needs.*.result, 'skipped') }}
+        run: |
+          echo "One or more job cancelled, failed, or skipped" && exit 1
+      - run: |
+          echo '## :heavy_check_mark: All continuous integration checks pass' >> $GITHUB_STEP_SUMMARY

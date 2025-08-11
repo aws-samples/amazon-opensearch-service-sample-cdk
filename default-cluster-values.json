@@ -1,0 +1,7 @@
+{
+  "useUnsignedBasicAuth": false,
+  "enforceHTTPS": true,
+  "tlsSecurityPolicy": "TLS_1_2",
+  "encryptionAtRestEnabled": true,
+  "nodeToNodeEncryptionEnabled": true
+}
