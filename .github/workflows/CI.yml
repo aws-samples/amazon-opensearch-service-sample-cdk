@@ -20,7 +20,7 @@ jobs:
         working-directory: ${{ matrix.npm-project }}
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.node-version }}
       - name: Install NPM dependencies
