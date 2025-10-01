@@ -3,6 +3,7 @@ import {EngineVersion} from "aws-cdk-lib/aws-opensearchservice";
 import {Secret} from "aws-cdk-lib/aws-secretsmanager";
 import {CdkLogger} from "./cdk-logger";
 import {Construct} from "constructs";
+import {SubnetSelection} from "aws-cdk-lib/aws-ec2";
 
 export const MAX_STAGE_NAME_LENGTH = 15;
 export const MAX_CLUSTER_ID_LENGTH = 15;
@@ -54,12 +55,20 @@ export function createBasicAuthSecret(scope: Construct, username: string, passwo
     })
 }
 
-export function generateClusterExports(scope: Construct, clusterEndpoint: string, clusterId: string, stage: string, clusterAccessSecurityGroupId?: string) {
+export function generateClusterExports(scope: Construct, clusterEndpoint: string, clusterId: string, stage: string, subnetSelection: SubnetSelection, clusterAccessSecurityGroupId?: string) {
     new CfnOutput(scope, `ClusterEndpointExport-${stage}-${clusterId}`, {
         exportName: `ClusterEndpoint-${stage}-${clusterId}`,
         value: clusterEndpoint,
         description: 'The endpoint URL of the cluster',
     });
+    if (subnetSelection.subnets) {
+        const subnetIds = subnetSelection.subnets.map(s => s.subnetId);
+        new CfnOutput(scope, `ClusterSubnets-${stage}-${clusterId}`, {
+            exportName: `ClusterSubnets-${stage}-${clusterId}`,
+            value: subnetIds.join(","),
+            description: 'The subnet ids of the deployed cluster',
+        });
+    }
     if (clusterAccessSecurityGroupId) {
         new CfnOutput(scope, `ClusterAccessSecurityGroupIdExport-${stage}-${clusterId}`, {
             exportName: `ClusterAccessSecurityGroupId-${stage}-${clusterId}`,
