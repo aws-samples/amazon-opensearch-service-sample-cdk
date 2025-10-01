@@ -204,7 +204,7 @@ export class OpenSearchDomainStack extends Stack {
       zoneAwareness: zoneAwarenessConfig,
       removalPolicy: props.domainRemovalPolicy
     });
-    generateClusterExports(this, domain.domainEndpoint, props.clusterId, props.stage, props.vpcDetails.clusterAccessSecurityGroup?.securityGroupId)
+    generateClusterExports(this, domain.domainEndpoint, props.clusterId, props.stage, props.vpcDetails.subnetSelection, props.vpcDetails.clusterAccessSecurityGroup?.securityGroupId)
   }
 }
 
