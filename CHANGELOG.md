@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Stage`, `VpcCidr`, `PublicSubnet1Cidr`, `PublicSubnet2Cidr`, `PrivateSubnet1Cidr`, `PrivateSubnet2Cidr`
 
 ### Parameters (OpenSearchDomainStack)
-- `Stage`, `VpcId`, `SubnetIds`, `SecurityGroupId`, `DomainName`, `EngineVersion`
+- `Stage`, `SubnetIds`, `SecurityGroupId`, `DomainName`, `EngineVersion`
 - `DataNodeInstanceType`, `DataNodeCount`, `DedicatedManagerNodeType`, `DedicatedManagerNodeCount`
 - `EBSVolumeSize`, `EBSVolumeType`, `EBSIops`, `EBSThroughput`
 

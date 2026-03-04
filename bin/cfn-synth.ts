@@ -203,11 +203,6 @@ class CfnOpenSearchDomainStack extends Stack {
         });
 
         // ── VPC parameters (from NetworkStack outputs or user-provided) ──
-        const vpcId = new CfnParameter(this, 'VpcId', {
-            type: 'AWS::EC2::VPC::Id',
-            description: 'VPC ID for the OpenSearch domain',
-        });
-
         const subnetIds = new CfnParameter(this, 'SubnetIds', {
             type: 'List<AWS::EC2::Subnet::Id>',
             description: 'Comma-separated private subnet IDs (2 recommended for zone awareness)',
