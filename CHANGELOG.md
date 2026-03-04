@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.2.3 - 2026-03-04
+
+### Changed
+- All npm scripts now use `npx` prefix to resolve binaries from `node_modules/.bin` instead of relying on global installations
+
 ## 0.2.2 - 2026-03-04
 
 ### Added
