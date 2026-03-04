@@ -3,8 +3,8 @@ import {CdkLogger} from "./cdk-logger";
 import {Construct} from "constructs";
 
 export class VpcDetails {
-    public subnetSelection: SubnetSelection;
-    public vpc: IVpc;
+    public subnetSelection!: SubnetSelection;
+    public vpc!: IVpc;
     public readonly clusterAccessSecurityGroup?: ISecurityGroup;
     private readonly createdVpc?: IVpc;
     private readonly vpcId?: string;
