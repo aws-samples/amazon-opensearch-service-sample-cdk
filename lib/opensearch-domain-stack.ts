@@ -1,14 +1,13 @@
 import {Construct} from "constructs";
 import {EbsDeviceVolumeType, ISecurityGroup, SecurityGroup, SubnetSelection} from "aws-cdk-lib/aws-ec2";
-import {Domain, EngineVersion, TLSSecurityPolicy, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
-import {CustomResource, Duration, RemovalPolicy, Stack} from "aws-cdk-lib";
+import {Domain, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
+import {CustomResource, Duration, Stack, StackProps} from "aws-cdk-lib";
 import {IKey, Key} from "aws-cdk-lib/aws-kms";
 import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
 import {ISecret, Secret} from "aws-cdk-lib/aws-secretsmanager";
 import {Code, Function as LambdaFunction, Runtime} from "aws-cdk-lib/aws-lambda";
 import {Provider} from "aws-cdk-lib/custom-resources";
-import {StackPropsExt} from "./stack-composer";
 import {VpcDetails} from "./components/vpc-details";
 import {
   createBasicAuthSecret,
@@ -17,101 +16,62 @@ import {
   LATEST_AOS_VERSION,
 } from "./components/common-utilities";
 import {ClusterConfig} from "./components/cluster-config";
-import {Environment} from "aws-cdk-lib/core/lib/environment";
 
-
-export interface OpensearchDomainStackProps extends StackPropsExt {
-  readonly version: EngineVersion,
-  readonly domainName: string,
-  readonly clusterId: string,
-  readonly dataNodeInstanceType?: string,
-  readonly dataNodes?: number,
-  readonly dedicatedManagerNodeType?: string,
-  readonly dedicatedManagerNodeCount?: number,
-  readonly warmInstanceType?: string,
-  readonly warmNodes?: number
-  readonly accessPolicyJson?: object,
-  readonly openAccessPolicyEnabled?: boolean
-  readonly useUnsignedBasicAuth?: boolean,
-  readonly fineGrainedManagerUserARN?: string,
-  readonly fineGrainedManagerUserSecretARN?: string,
-  readonly enableDemoAdmin?: boolean,
-  readonly enforceHTTPS?: boolean,
-  readonly tlsSecurityPolicy?: TLSSecurityPolicy,
-  readonly ebsEnabled?: boolean,
-  readonly ebsIops?: number,
-  readonly ebsThroughput?: number,
-  readonly ebsVolumeSize?: number,
-  readonly ebsVolumeTypeName?: string,
-  readonly encryptionAtRestEnabled?: boolean,
-  readonly encryptionAtRestKmsKeyARN?: string,
-  readonly appLogEnabled?: boolean,
-  readonly appLogGroup?: string,
-  readonly nodeToNodeEncryptionEnabled?: boolean,
-  readonly vpcDetails: VpcDetails,
-  readonly vpcSecurityGroupIds?: string[],
-  readonly domainRemovalPolicy?: RemovalPolicy,
-  readonly domainAccessSecurityGroupParameter?: string
+export interface OpenSearchDomainStackProps extends StackProps {
+  readonly stage: string;
+  readonly config: ClusterConfig;
+  readonly vpcDetails?: VpcDetails;
+  readonly vpcId?: string;
 }
-
 
 export class OpenSearchDomainStack extends Stack {
 
-  getEbsVolumeType(ebsVolumeTypeName: string) : EbsDeviceVolumeType|undefined {
-    const ebsVolumeType: EbsDeviceVolumeType|undefined = ebsVolumeTypeName ? EbsDeviceVolumeType[ebsVolumeTypeName as keyof typeof EbsDeviceVolumeType] : undefined
+  private getEbsVolumeType(ebsVolumeTypeName: string): EbsDeviceVolumeType | undefined {
+    const ebsVolumeType: EbsDeviceVolumeType | undefined = ebsVolumeTypeName ? EbsDeviceVolumeType[ebsVolumeTypeName as keyof typeof EbsDeviceVolumeType] : undefined;
     if (ebsVolumeTypeName && !ebsVolumeType) {
-        throw new Error("Provided ebsVolumeType does not match a selectable option, for reference https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.EbsDeviceVolumeType.html")
+      throw new Error("Provided ebsVolumeType does not match a selectable option, for reference https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.EbsDeviceVolumeType.html");
     }
-    return ebsVolumeType
+    return ebsVolumeType;
   }
 
-  createOpenAccessPolicy(domainName: string) {
+  private createOpenAccessPolicy(domainName: string) {
     return new PolicyStatement({
-        effect: Effect.ALLOW,
-        principals: [new AnyPrincipal()],
-        actions: ["es:*"],
-        resources: [`arn:${this.partition}:es:${this.region}:${this.account}:domain/${domainName}/*`]
-      })
+      effect: Effect.ALLOW,
+      principals: [new AnyPrincipal()],
+      actions: ["es:*"],
+      resources: [`arn:${this.partition}:es:${this.region}:${this.account}:domain/${domainName}/*`],
+    });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  parseAccessPolicies(jsonObject: Record<string, any>, clusterId: string): PolicyStatement[] {
-    const accessPolicies: PolicyStatement[] = []
-    const statements = jsonObject['Statement']
+  private parseAccessPolicies(jsonObject: Record<string, any>, clusterId: string): PolicyStatement[] {
+    const accessPolicies: PolicyStatement[] = [];
+    const statements = jsonObject['Statement'];
     if (!statements || statements.length < 1) {
-        throw new Error (`Invalid accessPolicies for cluster '${clusterId}': JSON must have a non-empty 'Statement' element. See AWS IAM policy documentation for proper format: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_statement.html`)
+      throw new Error(`Invalid accessPolicies for cluster '${clusterId}': JSON must have a non-empty 'Statement' element. See AWS IAM policy documentation for proper format: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_statement.html`);
     }
-    // Access policies can provide a single Statement block or an array of Statement blocks
     if (Array.isArray(statements)) {
-        for (const statementBlock of statements) {
-            const statement = PolicyStatement.fromJson(statementBlock)
-            accessPolicies.push(statement)
-        }
+      for (const statementBlock of statements) {
+        accessPolicies.push(PolicyStatement.fromJson(statementBlock));
+      }
+    } else {
+      accessPolicies.push(PolicyStatement.fromJson(statements));
     }
-    else {
-        const statement = PolicyStatement.fromJson(statements)
-        accessPolicies.push(statement)
-    }
-    return accessPolicies
+    return accessPolicies;
   }
 
-  validateNodeCounts(numAZs: number, props: OpensearchDomainStackProps) {
-    if (props.dataNodes && props.dataNodes % numAZs != 0) {
-      throw new Error(`The number of data nodes must be a multiple of the number of Availability Zones. Received 'dataNodeCount' of ${props.dataNodes} with AZ count of ${numAZs}`)
+  private validateNodeCounts(numAZs: number, config: ClusterConfig) {
+    if (config.dataNodeCount && config.dataNodeCount % numAZs !== 0) {
+      throw new Error(`The number of data nodes must be a multiple of the number of Availability Zones. Received 'dataNodeCount' of ${config.dataNodeCount} with AZ count of ${numAZs}`);
     }
-    if (props.dedicatedManagerNodeCount && props.dedicatedManagerNodeCount % numAZs != 0) {
-      throw new Error(`The number of manager nodes must be a multiple of the number of Availability Zones. Received 'dedicatedManagerNodeCount' of ${props.dedicatedManagerNodeCount} with AZ count of ${numAZs}`)
+    if (config.dedicatedManagerNodeCount && config.dedicatedManagerNodeCount % numAZs !== 0) {
+      throw new Error(`The number of manager nodes must be a multiple of the number of Availability Zones. Received 'dedicatedManagerNodeCount' of ${config.dedicatedManagerNodeCount} with AZ count of ${numAZs}`);
     }
-    if (props.warmNodes && props.warmNodes % numAZs != 0) {
-      throw new Error(`The number of warm nodes must be a multiple of the number of Availability Zones. Received 'warmNodesCount' of ${props.warmNodes} with AZ count of ${numAZs}`)
+    if (config.warmNodeCount && config.warmNodeCount % numAZs !== 0) {
+      throw new Error(`The number of warm nodes must be a multiple of the number of Availability Zones. Received 'warmNodesCount' of ${config.warmNodeCount} with AZ count of ${numAZs}`);
     }
   }
 
-  /**
-   * Creates a custom resource that validates an existing OpenSearch domain's VPC
-   * matches the VPC being deployed to. OpenSearch domains cannot be moved between
-   * VPCs, so this check prevents a confusing CloudFormation error.
-   */
   private createVpcValidation(domainName: string, expectedVpcId: string): CustomResource {
     const validationFn = new LambdaFunction(this, 'VpcValidationFunction', {
       runtime: Runtime.NODEJS_20_X,
@@ -166,168 +126,125 @@ exports.handler = async (event) => {
     });
   }
 
-  constructor(scope: Construct, id: string, props: OpensearchDomainStackProps) {
+  constructor(scope: Construct, id: string, props: OpenSearchDomainStackProps) {
     super(scope, id, props);
 
-    props.vpcDetails.initialize(this, props.clusterId)
-      // Skip accessing VPC for first synthesis stage which hasn't yet loaded in the VPC details from lookup
-    if (props.vpcDetails.vpc.vpcId == "vpc-12345") {
-        return
+    const { config, stage } = props;
+
+    // Resolve VPC details: either passed directly (created VPC) or looked up by ID
+    if (!props.vpcDetails && !props.vpcId) {
+      throw new Error("Either 'vpcDetails' or 'vpcId' must be provided for managed OpenSearch domains");
+    }
+    const vpcDetails = props.vpcDetails
+      ?? VpcDetails.fromVpcLookup(this, props.vpcId as string, config.clusterId, config.clusterSubnetIds);
+
+    // Skip accessing VPC for first synthesis stage which hasn't yet loaded in the VPC details from lookup
+    if (vpcDetails.vpc.vpcId === "vpc-12345") {
+      return;
     }
 
-    // Validate that an existing domain's VPC matches the VPC being deployed to.
-    // OpenSearch domains cannot be moved between VPCs — attempting to do so produces
-    // a confusing "subnets must be in the same VPC" error from the service.
-    const vpcValidation = this.createVpcValidation(props.domainName, props.vpcDetails.vpc.vpcId)
-
-    // Retrieve existing account resources if defined
-    const earKmsKey: IKey|undefined = props.encryptionAtRestKmsKeyARN && props.encryptionAtRestEnabled ?
-        Key.fromKeyArn(this, "earKey", props.encryptionAtRestKmsKeyARN) : undefined
-
-    const appLG: ILogGroup|undefined = props.appLogGroup && props.appLogEnabled ?
-        LogGroup.fromLogGroupArn(this, "appLogGroup", props.appLogGroup) : undefined
-
-    let adminUserSecret: ISecret|undefined = props.fineGrainedManagerUserSecretARN ?
-        Secret.fromSecretCompleteArn(this, "managerSecret", props.fineGrainedManagerUserSecretARN) : undefined
-    if (props.enableDemoAdmin) {
-      adminUserSecret = createBasicAuthSecret(scope, "admin", "myStrongPassword123!", props.stage, props.clusterId)
-    }
-
-    const numSubnets = props.vpcDetails.subnetSelection.subnets
-    if (!numSubnets || numSubnets.length < 1) {
-      throw new Error("Internal error: There should always be at least 1 subnet in the VpcDetails subnet selection")
-    }
-    // We enforce that only one subnet is provided per AZ
-    const numAZs = numSubnets.length
-    this.validateNodeCounts(numAZs, props)
-    const zoneAwarenessConfig: ZoneAwarenessConfig|undefined = numAZs > 1 ?
-        {enabled: true, availabilityZoneCount: numAZs} : undefined;
-
-    // If specified, these subnets will be selected to place the Domain nodes in. Otherwise, this is not provided
-    // to the Domain as it has existing behavior to select private subnets from a given VPC
-    let domainSubnets: SubnetSelection[]|undefined;
-    if (props.vpcDetails) {
-      domainSubnets = [props.vpcDetails.subnetSelection]
-    }
-
-    // Retrieve existing SGs to apply to VPC Domain endpoints
-    const securityGroups: ISecurityGroup[] = []
-    if (props.vpcDetails.clusterAccessSecurityGroup) {
-      securityGroups.push(props.vpcDetails.clusterAccessSecurityGroup)
-    }
-    if (props.vpcSecurityGroupIds) {
-      for (let i = 0; i < props.vpcSecurityGroupIds.length; i++) {
-        securityGroups.push(SecurityGroup.fromLookupById(this, "domainSecurityGroup-" + i, props.vpcSecurityGroupIds[i]))
-      }
-    }
-
-    const ebsVolumeType = props.ebsVolumeTypeName ? this.getEbsVolumeType(props.ebsVolumeTypeName) : undefined
-
-    // Only GP3, IO1, and IO2 support custom IOPS; only GP3 supports custom throughput
-    const supportsIops = ebsVolumeType === EbsDeviceVolumeType.GP3
-        || ebsVolumeType === EbsDeviceVolumeType.IO1
-        || ebsVolumeType === EbsDeviceVolumeType.IO2
-    const supportsThroughput = ebsVolumeType === EbsDeviceVolumeType.GP3
-
-    let accessPolicies: PolicyStatement[] | undefined
-    if (props.openAccessPolicyEnabled) {
-      accessPolicies = [this.createOpenAccessPolicy(props.domainName)]
-    } else {
-      accessPolicies = props.accessPolicyJson ? this.parseAccessPolicies(props.accessPolicyJson, props.clusterId) : undefined
-    }
-
-    const domain = new Domain(this, 'Domain', {
-      version: props.version,
-      domainName: props.domainName,
-      accessPolicies: accessPolicies,
-      useUnsignedBasicAuth: props.useUnsignedBasicAuth,
-      capacity: {
-        dataNodeInstanceType: props.dataNodeInstanceType,
-        dataNodes: props.dataNodes ?? numAZs,
-        masterNodeInstanceType: props.dedicatedManagerNodeType,
-        masterNodes: props.dedicatedManagerNodeCount,
-        warmInstanceType: props.warmInstanceType,
-        warmNodes: props.warmNodes
-      },
-      fineGrainedAccessControl: {
-        masterUserArn: props.fineGrainedManagerUserARN,
-        masterUserName: adminUserSecret ? adminUserSecret.secretValueFromJson('username').toString() : undefined,
-        masterUserPassword: adminUserSecret ? adminUserSecret.secretValueFromJson('password') : undefined,
-      },
-      nodeToNodeEncryption: props.nodeToNodeEncryptionEnabled,
-      encryptionAtRest: {
-        enabled: props.encryptionAtRestEnabled,
-        kmsKey: earKmsKey
-      },
-      enforceHttps: props.enforceHTTPS,
-      tlsSecurityPolicy: props.tlsSecurityPolicy,
-      ebs: {
-        enabled: props.ebsEnabled,
-        iops: supportsIops ? props.ebsIops : undefined,
-        throughput: supportsThroughput ? props.ebsThroughput : undefined,
-        volumeSize: props.ebsVolumeSize,
-        volumeType: ebsVolumeType
-      },
-      logging: {
-        appLogEnabled: props.appLogEnabled,
-        appLogGroup: appLG
-      },
-      vpc: props.vpcDetails?.vpc,
-      vpcSubnets: domainSubnets,
-      securityGroups: securityGroups,
-      zoneAwareness: zoneAwarenessConfig,
-      removalPolicy: props.domainRemovalPolicy
-    });
-
-    // Ensure VPC validation completes before domain create/update
-    if (vpcValidation) {
-      domain.node.addDependency(vpcValidation)
-    }
-
-    generateClusterExports(this, domain.domainEndpoint, props.clusterId, props.stage, props.vpcDetails.subnetSelection, props.vpcDetails.clusterAccessSecurityGroup?.securityGroupId)
-  }
-}
-
-export function createOpenSearchStack(scope: Construct, config: ClusterConfig, vpcDetails: VpcDetails, stage: string, region: string, env?: Environment): Stack {
-
-  const version = config.clusterVersion
+    const version = config.clusterVersion
       ? getEngineVersion(config.clusterVersion)
       : getEngineVersion(LATEST_AOS_VERSION);
 
-  return new OpenSearchDomainStack(scope, `openSearchDomainStack-${config.clusterId}`, {
-      version: version,
+    // Validate VPC hasn't changed for existing domains
+    const vpcValidation = this.createVpcValidation(config.clusterName, vpcDetails.vpc.vpcId);
+
+    // Retrieve existing account resources if defined
+    const earKmsKey: IKey | undefined = config.encryptionAtRestKmsKeyARN && config.encryptionAtRestEnabled
+      ? Key.fromKeyArn(this, "earKey", config.encryptionAtRestKmsKeyARN) : undefined;
+
+    const appLG: ILogGroup | undefined = config.loggingAppLogGroupARN && config.loggingAppLogEnabled
+      ? LogGroup.fromLogGroupArn(this, "appLogGroup", config.loggingAppLogGroupARN) : undefined;
+
+    let adminUserSecret: ISecret | undefined = config.fineGrainedManagerUserSecretARN
+      ? Secret.fromSecretCompleteArn(this, "managerSecret", config.fineGrainedManagerUserSecretARN) : undefined;
+    if (config.enableDemoAdmin) {
+      adminUserSecret = createBasicAuthSecret(scope, "admin", "myStrongPassword123!", stage, config.clusterId);
+    }
+
+    const numSubnets = vpcDetails.subnetSelection.subnets;
+    if (!numSubnets || numSubnets.length < 1) {
+      throw new Error("Internal error: There should always be at least 1 subnet in the VpcDetails subnet selection");
+    }
+    const numAZs = numSubnets.length;
+    this.validateNodeCounts(numAZs, config);
+    const zoneAwarenessConfig: ZoneAwarenessConfig | undefined = numAZs > 1
+      ? { enabled: true, availabilityZoneCount: numAZs } : undefined;
+
+    const domainSubnets: SubnetSelection[] = [vpcDetails.subnetSelection];
+
+    // Retrieve existing SGs to apply to VPC Domain endpoints
+    const securityGroups: ISecurityGroup[] = [];
+    if (vpcDetails.clusterAccessSecurityGroup) {
+      securityGroups.push(vpcDetails.clusterAccessSecurityGroup);
+    }
+    if (config.clusterSecurityGroupIds) {
+      for (let i = 0; i < config.clusterSecurityGroupIds.length; i++) {
+        securityGroups.push(SecurityGroup.fromLookupById(this, "domainSecurityGroup-" + i, config.clusterSecurityGroupIds[i]));
+      }
+    }
+
+    const ebsVolumeType = config.ebsVolumeType ? this.getEbsVolumeType(config.ebsVolumeType) : undefined;
+
+    // Only GP3, IO1, and IO2 support custom IOPS; only GP3 supports custom throughput
+    const supportsIops = ebsVolumeType === EbsDeviceVolumeType.GP3
+      || ebsVolumeType === EbsDeviceVolumeType.IO1
+      || ebsVolumeType === EbsDeviceVolumeType.IO2;
+    const supportsThroughput = ebsVolumeType === EbsDeviceVolumeType.GP3;
+
+    let accessPolicies: PolicyStatement[] | undefined;
+    if (config.openAccessPolicyEnabled) {
+      accessPolicies = [this.createOpenAccessPolicy(config.clusterName)];
+    } else {
+      accessPolicies = config.accessPolicies ? this.parseAccessPolicies(config.accessPolicies, config.clusterId) : undefined;
+    }
+
+    const domain = new Domain(this, 'Domain', {
+      version,
       domainName: config.clusterName,
-      clusterId: config.clusterId,
-      dataNodeInstanceType: config.dataNodeType,
-      dataNodes: config.dataNodeCount,
-      dedicatedManagerNodeType: config.dedicatedManagerNodeType,
-      dedicatedManagerNodeCount: config.dedicatedManagerNodeCount,
-      warmInstanceType: config.warmNodeType,
-      warmNodes: config.warmNodeCount,
-      accessPolicyJson: config.accessPolicies,
-      openAccessPolicyEnabled: config.openAccessPolicyEnabled,
+      accessPolicies,
       useUnsignedBasicAuth: config.useUnsignedBasicAuth,
-      fineGrainedManagerUserARN: config.fineGrainedManagerUserARN,
-      fineGrainedManagerUserSecretARN: config.fineGrainedManagerUserSecretARN,
-      enableDemoAdmin: config.enableDemoAdmin,
-      enforceHTTPS: config.enforceHTTPS,
+      capacity: {
+        dataNodeInstanceType: config.dataNodeType,
+        dataNodes: config.dataNodeCount ?? numAZs,
+        masterNodeInstanceType: config.dedicatedManagerNodeType,
+        masterNodes: config.dedicatedManagerNodeCount,
+        warmInstanceType: config.warmNodeType,
+        warmNodes: config.warmNodeCount,
+      },
+      fineGrainedAccessControl: {
+        masterUserArn: config.fineGrainedManagerUserARN,
+        masterUserName: adminUserSecret ? adminUserSecret.secretValueFromJson('username').toString() : undefined,
+        masterUserPassword: adminUserSecret ? adminUserSecret.secretValueFromJson('password') : undefined,
+      },
+      nodeToNodeEncryption: config.nodeToNodeEncryptionEnabled,
+      encryptionAtRest: {
+        enabled: config.encryptionAtRestEnabled,
+        kmsKey: earKmsKey,
+      },
+      enforceHttps: config.enforceHTTPS,
       tlsSecurityPolicy: config.tlsSecurityPolicy,
-      ebsEnabled: config.ebsEnabled,
-      ebsIops: config.ebsIops,
-      ebsThroughput: config.ebsThroughput,
-      ebsVolumeSize: config.ebsVolumeSize,
-      ebsVolumeTypeName: config.ebsVolumeType,
-      encryptionAtRestEnabled: config.encryptionAtRestEnabled,
-      encryptionAtRestKmsKeyARN: config.encryptionAtRestKmsKeyARN,
-      appLogEnabled: config.loggingAppLogEnabled,
-      appLogGroup: config.loggingAppLogGroupARN,
-      nodeToNodeEncryptionEnabled: config.nodeToNodeEncryptionEnabled,
-      vpcDetails: vpcDetails,
-      vpcSecurityGroupIds: config.clusterSecurityGroupIds,
-      domainRemovalPolicy: config.domainRemovalPolicy,
-      stackName: `OpenSearchDomain-${config.clusterId}-${stage}-${region}`,
-      description: 'This stack contains resources to create/manage an OpenSearch Service domain',
-      stage,
-      env: env,
+      ebs: {
+        enabled: config.ebsEnabled,
+        iops: supportsIops ? config.ebsIops : undefined,
+        throughput: supportsThroughput ? config.ebsThroughput : undefined,
+        volumeSize: config.ebsVolumeSize,
+        volumeType: ebsVolumeType,
+      },
+      logging: {
+        appLogEnabled: config.loggingAppLogEnabled,
+        appLogGroup: appLG,
+      },
+      vpc: vpcDetails.vpc,
+      vpcSubnets: domainSubnets,
+      securityGroups,
+      zoneAwareness: zoneAwarenessConfig,
+      removalPolicy: config.domainRemovalPolicy,
     });
+
+    domain.node.addDependency(vpcValidation);
+
+    generateClusterExports(this, domain.domainEndpoint, config.clusterId, stage, vpcDetails.subnetSelection, vpcDetails.clusterAccessSecurityGroup?.securityGroupId);
+  }
 }

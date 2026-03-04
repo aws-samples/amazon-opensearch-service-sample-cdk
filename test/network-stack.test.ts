@@ -2,11 +2,19 @@ import { NetworkStack } from "../lib/network-stack";
 import { Template } from "aws-cdk-lib/assertions";
 import { createStackComposer } from "./test-utils";
 import { describe, test, expect } from '@jest/globals';
+import { ClusterType } from "../lib/components/common-utilities";
 
 describe('NetworkStack Tests', () => {
 
-    test('Test default VPC resources get created with no VPC settings', () => {
-        const contextOptions = {}
+    test('Test default VPC resources get created with a managed cluster', () => {
+        const contextOptions = {
+            clusters: [
+                {
+                    clusterId: "test",
+                    clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE,
+                }
+            ]
+        }
 
         const openSearchStacks = createStackComposer(contextOptions)
 
@@ -21,6 +29,15 @@ describe('NetworkStack Tests', () => {
         const vpc = networkStack.vpc
         expect(vpc.publicSubnets.length).toBe(2)
         expect(vpc.privateSubnets.length).toBe(2)
+    });
+
+    test('Test no NetworkStack created when no clusters defined', () => {
+        const contextOptions = {}
+
+        const openSearchStacks = createStackComposer(contextOptions)
+
+        const networkStacks = openSearchStacks.stacks.filter((s) => s instanceof NetworkStack)
+        expect(networkStacks.length).toBe(0)
     });
 
 });

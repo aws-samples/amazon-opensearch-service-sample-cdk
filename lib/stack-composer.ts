@@ -1,7 +1,7 @@
 import {Construct} from "constructs";
 import {Stack, StackProps} from "aws-cdk-lib";
-import {createOpenSearchStack} from "./opensearch-domain-stack";
-import {createServerlessStack} from "./serverless-collection-stack";
+import {OpenSearchDomainStack} from "./opensearch-domain-stack";
+import {ServerlessCollectionStack} from "./serverless-collection-stack";
 import * as defaultValuesJson from "../default-values.json"
 import * as defaultClusterValuesJson from "../default-cluster-values.json"
 import {NetworkStack} from "./network-stack";
@@ -16,10 +16,7 @@ import {
 } from "./components/context-parsing"
 import {CdkLogger} from "./components/cdk-logger";
 import {VpcDetails} from "./components/vpc-details";
-
-export interface StackPropsExt extends StackProps {
-    readonly stage: string,
-}
+import {ClusterConfig} from "./components/cluster-config";
 
 export class StackComposer {
     public stacks: Stack[] = [];
@@ -60,8 +57,23 @@ export class StackComposer {
             throw new Error("The 'vpcCidr' option cannot be used with an imported VPC via 'vpcId'")
         }
 
-        let networkStack: NetworkStack|undefined
-        if (!vpcId) {
+        // Parse clusters
+        const clusters = getContextForType('clusters', 'object', defaultValues, contextJSON)
+        if (!Array.isArray(clusters) || clusters.length === 0) {
+            CdkLogger.warn("No clusters were defined in the CDK context. Skipping cluster stack creation.");
+            return
+        }
+
+        const parsedClusters: { config: ClusterConfig; type: ClusterType }[] = clusters.map(rawConfig => {
+            const config = parseClusterConfig(rawConfig, defaultClusterValues, stage)
+            const type = parseClusterType(config.clusterType, config.clusterId)
+            return { config, type }
+        })
+
+        // Smart VPC: only create NetworkStack if at least one managed cluster needs it and no vpcId is provided
+        const hasManagedClusters = parsedClusters.some(c => c.type === ClusterType.OPENSEARCH_MANAGED_SERVICE)
+        let networkStack: NetworkStack | undefined
+        if (hasManagedClusters && !vpcId) {
             networkStack = new NetworkStack(scope, `networkStack`, {
                 vpcAZCount: vpcAZCount,
                 vpcCidr: vpcCidr,
@@ -73,29 +85,42 @@ export class StackComposer {
             this.stacks.push(networkStack)
         }
 
-        const clusters = getContextForType('clusters', 'object', defaultValues, contextJSON)
-        if (!Array.isArray(clusters) || clusters.length === 0) {
-            CdkLogger.warn("No clusters were defined in the CDK context. Skipping cluster stack creation.");
-            return
-        }
-        for (const rawConfig of clusters) {
-            const config = parseClusterConfig(rawConfig, defaultClusterValues, stage)
-            const resolvedType = parseClusterType(config.clusterType, config.clusterId)
-
-            switch (resolvedType) {
+        for (const { config, type } of parsedClusters) {
+            switch (type) {
                 case ClusterType.OPENSEARCH_MANAGED_SERVICE: {
-                    const clusterVpcDetails = new VpcDetails(vpcId, networkStack?.vpc, config.clusterSubnetIds, networkStack?.clusterAccessSecurityGroup)
-                    const clusterStack = createOpenSearchStack(scope, config, clusterVpcDetails, stage, region, props.env)
+                    const clusterStack = networkStack
+                        ? new OpenSearchDomainStack(scope, `openSearchDomainStack-${config.clusterId}`, {
+                            config,
+                            vpcDetails: VpcDetails.fromCreatedVpc(networkStack.vpc, networkStack.clusterAccessSecurityGroup),
+                            stage,
+                            stackName: `OpenSearchDomain-${config.clusterId}-${stage}-${region}`,
+                            description: 'This stack contains resources to create/manage an OpenSearch Service domain',
+                            env: props.env,
+                        })
+                        : new OpenSearchDomainStack(scope, `openSearchDomainStack-${config.clusterId}`, {
+                            config,
+                            vpcId: vpcId as string,
+                            stage,
+                            stackName: `OpenSearchDomain-${config.clusterId}-${stage}-${region}`,
+                            description: 'This stack contains resources to create/manage an OpenSearch Service domain',
+                            env: props.env,
+                        })
                     if (networkStack) {
                         clusterStack.addDependency(networkStack)
                     }
-                    this.stacks.push(clusterStack);
-                    break;
+                    this.stacks.push(clusterStack)
+                    break
                 }
                 case ClusterType.OPENSEARCH_SERVERLESS: {
-                    const serverlessStack = createServerlessStack(scope, config, stage, region, props.env)
-                    this.stacks.push(serverlessStack);
-                    break;
+                    const serverlessStack = new ServerlessCollectionStack(scope, `serverlessCollectionStack-${config.clusterId}`, {
+                        config,
+                        stage,
+                        stackName: `OpenSearchServerless-${config.clusterId}-${stage}-${region}`,
+                        description: 'This stack contains resources to create/manage an OpenSearch Serverless collection',
+                        env: props.env,
+                    })
+                    this.stacks.push(serverlessStack)
+                    break
                 }
             }
         }
