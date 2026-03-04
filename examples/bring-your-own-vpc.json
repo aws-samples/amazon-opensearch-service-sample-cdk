@@ -1,0 +1,13 @@
+{
+  "stage": "prod",
+  "vpcId": "vpc-0123456789abcdef0",
+  "clusters": [
+    {
+      "clusterId": "search",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "clusterVersion": "OS_2.19",
+      "clusterSubnetIds": ["subnet-aaa", "subnet-bbb"],
+      "clusterSecurityGroupIds": ["sg-xxx"]
+    }
+  ]
+}

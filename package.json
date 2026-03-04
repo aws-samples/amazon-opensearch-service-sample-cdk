@@ -43,6 +43,7 @@
     "test:lint": "eslint .",
     "test:jest": "jest  --coverage",
     "clean": "rm -rf dist",
+    "validate": "cdk synth --no-staging -q",
     "prepublishOnly": "npm run build",
     "cdk": "cdk"
   },
