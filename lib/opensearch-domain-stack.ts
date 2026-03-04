@@ -8,6 +8,7 @@ import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
 import {ISecret, Secret} from "aws-cdk-lib/aws-secretsmanager";
 import {Code, Function as LambdaFunction, Runtime} from "aws-cdk-lib/aws-lambda";
 import {Provider} from "aws-cdk-lib/custom-resources";
+import {NagSuppressions} from "cdk-nag";
 import {VpcDetails} from "./components/vpc-details";
 import {
   createBasicAuthSecret,
@@ -74,7 +75,7 @@ export class OpenSearchDomainStack extends Stack {
 
   private createVpcValidation(domainName: string, expectedVpcId: string): CustomResource {
     const validationFn = new LambdaFunction(this, 'VpcValidationFunction', {
-      runtime: Runtime.NODEJS_20_X,
+      runtime: Runtime.NODEJS_22_X,
       handler: 'index.handler',
       timeout: Duration.seconds(30),
       code: Code.fromInline(`
@@ -244,6 +245,19 @@ exports.handler = async (event) => {
     });
 
     domain.node.addDependency(vpcValidation);
+
+    // cdk-nag suppressions for user-configurable options and CDK framework internals
+    NagSuppressions.addResourceSuppressions(domain, [
+      { id: 'AwsSolutions-OS3', reason: 'IP-based access policies are user-configurable via accessPolicies context option' },
+      { id: 'AwsSolutions-OS4', reason: 'Dedicated master nodes are user-configurable via dedicatedManagerNodeType/Count context options' },
+      { id: 'AwsSolutions-OS5', reason: 'Unsigned basic auth and fine-grained access control are user-configurable context options' },
+      { id: 'AwsSolutions-OS9', reason: 'Slow log publishing is user-configurable via loggingAppLogEnabled context option' },
+    ]);
+    NagSuppressions.addResourceSuppressions(this, [
+      { id: 'AwsSolutions-IAM4', reason: 'VPC validation custom resource uses AWSLambdaBasicExecutionRole managed policy for CloudWatch Logs access', appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'] },
+      { id: 'AwsSolutions-IAM5', reason: 'CDK custom resource framework requires invoke permission with :* suffix on the Lambda ARN' },
+      { id: 'AwsSolutions-L1', reason: 'VPC validation Lambda uses Node.js 22.x (current LTS); CDK Provider framework Lambda runtime is managed by aws-cdk-lib' },
+    ], true);
 
     generateClusterExports(this, domain.domainEndpoint, config.clusterId, stage, vpcDetails.subnetSelection, vpcDetails.clusterAccessSecurityGroup?.securityGroupId);
   }

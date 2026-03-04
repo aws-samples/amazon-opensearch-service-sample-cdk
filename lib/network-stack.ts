@@ -1,4 +1,5 @@
 import {
+    FlowLogDestination, FlowLogTrafficType,
     IpAddresses, IpProtocol, ISecurityGroup,
     IVpc, Port, SecurityGroup,
     Vpc
@@ -32,6 +33,12 @@ export class NetworkStack extends Stack {
             ipProtocol: IpProtocol.DUAL_STACK,
             vpcName: `vpc-${props.stage}`,
             maxAzs: zoneCount,
+            flowLogs: {
+                defaultFlowLog: {
+                    destination: FlowLogDestination.toCloudWatchLogs(),
+                    trafficType: FlowLogTrafficType.REJECT,
+                },
+            },
         });
 
         this.vpc.publicSubnets.forEach((subnet, index) => {
