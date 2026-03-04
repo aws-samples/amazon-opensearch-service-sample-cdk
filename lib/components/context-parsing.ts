@@ -49,7 +49,7 @@ export function parseContextJson(scope: Construct) {
         try {
             fileJSON = JSON.parse(fileString)
         } catch (error) {
-            throw new Error(`Unable to parse context file ${contextFile} into JSON with following error: ${error}`);
+            throw new Error(`Unable to parse context file ${contextFile} into JSON`, { cause: error });
         }
         return fileJSON
     }
