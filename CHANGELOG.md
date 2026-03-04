@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.2.1 - 2026-03-04
+
+### Changed
+- **BREAKING:** Removed `StackPropsExt` interface — stacks now use inline `stage` prop on their own props interfaces
+- **BREAKING:** Removed `OpensearchDomainStackProps` — replaced by `OpenSearchDomainStackProps` with `config: ClusterConfig` + optional `vpcDetails`/`vpcId`
+- **BREAKING:** Removed `createOpenSearchStack` and `createServerlessStack` factory functions — stacks are constructed directly in `StackComposer`
+- **BREAKING:** `VpcDetails` rewritten as immutable with static factory methods (`fromCreatedVpc`, `fromVpcLookup`) — constructor and `initialize()` removed
+- Smart NetworkStack creation: VPC only created when at least one managed cluster exists (serverless-only deployments no longer create unnecessary VPCs)
+- `OpenSearchDomainStack` and `ServerlessCollectionStack` now take `ClusterConfig` directly instead of verbose intermediate props
+- Barrel export updated: removed `StackPropsExt`, `OpensearchDomainStackProps`, factory functions
+
+### Added
+- README: link to [v0.1.10 README](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/blob/v0.1.10/README.md) for legacy users
+- README: multi-cluster deployment examples (managed + serverless in one config)
+- README: serverless collection quick start
+- README: full configuration reference for all cluster types
+- Tests for smart VPC behavior (serverless-only skips NetworkStack, mixed creates it)
+
 ## 0.2.0 - 2026-03-04
 
 ### Added
