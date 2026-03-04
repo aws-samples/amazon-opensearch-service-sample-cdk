@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
 
 env:
   node-version: '18.x'
@@ -10,23 +12,13 @@ env:
 jobs:
   node-tests:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        npm-project:
-          - '.'
-    defaults:
-      run:
-        working-directory: ${{ matrix.npm-project }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.node-version }}
-      - name: Install NPM dependencies
-        run: npm ci
-      - name: Run CDK Jest Tests
-        run: npm run test
+      - run: npm ci
+      - run: npm run test
 
   build:
     runs-on: ubuntu-latest
@@ -57,7 +49,6 @@ jobs:
           fail: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
   all-ci-checks-pass:
     needs:

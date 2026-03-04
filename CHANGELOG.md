@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.1.2 - 2026-03-04
+
+### Changed
+- CI restricted to `main` branch pushes and PRs only (no duplicate runs on tag pushes)
+- Simplified `node-tests` CI job (removed unnecessary matrix strategy)
+- Added `prepublishOnly` script to auto-build before `npm pack`
+
+### Fixed
+- Added `types` condition to `exports` for proper TypeScript module resolution
+
 ## 0.1.1 - 2026-03-04
 
 ### Fixed
