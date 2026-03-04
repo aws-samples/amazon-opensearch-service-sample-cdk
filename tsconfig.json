@@ -7,10 +7,6 @@
     "resolveJsonModule": true,
     "declaration": true,
     "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitReturns": true,
@@ -18,7 +14,6 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "experimentalDecorators": true,
-    "strictPropertyInitialization": false,
     "typeRoots": ["./node_modules/@types"]
   },
   "exclude": ["node_modules", "cdk.out", "dist", "test", "bin"]
