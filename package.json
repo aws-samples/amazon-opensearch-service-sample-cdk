@@ -37,15 +37,15 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
+    "build": "npx tsc",
+    "watch": "npx tsc -w",
     "test": "npm run test:lint && npm run test:jest",
-    "test:lint": "eslint .",
-    "test:jest": "jest  --coverage",
+    "test:lint": "npx eslint .",
+    "test:jest": "npx jest --coverage",
     "clean": "rm -rf dist",
-    "validate": "cdk synth --no-staging -q",
+    "validate": "npx cdk synth --no-staging -q",
     "prepublishOnly": "npm run build",
-    "cdk": "cdk"
+    "cdk": "npx cdk"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
