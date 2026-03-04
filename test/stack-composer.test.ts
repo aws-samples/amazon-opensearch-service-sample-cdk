@@ -3,6 +3,7 @@ import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
 import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
 import { describe, afterEach, test, expect, jest } from '@jest/globals';
 import {NetworkStack} from "../lib/network-stack";
+import {ServerlessCollectionStack} from "../lib/serverless-collection-stack";
 import {ClusterType} from "../lib/components/common-utilities";
 
 describe('Stack Composer Tests', () => {
@@ -214,6 +215,48 @@ describe('Stack Composer Tests', () => {
 
     const networkStacks = stackComposer.stacks.filter((s) => s instanceof NetworkStack)
     expect(networkStacks.length).toBe(0)
+  })
+
+  test('Test serverless-only deployment does not create NetworkStack', () => {
+    const contextOptions = {
+      clusters: [
+        {
+          clusterId: "search",
+          clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        }
+      ]
+    }
+
+    const stackComposer = createStackComposer(contextOptions)
+
+    const networkStacks = stackComposer.stacks.filter((s) => s instanceof NetworkStack)
+    const serverlessStacks = stackComposer.stacks.filter((s) => s instanceof ServerlessCollectionStack)
+    expect(networkStacks.length).toBe(0)
+    expect(serverlessStacks.length).toBe(1)
+  })
+
+  test('Test mixed managed + serverless creates NetworkStack', () => {
+    const contextOptions = {
+      clusters: [
+        {
+          clusterId: "managed",
+          clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE,
+        },
+        {
+          clusterId: "serverless",
+          clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        }
+      ]
+    }
+
+    const stackComposer = createStackComposer(contextOptions)
+
+    const networkStacks = stackComposer.stacks.filter((s) => s instanceof NetworkStack)
+    const serverlessStacks = stackComposer.stacks.filter((s) => s instanceof ServerlessCollectionStack)
+    const domainStacks = stackComposer.stacks.filter((s) => s instanceof OpenSearchDomainStack)
+    expect(networkStacks.length).toBe(1)
+    expect(serverlessStacks.length).toBe(1)
+    expect(domainStacks.length).toBe(1)
   })
 
 })

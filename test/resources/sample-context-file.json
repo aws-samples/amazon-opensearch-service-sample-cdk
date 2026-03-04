@@ -1,4 +1,9 @@
 {
   "stage": "unittest",
-  "clusters": []
+  "clusters": [
+    {
+      "clusterId": "test",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE"
+    }
+  ]
 }
