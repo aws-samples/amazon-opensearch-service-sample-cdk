@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.1.9 - 2026-03-04
+
+### Changed
+- Moved `source-map-support` from `dependencies` to `devDependencies` — it's only used in `bin/app.ts` for debugging stack traces, not needed by library consumers. The package now has zero runtime dependencies.
+
 ## 0.1.8 - 2026-03-04
 
 ### Fixed
