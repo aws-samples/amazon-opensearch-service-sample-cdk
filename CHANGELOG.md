@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Templates use CloudFormation Parameters — deployable directly via AWS Console or CLI without CDK
 - `bin/cfn-synth.ts` — separate CDK app for synthesizing parameterized CFN templates
 
+### Fixed
+- Bumped CI/release/version-bump workflows from Node 18 to Node 20 (required by ESLint 10)
+
 ### Parameters (NetworkStack)
 - `Stage`, `VpcCidr`, `PublicSubnet1Cidr`, `PublicSubnet2Cidr`, `PrivateSubnet1Cidr`, `PrivateSubnet2Cidr`
 
