@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.2.2 - 2026-03-04
+
+### Added
+- Example config files in `examples/` directory: single-domain, serverless, multi-cluster, bring-your-own-vpc
+- `npm run validate` script — dry-run config validation via `cdk synth --no-staging -q`
+- `.editorconfig` — consistent formatting across editors (2-space indent, LF, UTF-8)
+
+### Changed
+- README rewritten with hero section, badges, architecture diagram, secure defaults table, full configuration reference, and examples directory links
+- Jest `forceExit` enabled to suppress worker process exit warning
+
 ## 0.2.1 - 2026-03-04
 
 ### Changed
