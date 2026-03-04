@@ -118,6 +118,7 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         tlsSecurityPolicy,
         ebsEnabled: getContextForType('ebsEnabled', 'boolean', defaults, config),
         ebsIops: getContextForType('ebsIops', 'number', defaults, config),
+        ebsThroughput: getContextForType('ebsThroughput', 'number', defaults, config),
         ebsVolumeSize: getContextForType('ebsVolumeSize', 'number', defaults, config),
         ebsVolumeType: getContextForType('ebsVolumeType', 'string', defaults, config),
         encryptionAtRestEnabled: getContextForType('encryptionAtRestEnabled', 'boolean', defaults, config),

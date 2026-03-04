@@ -25,6 +25,7 @@ export interface ClusterConfig {
     tlsSecurityPolicy?: TLSSecurityPolicy;
     ebsEnabled?: boolean;
     ebsIops?: number;
+    ebsThroughput?: number;
     ebsVolumeSize?: number;
     ebsVolumeType?: string;
     encryptionAtRestEnabled?: boolean;
