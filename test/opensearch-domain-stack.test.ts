@@ -228,6 +228,28 @@ describe('OpenSearch Domain Stack Tests', () => {
     domainTemplate.resourceCountIs("AWS::OpenSearchService::Domain", 1)
   })
 
+  test('Test ebsThroughput is set via CFN escape hatch', () => {
+    const contextOptions = {
+      ebsEnabled: true,
+      ebsVolumeType: "GP3",
+      ebsVolumeSize: 100,
+      ebsThroughput: 250,
+    }
+
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
+
+    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
+    const domainTemplate = Template.fromStack(domainStack)
+    domainTemplate.hasResourceProperties("AWS::OpenSearchService::Domain", {
+      EBSOptions: {
+        EBSEnabled: true,
+        VolumeSize: 100,
+        VolumeType: "gp3",
+        Throughput: 250,
+      }
+    })
+  })
+
 })
 
 /*

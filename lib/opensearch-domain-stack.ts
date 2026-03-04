@@ -1,6 +1,6 @@
 import {Construct} from "constructs";
 import {EbsDeviceVolumeType, ISecurityGroup, SecurityGroup, SubnetSelection} from "aws-cdk-lib/aws-ec2";
-import {Domain, EngineVersion, TLSSecurityPolicy, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
+import {Domain, EngineVersion, TLSSecurityPolicy, ZoneAwarenessConfig, CfnDomain} from "aws-cdk-lib/aws-opensearchservice";
 import {RemovalPolicy, Stack} from "aws-cdk-lib";
 import {IKey, Key} from "aws-cdk-lib/aws-kms";
 import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
@@ -38,6 +38,7 @@ export interface OpensearchDomainStackProps extends StackPropsExt {
   readonly tlsSecurityPolicy?: TLSSecurityPolicy,
   readonly ebsEnabled?: boolean,
   readonly ebsIops?: number,
+  readonly ebsThroughput?: number,
   readonly ebsVolumeSize?: number,
   readonly ebsVolumeTypeName?: string,
   readonly encryptionAtRestEnabled?: boolean,
@@ -204,6 +205,13 @@ export class OpenSearchDomainStack extends Stack {
       zoneAwareness: zoneAwarenessConfig,
       removalPolicy: props.domainRemovalPolicy
     });
+
+    // EBS throughput is not exposed by the L2 Domain construct, use CFN escape hatch
+    if (props.ebsThroughput) {
+      const cfnDomain = domain.node.defaultChild as CfnDomain;
+      cfnDomain.addPropertyOverride('EBSOptions.Throughput', props.ebsThroughput);
+    }
+
     generateClusterExports(this, domain.domainEndpoint, props.clusterId, props.stage, props.vpcDetails.subnetSelection, props.vpcDetails.clusterAccessSecurityGroup?.securityGroupId)
   }
 }
@@ -234,6 +242,7 @@ export function createOpenSearchStack(scope: Construct, config: ClusterConfig, v
       tlsSecurityPolicy: config.tlsSecurityPolicy,
       ebsEnabled: config.ebsEnabled,
       ebsIops: config.ebsIops,
+      ebsThroughput: config.ebsThroughput,
       ebsVolumeSize: config.ebsVolumeSize,
       ebsVolumeTypeName: config.ebsVolumeType,
       encryptionAtRestEnabled: config.encryptionAtRestEnabled,
