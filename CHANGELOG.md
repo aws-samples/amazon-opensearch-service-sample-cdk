@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.2.6 - 2026-03-04
+
+### Changed
+- README title updated to "Amazon OpenSearch Service Sample CDK" to match repo name
+- Added aws-samples callout explaining this is a sample/reference implementation
+- Reframed README language throughout to emphasize sample project nature
+
 ## 0.2.5 - 2026-03-04
 
 ### Changed
