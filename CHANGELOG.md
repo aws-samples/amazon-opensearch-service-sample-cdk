@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.2.4 - 2026-03-04
+
+### Added
+- `cdk-nag` integration with AWS Solutions Checks — validates all CDK constructs against AWS best practices
+- `cfn-lint` CI job — synthesizes and lints CloudFormation templates on every PR
+- VPC Flow Logs on NetworkStack (reject traffic → CloudWatch Logs)
+- cdk-nag test suite covering managed, serverless, and mixed deployments
+
+### Changed
+- VPC validation Lambda upgraded to Node.js 22.x (current LTS)
+- Fixed `examples/single-domain.json`: dedicated manager node count (3 → 2) for 2-AZ compatibility
+
 ## 0.2.3 - 2026-03-04
 
 ### Changed
