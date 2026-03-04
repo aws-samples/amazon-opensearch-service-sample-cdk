@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.1.3 - 2026-03-04
+
+### Added
+- Standalone CloudFormation templates as release artifacts (`cfn-NetworkStack.min.json`, `cfn-OpenSearchDomainStack.min.json`)
+- Templates use CloudFormation Parameters — deployable directly via AWS Console or CLI without CDK
+- `bin/cfn-synth.ts` — separate CDK app for synthesizing parameterized CFN templates
+
+### Parameters (NetworkStack)
+- `Stage`, `VpcCidr`, `PublicSubnet1Cidr`, `PublicSubnet2Cidr`, `PrivateSubnet1Cidr`, `PrivateSubnet2Cidr`
+
+### Parameters (OpenSearchDomainStack)
+- `Stage`, `VpcId`, `SubnetIds`, `SecurityGroupId`, `DomainName`, `EngineVersion`
+- `DataNodeInstanceType`, `DataNodeCount`, `DedicatedManagerNodeType`, `DedicatedManagerNodeCount`
+- `EBSVolumeSize`, `EBSVolumeType`, `EBSIops`, `EBSThroughput`
+
 ## 0.1.2 - 2026-03-04
 
 ### Changed

@@ -19,8 +19,21 @@ jobs:
       - run: npm run test
       - run: npm run build
       - run: npm pack
+
+      - name: Synthesize CFN templates
+        run: npx cdk synth --app "npx ts-node bin/cfn-synth.ts" --no-staging -o cfn.out
+
+      - name: Minify CFN templates
+        run: |
+          for f in cfn.out/*.template.json; do
+            name=$(basename "$f" .template.json)
+            node -e "process.stdout.write(JSON.stringify(JSON.parse(require('fs').readFileSync('$f','utf8'))))" > "cfn-${name}.min.json"
+          done
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: '*.tgz'
+          files: |
+            *.tgz
+            cfn-*.min.json
