@@ -1,11 +1,13 @@
 import {Construct} from "constructs";
 import {EbsDeviceVolumeType, ISecurityGroup, SecurityGroup, SubnetSelection} from "aws-cdk-lib/aws-ec2";
 import {Domain, EngineVersion, TLSSecurityPolicy, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
-import {RemovalPolicy, Stack} from "aws-cdk-lib";
+import {CustomResource, Duration, RemovalPolicy, Stack} from "aws-cdk-lib";
 import {IKey, Key} from "aws-cdk-lib/aws-kms";
 import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
 import {ISecret, Secret} from "aws-cdk-lib/aws-secretsmanager";
+import {Code, Function as LambdaFunction, Runtime} from "aws-cdk-lib/aws-lambda";
+import {Provider} from "aws-cdk-lib/custom-resources";
 import {StackPropsExt} from "./stack-composer";
 import {VpcDetails} from "./components/vpc-details";
 import {
@@ -105,6 +107,65 @@ export class OpenSearchDomainStack extends Stack {
     }
   }
 
+  /**
+   * Creates a custom resource that validates an existing OpenSearch domain's VPC
+   * matches the VPC being deployed to. OpenSearch domains cannot be moved between
+   * VPCs, so this check prevents a confusing CloudFormation error.
+   */
+  private createVpcValidation(domainName: string, expectedVpcId: string): CustomResource {
+    const validationFn = new LambdaFunction(this, 'VpcValidationFunction', {
+      runtime: Runtime.NODEJS_20_X,
+      handler: 'index.handler',
+      timeout: Duration.seconds(30),
+      code: Code.fromInline(`
+const { OpenSearchClient, DescribeDomainCommand } = require("@aws-sdk/client-opensearch");
+exports.handler = async (event) => {
+  if (event.RequestType === "Delete") {
+    return { PhysicalResourceId: event.PhysicalResourceId };
+  }
+  const domainName = event.ResourceProperties.DomainName;
+  const expectedVpcId = event.ResourceProperties.ExpectedVpcId;
+  const client = new OpenSearchClient();
+  try {
+    const resp = await client.send(new DescribeDomainCommand({ DomainName: domainName }));
+    const existingVpcId = resp.DomainStatus?.VPCOptions?.VPCId;
+    if (existingVpcId && existingVpcId !== expectedVpcId) {
+      throw new Error(
+        "VPC mismatch: OpenSearch domain '" + domainName + "' exists in VPC " + existingVpcId +
+        " but the deployment targets VPC " + expectedVpcId + ". OpenSearch domains cannot be moved " +
+        "between VPCs. Delete the existing domain (and its CloudFormation stack) first, then redeploy."
+      );
+    }
+  } catch (e) {
+    if (e.name === "ResourceNotFoundException") {
+      // Domain doesn't exist yet — no validation needed
+    } else {
+      throw e;
+    }
+  }
+  return { PhysicalResourceId: domainName + "-vpc-check" };
+};
+      `),
+    });
+
+    validationFn.addToRolePolicy(new PolicyStatement({
+      actions: ['es:DescribeDomain'],
+      resources: [`arn:${this.partition}:es:${this.region}:${this.account}:domain/${domainName}`],
+    }));
+
+    const provider = new Provider(this, 'VpcValidationProvider', {
+      onEventHandler: validationFn,
+    });
+
+    return new CustomResource(this, 'VpcValidation', {
+      serviceToken: provider.serviceToken,
+      properties: {
+        DomainName: domainName,
+        ExpectedVpcId: expectedVpcId,
+      },
+    });
+  }
+
   constructor(scope: Construct, id: string, props: OpensearchDomainStackProps) {
     super(scope, id, props);
 
@@ -113,6 +174,11 @@ export class OpenSearchDomainStack extends Stack {
     if (props.vpcDetails.vpc.vpcId == "vpc-12345") {
         return
     }
+
+    // Validate that an existing domain's VPC matches the VPC being deployed to.
+    // OpenSearch domains cannot be moved between VPCs — attempting to do so produces
+    // a confusing "subnets must be in the same VPC" error from the service.
+    const vpcValidation = this.createVpcValidation(props.domainName, props.vpcDetails.vpc.vpcId)
 
     // Retrieve existing account resources if defined
     const earKmsKey: IKey|undefined = props.encryptionAtRestKmsKeyARN && props.encryptionAtRestEnabled ?
@@ -206,6 +272,11 @@ export class OpenSearchDomainStack extends Stack {
       zoneAwareness: zoneAwarenessConfig,
       removalPolicy: props.domainRemovalPolicy
     });
+
+    // Ensure VPC validation completes before domain create/update
+    if (vpcValidation) {
+      domain.node.addDependency(vpcValidation)
+    }
 
     generateClusterExports(this, domain.domainEndpoint, props.clusterId, props.stage, props.vpcDetails.subnetSelection, props.vpcDetails.clusterAccessSecurityGroup?.securityGroupId)
   }
