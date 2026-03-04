@@ -1,0 +1,20 @@
+{
+  "stage": "prod",
+  "vpcAZCount": 2,
+  "clusters": [
+    {
+      "clusterId": "search",
+      "clusterVersion": "OS_2.19",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "dataNodeType": "r6g.xlarge.search",
+      "dataNodeCount": 2,
+      "dedicatedManagerNodeType": "m6g.large.search",
+      "dedicatedManagerNodeCount": 3,
+      "ebsEnabled": true,
+      "ebsVolumeSize": 500,
+      "ebsVolumeType": "GP3",
+      "ebsThroughput": 250,
+      "domainRemovalPolicy": "RETAIN"
+    }
+  ]
+}

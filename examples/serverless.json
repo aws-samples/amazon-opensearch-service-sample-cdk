@@ -1,0 +1,12 @@
+{
+  "stage": "dev",
+  "clusters": [
+    {
+      "clusterId": "embeddings",
+      "clusterType": "OPENSEARCH_SERVERLESS",
+      "collectionType": "VECTORSEARCH",
+      "standbyReplicas": "DISABLED",
+      "domainRemovalPolicy": "DESTROY"
+    }
+  ]
+}

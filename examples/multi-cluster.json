@@ -1,0 +1,36 @@
+{
+  "stage": "prod",
+  "vpcAZCount": 3,
+  "clusters": [
+    {
+      "clusterId": "search",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "clusterVersion": "OS_2.19",
+      "dataNodeType": "r6g.xlarge.search",
+      "dataNodeCount": 6,
+      "dedicatedManagerNodeType": "m6g.large.search",
+      "dedicatedManagerNodeCount": 3,
+      "ebsEnabled": true,
+      "ebsVolumeSize": 500,
+      "ebsVolumeType": "GP3",
+      "ebsThroughput": 250,
+      "domainRemovalPolicy": "RETAIN"
+    },
+    {
+      "clusterId": "logs",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "clusterVersion": "OS_2.19",
+      "dataNodeType": "r6g.2xlarge.search",
+      "dataNodeCount": 6,
+      "ebsEnabled": true,
+      "ebsVolumeSize": 2048,
+      "domainRemovalPolicy": "RETAIN"
+    },
+    {
+      "clusterId": "vectors",
+      "clusterType": "OPENSEARCH_SERVERLESS",
+      "collectionType": "VECTORSEARCH",
+      "standbyReplicas": "ENABLED"
+    }
+  ]
+}
