@@ -2,10 +2,11 @@
   <img src="https://opensearch.org/assets/brand/SVG/Mark/opensearch_mark_default.svg" alt="OpenSearch" width="64" height="64">
 </p>
 
-<h1 align="center">Amazon OpenSearch Service CDK</h1>
+<h1 align="center">Amazon OpenSearch Service Sample CDK</h1>
 
 <p align="center">
-  Production-ready CDK infrastructure for deploying OpenSearch managed domains and serverless collections to AWS.<br>
+  A sample CDK project demonstrating how to deploy OpenSearch managed domains and serverless collections to AWS.<br>
+  Use as a reference, starting point, or learning resource for your own OpenSearch infrastructure.<br>
   Multi-cluster · Serverless · CloudFormation templates · Secure defaults · Zero runtime dependencies.
 </p>
 
@@ -19,9 +20,11 @@
 
 ---
 
+> **📦 This is an [AWS Samples](https://github.com/aws-samples) project.** It is released as a sample/reference implementation — not an officially supported AWS service or product. Use it as a starting point, adapt it to your needs, and contribute back if you find improvements.
+
 ## Why This Project?
 
-Standing up OpenSearch on AWS involves VPC networking, security groups, encryption policies, EBS tuning, and more — all before you write your first query. This project gives you a single JSON config that handles all of it:
+Standing up OpenSearch on AWS involves VPC networking, security groups, encryption policies, EBS tuning, and more — all before you write your first query. This sample project shows you how to handle all of it with a single JSON config:
 
 - **Managed domains** with VPC isolation, encryption at rest, node-to-node encryption, and TLS 1.2 enforced by default
 - **Serverless collections** (Search, Time Series, Vector Search) with zero VPC overhead
@@ -101,7 +104,7 @@ npm run validate -- --context contextFile=my-cluster.json
 cdk deploy "*" --context contextFile=my-cluster.json --require-approval never --concurrency 3
 ```
 
-This creates a VPC with public/private subnets across 2 AZs, a security group, and an OpenSearch domain — all wired together with secure defaults.
+This creates a VPC with public/private subnets across 2 AZs, a security group, and an OpenSearch domain — all wired together with secure defaults. Adapt the config to match your requirements.
 
 ### 6. Tear Down
 
@@ -170,7 +173,7 @@ cdk deploy "*" --context contextFile=examples/single-domain.json --require-appro
 
 ### Single Managed Domain
 
-The simplest production-ready config — a single domain with secure defaults:
+A sample config for a single domain with secure defaults:
 
 ```json
 {
@@ -396,7 +399,7 @@ graph TD
 
 ## Secure Defaults
 
-Every domain is deployed with security best practices out of the box:
+Every domain deployed with this sample uses security best practices out of the box:
 
 | Setting | Default | Why |
 |---------|---------|-----|
@@ -498,7 +501,7 @@ cdk diff           # Compare with deployed stacks
 
 ### Using as a Library
 
-This package can be consumed as a CDK construct library:
+This sample can also be consumed as a CDK construct library in your own projects:
 
 ```typescript
 import { StackComposer } from 'opensearch-service-domain-cdk';
@@ -531,4 +534,4 @@ Full changelog: [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
-This project is licensed under the [MIT-0](LICENSE) License.
+This sample code is licensed under the [MIT-0](LICENSE) License. See the [LICENSE](LICENSE) file.
