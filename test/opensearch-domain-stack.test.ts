@@ -228,7 +228,7 @@ describe('OpenSearch Domain Stack Tests', () => {
     domainTemplate.resourceCountIs("AWS::OpenSearchService::Domain", 1)
   })
 
-  test('Test ebsThroughput is set via CFN escape hatch', () => {
+  test('Test ebsThroughput is set on EBS options', () => {
     const contextOptions = {
       ebsEnabled: true,
       ebsVolumeType: "GP3",
