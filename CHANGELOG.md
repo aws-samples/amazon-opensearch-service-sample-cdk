@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.1.8 - 2026-03-04
+
+### Fixed
+- EBS `iops` and `throughput` are now only set when the volume type supports them: `iops` for GP3/IO1/IO2, `throughput` for GP3 only. Previously these values were passed for all volume types, which could cause CloudFormation errors.
+
+### Added
+- Test for non-GP3 volume types verifying iops/throughput are not set
+
 ## 0.1.7 - 2026-03-04
 
 ### Changed

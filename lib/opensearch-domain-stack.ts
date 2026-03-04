@@ -223,6 +223,12 @@ exports.handler = async (event) => {
 
     const ebsVolumeType = props.ebsVolumeTypeName ? this.getEbsVolumeType(props.ebsVolumeTypeName) : undefined
 
+    // Only GP3, IO1, and IO2 support custom IOPS; only GP3 supports custom throughput
+    const supportsIops = ebsVolumeType === EbsDeviceVolumeType.GP3
+        || ebsVolumeType === EbsDeviceVolumeType.IO1
+        || ebsVolumeType === EbsDeviceVolumeType.IO2
+    const supportsThroughput = ebsVolumeType === EbsDeviceVolumeType.GP3
+
     let accessPolicies: PolicyStatement[] | undefined
     if (props.openAccessPolicyEnabled) {
       accessPolicies = [this.createOpenAccessPolicy(props.domainName)]
@@ -257,8 +263,8 @@ exports.handler = async (event) => {
       tlsSecurityPolicy: props.tlsSecurityPolicy,
       ebs: {
         enabled: props.ebsEnabled,
-        iops: props.ebsIops,
-        throughput: props.ebsThroughput,
+        iops: supportsIops ? props.ebsIops : undefined,
+        throughput: supportsThroughput ? props.ebsThroughput : undefined,
         volumeSize: props.ebsVolumeSize,
         volumeType: ebsVolumeType
       },
