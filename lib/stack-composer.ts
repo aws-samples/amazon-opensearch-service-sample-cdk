@@ -1,6 +1,7 @@
 import {Construct} from "constructs";
 import {Stack, StackProps} from "aws-cdk-lib";
 import {createOpenSearchStack} from "./opensearch-domain-stack";
+import {createServerlessStack} from "./serverless-collection-stack";
 import * as defaultValuesJson from "../default-values.json"
 import * as defaultClusterValuesJson from "../default-cluster-values.json"
 import {NetworkStack} from "./network-stack";
@@ -80,15 +81,20 @@ export class StackComposer {
         for (const rawConfig of clusters) {
             const config = parseClusterConfig(rawConfig, defaultClusterValues, stage)
             const resolvedType = parseClusterType(config.clusterType, config.clusterId)
-            const clusterVpcDetails = new VpcDetails(vpcId, networkStack?.vpc, config.clusterSubnetIds, networkStack?.clusterAccessSecurityGroup)
 
             switch (resolvedType) {
                 case ClusterType.OPENSEARCH_MANAGED_SERVICE: {
+                    const clusterVpcDetails = new VpcDetails(vpcId, networkStack?.vpc, config.clusterSubnetIds, networkStack?.clusterAccessSecurityGroup)
                     const clusterStack = createOpenSearchStack(scope, config, clusterVpcDetails, stage, region, props.env)
                     if (networkStack) {
                         clusterStack.addDependency(networkStack)
                     }
                     this.stacks.push(clusterStack);
+                    break;
+                }
+                case ClusterType.OPENSEARCH_SERVERLESS: {
+                    const serverlessStack = createServerlessStack(scope, config, stage, region, props.env)
+                    this.stacks.push(serverlessStack);
                     break;
                 }
             }
