@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.1.10 - 2026-03-04
+
+### Security
+- Pinned all GitHub Actions to commit SHAs instead of mutable tags (security best practice to prevent supply chain attacks):
+  - `actions/checkout@v6` → `actions/checkout@de0fac2e`
+  - `actions/setup-node@v6` → `actions/setup-node@53b83947`
+  - `softprops/action-gh-release@v2` → `softprops/action-gh-release@a06a81a0`
+  - `lycheeverse/lychee-action@v2` → `lycheeverse/lychee-action@8646ba30`
+
 ## 0.1.9 - 2026-03-04
 
 ### Changed
