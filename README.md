@@ -1,6 +1,12 @@
 # AWS OpenSearch Service CDK
 
-CDK infrastructure for deploying OpenSearch Service domains to AWS. Supports VPC-based deployments with configurable networking, security, and storage options.
+CDK infrastructure for deploying OpenSearch Service domains and serverless collections to AWS. Supports multi-cluster deployments, VPC-based networking, and configurable security/storage options.
+
+> **Upgrading from 0.1.x?** See the [v0.1.10 README](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/blob/v0.1.10/README.md) for the previous API. Key breaking changes in 0.2.x:
+> - `StackPropsExt` removed — stacks use inline `stage` prop
+> - `createOpenSearchStack`/`createServerlessStack` factory functions removed
+> - `VpcDetails` is now immutable with static factory methods
+> - NetworkStack only created when managed clusters need it
 
 ## Quick Start
 
@@ -9,7 +15,7 @@ npm install
 cdk bootstrap  # first time only
 ```
 
-Create a `cdk.context.json`:
+Create a context file (e.g. `my-cluster.json`):
 ```json
 {
   "stage": "dev",
@@ -26,12 +32,82 @@ Create a `cdk.context.json`:
 
 Deploy:
 ```bash
-cdk deploy "*" --require-approval never --concurrency 3
+cdk deploy "*" --context contextFile=my-cluster.json --require-approval never --concurrency 3
 ```
+
+## Multi-Cluster Deployments
+
+Deploy multiple clusters (managed + serverless) from a single config:
+
+```json
+{
+  "stage": "prod",
+  "vpcAZCount": 3,
+  "clusters": [
+    {
+      "clusterId": "search",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "clusterVersion": "OS_2.19",
+      "dataNodeType": "r6g.xlarge.search",
+      "dataNodeCount": 6,
+      "dedicatedManagerNodeType": "m6g.large.search",
+      "dedicatedManagerNodeCount": 3,
+      "ebsEnabled": true,
+      "ebsVolumeSize": 500,
+      "ebsVolumeType": "GP3",
+      "ebsThroughput": 250,
+      "nodeToNodeEncryption": true,
+      "domainRemovalPolicy": "RETAIN"
+    },
+    {
+      "clusterId": "logs",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "clusterVersion": "OS_2.19",
+      "dataNodeType": "r6g.2xlarge.search",
+      "dataNodeCount": 6,
+      "ebsEnabled": true,
+      "ebsVolumeSize": 2048,
+      "domainRemovalPolicy": "RETAIN"
+    },
+    {
+      "clusterId": "vectors",
+      "clusterType": "OPENSEARCH_SERVERLESS",
+      "collectionType": "VECTORSEARCH",
+      "standbyReplicas": "ENABLED"
+    }
+  ]
+}
+```
+
+This creates:
+- 1 shared VPC (NetworkStack) — used by both managed clusters
+- 2 managed OpenSearch domains (search + logs)
+- 1 serverless collection (vectors) — no VPC needed
+
+## Serverless Collections
+
+Deploy an OpenSearch Serverless collection without any VPC:
+
+```json
+{
+  "stage": "dev",
+  "clusters": [
+    {
+      "clusterId": "search",
+      "clusterType": "OPENSEARCH_SERVERLESS",
+      "collectionType": "SEARCH",
+      "standbyReplicas": "DISABLED",
+      "domainRemovalPolicy": "DESTROY"
+    }
+  ]
+}
+```
+
+Collection types: `SEARCH`, `TIMESERIES`, `VECTORSEARCH`
 
 ## Deploy Without CDK (CloudFormation Templates)
 
-Each [GitHub Release](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/releases) includes pre-synthesized CloudFormation templates that can be deployed directly:
+Each [GitHub Release](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/releases) includes pre-synthesized CloudFormation templates:
 
 ```bash
 # 1. Deploy the VPC
@@ -58,83 +134,90 @@ aws cloudformation create-stack \
     ParameterKey=EBSVolumeSize,ParameterValue=200
 ```
 
-## Configuration Options
+## Configuration Reference
 
 ### General Options
 
 | Name     | Type   | Example | Description |
 |----------|--------|---------|:------------|
-| stage    | string | "dev"   | **Required.** Environment name for resource labelling |
-| clusters | JSON   | See above | JSON array of cluster objects |
+| stage    | string | "dev"   | **Required.** Environment name (max 15 chars) |
+| clusters | array  | See above | Array of cluster configurations |
 
 ### VPC Options
 
 | Name       | Type   | Example                 | Description |
 |------------|--------|-------------------------|:------------|
 | vpcId      | string | "vpc-123456789abcdefgh" | Use an existing VPC instead of creating one |
-| vpcAZCount | number | 2                       | Number of AZs for the created VPC (1-3). Not compatible with `vpcId` |
-| vpcCidr    | string | "10.212.0.0/16"         | Custom CIDR for the created VPC. Not compatible with `vpcId` |
+| vpcAZCount | number | 2                       | AZ count for created VPC (1-3). Incompatible with `vpcId` |
+| vpcCidr    | string | "10.212.0.0/16"         | CIDR for created VPC. Incompatible with `vpcId` |
 
-### Cluster Options
+### Cluster Options (all types)
 
-| Name                    | Type         | Example | Description |
-|-------------------------|--------------|---------|:------------|
-| clusterId               | string       | "payment-search" | **Required.** Unique cluster identifier |
-| clusterType             | string       | "OPENSEARCH_MANAGED_SERVICE" | **Required.** Cluster type |
-| clusterName             | string       | "search-cluster-dev" | Custom name (defaults to `cluster-<stage>-<clusterId>`) |
-| clusterVersion          | string       | "OS_2.19" | Engine version (`OS_x.y` or `ES_x.y`) |
-| clusterSubnetIds        | string[]     | ["subnet-abc", "subnet-def"] | Subnet IDs for imported VPC. Requires `vpcId` |
-| clusterSecurityGroupIds | string[]     | ["sg-abc"] | Security group IDs. Requires `vpcId` |
+| Name                    | Type     | Example                        | Description |
+|-------------------------|----------|--------------------------------|:------------|
+| clusterId               | string   | "payment-search"               | **Required.** Unique identifier (max 15 chars) |
+| clusterType             | string   | "OPENSEARCH_MANAGED_SERVICE"   | **Required.** `OPENSEARCH_MANAGED_SERVICE` or `OPENSEARCH_SERVERLESS` |
+| clusterName             | string   | "my-domain"                    | Custom name (default: `cluster-<stage>-<clusterId>`) |
+| domainRemovalPolicy     | string   | "DESTROY"                      | `RETAIN` (default) or `DESTROY` |
 
-### OpenSearch Domain Options
+### Managed Domain Options
 
 | Name | Type | Default | Description |
 |------|------|---------|:------------|
+| clusterVersion | string | OS_2.19 | Engine version (`OS_x.y` or `ES_x.y`) |
+| clusterSubnetIds | string[] | — | Subnet IDs for imported VPC |
+| clusterSecurityGroupIds | string[] | — | Security group IDs for imported VPC |
 | dataNodeType | string | — | Data node instance type |
 | dataNodeCount | number | AZ count | Number of data nodes |
 | dedicatedManagerNodeType | string | — | Manager node instance type |
 | dedicatedManagerNodeCount | number | — | Number of manager nodes |
 | warmNodeType | string | — | Warm node instance type |
 | warmNodeCount | number | — | Number of warm nodes |
-| ebsEnabled | boolean | — | Attach EBS volumes to data nodes |
+| ebsEnabled | boolean | — | Attach EBS volumes |
 | ebsVolumeSize | number | — | EBS volume size (GiB) |
 | ebsVolumeType | string | GP3 | EBS volume type |
-| ebsIops | number | — | EBS IOPS |
-| ebsThroughput | number | — | EBS throughput (MiB/s, GP3 only) |
+| ebsIops | number | — | IOPS (GP3/IO1/IO2 only) |
+| ebsThroughput | number | — | Throughput MiB/s (GP3 only) |
 | encryptionAtRestEnabled | boolean | true | Encrypt data at rest |
-| encryptionAtRestKmsKeyARN | string | — | KMS key for encryption at rest |
+| encryptionAtRestKmsKeyARN | string | — | KMS key ARN |
 | nodeToNodeEncryptionEnabled | boolean | true | Node-to-node encryption |
 | enforceHTTPS | boolean | true | Require HTTPS |
 | tlsSecurityPolicy | string | TLS_1_2 | Minimum TLS version |
-| openAccessPolicyEnabled | boolean | false | Open access policy (VPC-only domains) |
-| accessPolicies | JSON | — | IAM access policies |
-| useUnsignedBasicAuth | boolean | false | Enable unsigned basic auth |
+| openAccessPolicyEnabled | boolean | false | Open access policy |
+| accessPolicies | object | — | IAM access policies |
+| useUnsignedBasicAuth | boolean | false | Unsigned basic auth |
 | fineGrainedManagerUserARN | string | — | Manager user IAM ARN |
-| fineGrainedManagerUserSecretARN | string | — | Manager user Secrets Manager ARN |
-| enableDemoAdmin | boolean | false | Demo admin (admin/myStrongPassword123!) |
-| loggingAppLogEnabled | boolean | — | Enable application logging |
+| fineGrainedManagerUserSecretARN | string | — | Manager user secret ARN |
+| enableDemoAdmin | boolean | false | Demo admin credentials |
+| loggingAppLogEnabled | boolean | — | Application logging |
 | loggingAppLogGroupARN | string | — | CloudWatch log group ARN |
-| domainRemovalPolicy | string | RETAIN | Stack deletion policy (RETAIN/DESTROY) |
+
+### Serverless Collection Options
+
+| Name | Type | Default | Description |
+|------|------|---------|:------------|
+| collectionType | string | SEARCH | `SEARCH`, `TIMESERIES`, or `VECTORSEARCH` |
+| standbyReplicas | string | ENABLED | `ENABLED` or `DISABLED` |
 
 ### Context Precedence
 
 1. CDK CLI context (`-c stage=dev2`) — highest
-2. `cdk.context.json` file
-3. `default-values.json` defaults
+2. Context file (`--context contextFile=my-cluster.json`)
+3. `cdk.context.json`
+4. `default-values.json` / `default-cluster-values.json`
 
 ## VPC Mismatch Protection
 
-OpenSearch domains cannot be moved between VPCs. If the NetworkStack is recreated with a new VPC while an existing domain remains in the old VPC, the deployment will fail early with a clear error:
+OpenSearch domains cannot be moved between VPCs. If the NetworkStack is recreated with a new VPC while an existing domain remains in the old VPC, the deployment fails early with a clear error:
 
 ```
 VPC mismatch: OpenSearch domain 'my-domain' exists in VPC vpc-old123 but the deployment
-targets VPC vpc-new456. OpenSearch domains cannot be moved between VPCs. Delete the
-existing domain (and its CloudFormation stack) first, then redeploy.
+targets VPC vpc-new456. Delete the existing domain stack first, then redeploy.
 ```
 
 ## Releasing
 
-Releases are automated via GitHub Actions:
+Automated via GitHub Actions:
 
 **One-click:** Actions → "Version Bump" → Run workflow → select `patch`/`minor`/`prerelease`
 
@@ -155,7 +238,7 @@ Each release includes:
 cdk destroy "*"
 ```
 
-Note: The default `domainRemovalPolicy` is `RETAIN`. Set to `DESTROY` to delete the domain on stack deletion.
+Note: Default `domainRemovalPolicy` is `RETAIN`. Set to `DESTROY` to delete domains on stack deletion.
 
 ## Development
 
