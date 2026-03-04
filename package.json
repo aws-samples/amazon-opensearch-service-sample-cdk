@@ -8,7 +8,7 @@
     "elasticsearch",
     "infrastructure"
   ],
-  "version": "0.1.8",
+  "version": "0.1.9",
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
   "files": [
@@ -58,11 +58,10 @@
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.56.1"
-  },
-  "dependencies": {
+    "typescript-eslint": "^8.56.1",
     "source-map-support": "^0.5.21"
   },
+  "dependencies": {},
   "peerDependencies": {
     "aws-cdk-lib": "^2.150.0",
     "constructs": "^10.4.2"
