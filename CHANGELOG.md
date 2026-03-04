@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.1.5 - 2026-03-04
+
+### Added
+- VPC mismatch validation: a custom resource now checks that an existing OpenSearch domain's VPC matches the VPC being deployed to, failing fast with a clear error message instead of the confusing "subnets must be in the same VPC" CloudFormation error
+- This prevents silent failures when the NetworkStack is recreated with a new VPC while the OpenSearch domain still exists in the old VPC
+
 ## 0.1.4 - 2026-03-04
 
 ### Changed
