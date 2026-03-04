@@ -250,6 +250,29 @@ describe('OpenSearch Domain Stack Tests', () => {
     })
   })
 
+  test('Test default GP3 volume type allows ebsIops and ebsThroughput without explicit volume type', () => {
+    const contextOptions = {
+      ebsEnabled: true,
+      ebsVolumeSize: 100,
+      ebsIops: 4000,
+      ebsThroughput: 250,
+    }
+
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
+
+    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
+    const domainTemplate = Template.fromStack(domainStack)
+    domainTemplate.hasResourceProperties("AWS::OpenSearchService::Domain", {
+      EBSOptions: {
+        EBSEnabled: true,
+        VolumeSize: 100,
+        VolumeType: "gp3",
+        Iops: 4000,
+        Throughput: 250,
+      }
+    })
+  })
+
 })
 
 /*
