@@ -9,7 +9,7 @@
       "dataNodeType": "r6g.xlarge.search",
       "dataNodeCount": 2,
       "dedicatedManagerNodeType": "m6g.large.search",
-      "dedicatedManagerNodeCount": 3,
+      "dedicatedManagerNodeCount": 2,
       "ebsEnabled": true,
       "ebsVolumeSize": 500,
       "ebsVolumeType": "GP3",
