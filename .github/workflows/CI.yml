@@ -41,6 +41,7 @@ jobs:
             --accept=200,403,429
             --exclude "http://localhost*"
             --exclude "https://localhost*"
+            --exclude "https://opencollective.com/*"
             "**/*.html" "**/*.md" "**/*.txt" "**/*.json"
           fail: true
         env:
