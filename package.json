@@ -1,9 +1,10 @@
 {
   "name": "opensearch-service-domain-cdk",
   "description": "CDK infrastructure for deploying search clusters to AWS",
-  "version": "0.1.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "keywords": ["aws", "cdk", "opensearch", "elasticsearch", "infrastructure"],
+  "version": "0.1.1",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
   "files": [
     "dist/",
     "README.md",
@@ -11,8 +12,8 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "import": "./dist/lib/index.js",
+      "require": "./dist/lib/index.js"
     },
     "./package.json": "./package.json"
   },
