@@ -28,6 +28,17 @@ jobs:
       - name: Run CDK Jest Tests
         run: npm run test
 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.node-version }}
+      - run: npm ci
+      - run: npm run build
+      - run: npm pack --dry-run
+
   link-checker:
     runs-on: ubuntu-latest
     steps:
@@ -52,6 +63,7 @@ jobs:
     needs:
       - link-checker
       - node-tests
+      - build
     if: always()
     runs-on: ubuntu-latest
     steps:
