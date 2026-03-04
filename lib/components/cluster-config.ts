@@ -36,4 +36,8 @@ export interface ClusterConfig {
     openAccessPolicyEnabled?: boolean;
     accessPolicies?: object;
     domainRemovalPolicy?: RemovalPolicy;
+
+    // OpenSearch Serverless options
+    collectionType?: string;
+    standbyReplicas?: string;
 }

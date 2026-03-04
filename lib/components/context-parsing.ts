@@ -129,5 +129,9 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         openAccessPolicyEnabled: getContextForType('openAccessPolicyEnabled', 'boolean', defaults, config),
         accessPolicies: getContextForType('accessPolicies', 'object', defaults, config),
         domainRemovalPolicy,
+
+        // Serverless
+        collectionType: getContextForType('collectionType', 'string', defaults, config),
+        standbyReplicas: getContextForType('standbyReplicas', 'string', defaults, config),
     };
 }

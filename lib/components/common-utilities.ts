@@ -11,6 +11,7 @@ export const LATEST_AOS_VERSION = "OS_2.19"
 
 export enum ClusterType {
     OPENSEARCH_MANAGED_SERVICE = 'OPENSEARCH_MANAGED_SERVICE',
+    OPENSEARCH_SERVERLESS = 'OPENSEARCH_SERVERLESS',
 }
 
 export function parseClusterType(input: string, clusterId: string): ClusterType {
