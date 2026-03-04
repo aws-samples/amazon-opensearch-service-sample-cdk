@@ -156,6 +156,7 @@ export class OpenSearchDomainStack extends Stack {
     }
 
     const ebsVolumeType = props.ebsVolumeTypeName ? this.getEbsVolumeType(props.ebsVolumeTypeName) : undefined
+    const isGp3 = ebsVolumeType === EbsDeviceVolumeType.GP3
 
     let accessPolicies: PolicyStatement[] | undefined
     if (props.openAccessPolicyEnabled) {
@@ -191,8 +192,8 @@ export class OpenSearchDomainStack extends Stack {
       tlsSecurityPolicy: props.tlsSecurityPolicy,
       ebs: {
         enabled: props.ebsEnabled,
-        iops: props.ebsIops,
-        throughput: props.ebsThroughput,
+        iops: isGp3 ? props.ebsIops : undefined,
+        throughput: isGp3 ? props.ebsThroughput : undefined,
         volumeSize: props.ebsVolumeSize,
         volumeType: ebsVolumeType
       },

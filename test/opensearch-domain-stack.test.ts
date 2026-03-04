@@ -1,7 +1,7 @@
 import { Template } from 'aws-cdk-lib/assertions';
 import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
 import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
-import {describe, afterEach, test, jest} from '@jest/globals';
+import {describe, afterEach, test, jest, expect} from '@jest/globals';
 import {ClusterType} from "../lib/components/common-utilities";
 
 describe('OpenSearch Domain Stack Tests', () => {
@@ -248,6 +248,32 @@ describe('OpenSearch Domain Stack Tests', () => {
         Throughput: 250,
       }
     })
+  })
+
+  test('Test ebsIops and ebsThroughput are ignored when volume type is not GP3', () => {
+    const contextOptions = {
+      ebsEnabled: true,
+      ebsVolumeSize: 100,
+      ebsIops: 4000,
+      ebsThroughput: 250,
+    }
+
+    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
+
+    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
+    const domainTemplate = Template.fromStack(domainStack)
+    domainTemplate.hasResourceProperties("AWS::OpenSearchService::Domain", {
+      EBSOptions: {
+        EBSEnabled: true,
+        VolumeSize: 100,
+      }
+    })
+    // Verify iops and throughput are NOT present in the EBS options
+    const resources = domainTemplate.findResources("AWS::OpenSearchService::Domain")
+    const domainResource = Object.values(resources)[0]
+    const ebsOptions = domainResource.Properties.EBSOptions
+    expect(ebsOptions.Iops).toBeUndefined()
+    expect(ebsOptions.Throughput).toBeUndefined()
   })
 
 })
