@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.1.4 - 2026-03-04
+
+### Changed
+- CI `node-tests` job now runs a matrix across all non-deprecated Node.js versions: 20.x, 22.x, 24.x (LTS), and 25.x (latest)
+- Updated `engines.node` to `>=20` (Node 18 is EOL)
+
 ## 0.1.3 - 2026-03-04
 
 ### Added
