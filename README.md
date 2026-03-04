@@ -368,26 +368,23 @@ Configuration values are resolved in this order (highest priority first):
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  my-cluster.json                                                │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                      │
-│  │ cluster 1│  │ cluster 2│  │ cluster 3│  ...                  │
-│  │ managed  │  │ managed  │  │serverless│                       │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘                      │
-└───────┼──────────────┼─────────────┼────────────────────────────┘
-        │              │             │
-        ▼              ▼             ▼
-   StackComposer (reads config, creates stacks)
-        │              │             │
-        ▼              ▼             ▼
-  ┌───────────┐  ┌───────────┐  ┌──────────────────┐
-  │ Network   │  │ OpenSearch │  │ Serverless       │
-  │ Stack     │◄─┤ Domain    │  │ Collection Stack │
-  │ (shared)  │  │ Stack(s)  │  │ (no VPC needed)  │
-  └───────────┘  └───────────┘  └──────────────────┘
-   VPC, subnets,   Managed         Encryption, network,
-   NAT, SG         domains         & data access policies
+```mermaid
+graph TD
+    Config["📄 my-cluster.json"]
+
+    Config --> C1["cluster 1<br/><i>managed</i>"]
+    Config --> C2["cluster 2<br/><i>managed</i>"]
+    Config --> C3["cluster 3<br/><i>serverless</i>"]
+
+    C1 --> SC["StackComposer<br/><small>reads config, creates stacks</small>"]
+    C2 --> SC
+    C3 --> SC
+
+    SC --> NS["🔒 Network Stack<br/><small>VPC, subnets, NAT, SG</small>"]
+    SC --> DS["🔍 OpenSearch Domain Stack(s)<br/><small>Managed domains</small>"]
+    SC --> SS["⚡ Serverless Collection Stack<br/><small>Encryption, network &amp;<br/>data access policies</small>"]
+
+    DS -- "uses VPC" --> NS
 ```
 
 **Smart VPC handling:**
