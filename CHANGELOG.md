@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.2.0 - 2026-03-04
+
+### Added
+- **OpenSearch Serverless support** — new `OPENSEARCH_SERVERLESS` cluster type for deploying serverless collections
+  - `ServerlessCollectionStack` with encryption, network, and data access policies
+  - Configurable collection types: `SEARCH`, `TIMESERIES`, `VECTORSEARCH`
+  - Configurable standby replicas: `ENABLED` (default), `DISABLED`
+  - Serverless clusters don't require VPC configuration
+- 18 new VpcDetails unit tests (coverage: 39% → 98%)
+- 10 new serverless collection tests (100% coverage)
+
+### Changed
+- **BREAKING:** `ClusterType` enum now includes `OPENSEARCH_SERVERLESS` — consumers using exhaustive switches must handle the new variant
+- **BREAKING:** Full strict TypeScript enabled (`strictPropertyInitialization`) — may surface type errors in downstream code extending these classes
+- `ClusterConfig` interface has new optional fields: `collectionType`, `standbyReplicas`
+- Cleaned up `tsconfig.json` — removed redundant flags already implied by `strict: true`
+- `VpcDetails` properties use definite assignment assertions (`!`) for properties set in `initialize()`
+
 ## 0.1.10 - 2026-03-04
 
 ### Security
