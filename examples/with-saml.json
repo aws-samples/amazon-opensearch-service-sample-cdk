@@ -1,0 +1,23 @@
+{
+  "$schema": "../cluster-config.schema.json",
+  "stage": "dev",
+  "vpcAZCount": 2,
+  "clusters": [
+    {
+      "clusterId": "search",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "clusterVersion": "OS_2.19",
+      "dataNodeType": "r6g.large.search",
+      "dataNodeCount": 2,
+      "ebsEnabled": true,
+      "ebsVolumeSize": 100,
+      "samlEntityId": "https://idp.example.com/metadata",
+      "samlMetadataContent": "<md:EntityDescriptor xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata' entityID='https://idp.example.com/metadata'></md:EntityDescriptor>",
+      "samlMasterUserName": "admin@example.com",
+      "samlRolesKey": "http://schemas.xmlsoap.org/claims/Group",
+      "samlSubjectKey": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+      "samlSessionTimeoutMinutes": 480,
+      "domainRemovalPolicy": "DESTROY"
+    }
+  ]
+}

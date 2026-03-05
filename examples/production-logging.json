@@ -1,0 +1,25 @@
+{
+  "$schema": "../cluster-config.schema.json",
+  "stage": "prod",
+  "vpcAZCount": 3,
+  "clusters": [
+    {
+      "clusterId": "search",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "clusterVersion": "OS_2.19",
+      "dataNodeType": "r6g.xlarge.search",
+      "dataNodeCount": 3,
+      "dedicatedManagerNodeType": "m6g.large.search",
+      "dedicatedManagerNodeCount": 3,
+      "ebsEnabled": true,
+      "ebsVolumeSize": 500,
+      "ebsVolumeType": "GP3",
+      "loggingAppLogEnabled": true,
+      "slowSearchLogEnabled": true,
+      "auditLogEnabled": true,
+      "autoTuneEnabled": true,
+      "offPeakWindowEnabled": true,
+      "domainRemovalPolicy": "RETAIN"
+    }
+  ]
+}

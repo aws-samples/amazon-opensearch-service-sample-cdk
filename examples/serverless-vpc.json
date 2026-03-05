@@ -1,0 +1,15 @@
+{
+  "$schema": "../cluster-config.schema.json",
+  "stage": "dev",
+  "vpcAZCount": 2,
+  "clusters": [
+    {
+      "clusterId": "search",
+      "clusterType": "OPENSEARCH_SERVERLESS",
+      "collectionType": "SEARCH",
+      "createVpcEndpoint": true,
+      "standbyReplicas": "DISABLED",
+      "domainRemovalPolicy": "DESTROY"
+    }
+  ]
+}
