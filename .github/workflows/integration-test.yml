@@ -1,0 +1,68 @@
+name: Integration Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: 'AWS region to deploy to'
+        required: true
+        default: 'us-east-1'
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  node-version: '20.x'
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: ${{ env.node-version }}
+
+      - run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.INTEGRATION_TEST_ROLE_ARN }}
+          aws-region: ${{ inputs.region }}
+
+      - name: Deploy serverless example
+        id: deploy
+        run: |
+          npx cdk deploy "*" \
+            --context contextFile=examples/serverless.json \
+            --require-approval never \
+            --outputs-file cdk-outputs.json
+          echo "deployed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Verify collection endpoint
+        run: |
+          ENDPOINT=$(jq -r '.. | .CollectionEndpoint? // empty' cdk-outputs.json | head -1)
+          echo "Collection endpoint: $ENDPOINT"
+          if [ -z "$ENDPOINT" ]; then
+            echo "ERROR: No collection endpoint found in outputs"
+            exit 1
+          fi
+          # Verify endpoint is reachable (AOSS returns 403 without auth, which is expected)
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$ENDPOINT" || true)
+          echo "HTTP response code: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "000" ]; then
+            echo "ERROR: Collection endpoint is not reachable"
+            exit 1
+          fi
+          echo "Collection endpoint is reachable (HTTP $HTTP_CODE)"
+
+      - name: Tear down
+        if: always() && steps.deploy.outputs.deployed == 'true'
+        run: |
+          npx cdk destroy "*" \
+            --context contextFile=examples/serverless.json \
+            --force
