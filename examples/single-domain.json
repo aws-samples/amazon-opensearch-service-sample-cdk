@@ -15,6 +15,7 @@
       "ebsVolumeSize": 500,
       "ebsVolumeType": "GP3",
       "ebsThroughput": 250,
+      "allowAllVpcTraffic": true,
       "domainRemovalPolicy": "RETAIN"
     }
   ]

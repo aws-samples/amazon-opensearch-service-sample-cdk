@@ -382,7 +382,8 @@ A single CloudFormation stack `OpenSearch-prod-<region>` containing:
 | `auditLogEnabled` | boolean | — | Enable audit log publishing (requires fine-grained access) |
 | `auditLogGroupARN` | string | — | CloudWatch log group ARN for audit logs |
 | `clusterSubnetIds` | string[] | — | Subnet IDs (for imported VPC) |
-| `clusterSecurityGroupIds` | string[] | — | Security group IDs (for imported VPC) |
+| `clusterSecurityGroupIds` | string[] | — | Additional security group IDs to attach to the domain |
+| `allowAllVpcTraffic` | boolean | — | Allow all traffic from the VPC CIDR to the cluster |
 | `coldStorageEnabled` | boolean | — | Enable UltraWarm cold storage (requires warm nodes + dedicated managers) |
 | `multiAZWithStandbyEnabled` | boolean | — | Enable Multi-AZ with Standby |
 | `offPeakWindowEnabled` | boolean | — | Enable off-peak maintenance window |

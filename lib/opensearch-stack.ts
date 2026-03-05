@@ -3,7 +3,7 @@ import {CfnOutput, Stack, StackProps, Tags} from "aws-cdk-lib";
 import {
     CfnInternetGateway, CfnNatGateway, CfnEIP, CfnRouteTable,
     FlowLogDestination, FlowLogTrafficType,
-    IpAddresses, IpProtocol, Port,
+    IpAddresses, IpProtocol, Peer, Port,
     SecurityGroup, Vpc,
 } from "aws-cdk-lib/aws-ec2";
 import {VpcDetails} from "./components/vpc-details";
@@ -38,7 +38,8 @@ export class OpenSearchStack extends Stack {
                 const subnetIds = hasManagedClusters ? managedClusters[0].clusterSubnetIds : undefined;
                 vpcDetails = VpcDetails.fromVpcLookup(this, props.vpcId, clusterId, subnetIds);
             } else {
-                vpcDetails = this.createVpc(stage, props.vpcAZCount, props.vpcCidr);
+                const allowAllVpcTraffic = managedClusters.some(c => c.allowAllVpcTraffic);
+                vpcDetails = this.createVpc(stage, props.vpcAZCount, props.vpcCidr, allowAllVpcTraffic);
             }
         }
 
@@ -56,7 +57,7 @@ export class OpenSearchStack extends Stack {
         }
     }
 
-    private createVpc(stage: string, vpcAZCount?: number, vpcCidr?: string): VpcDetails {
+    private createVpc(stage: string, vpcAZCount?: number, vpcCidr?: string, allowAllVpcTraffic?: boolean): VpcDetails {
         const zoneCount = vpcAZCount ?? 2;
         if (zoneCount < 1 || zoneCount > 3) {
             throw new Error(`The 'vpcAZCount' option must be a number between 1 - 3, but received an AZ count of ${zoneCount}`);
@@ -92,6 +93,11 @@ export class OpenSearchStack extends Stack {
         });
         sg.addIngressRule(sg, Port.allTraffic());
         Tags.of(sg).add("Name", `cluster-access-sg-${stage}`);
+
+        // Allow all traffic from VPC CIDR when any managed cluster requests it
+        if (allowAllVpcTraffic) {
+            sg.addIngressRule(Peer.ipv4(cidr), Port.allTraffic(), 'Allow all traffic from VPC CIDR');
+        }
 
         new CfnOutput(this, `VpcIdExport-${stage}`, {
             exportName: `VpcId-${stage}`,
