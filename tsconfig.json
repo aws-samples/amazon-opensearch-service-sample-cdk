@@ -17,5 +17,5 @@
     "typeRoots": ["./node_modules/@types"],
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "cdk.out", "dist", "test", "bin"]
+  "exclude": ["node_modules", "cdk.out", "dist", "test"]
 }

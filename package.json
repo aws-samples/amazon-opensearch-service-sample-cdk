@@ -48,16 +48,18 @@
     "cdk": "npx cdk",
     "config-coverage": "node scripts/config-coverage.js"
   },
+  "dependencies": {
+    "aws-cdk-lib": "2.241.0",
+    "cdk-nag": "^2.37.55",
+    "constructs": "^10.5.1",
+    "source-map-support": "^0.5.21"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "25.3.3",
     "@vitest/coverage-v8": "^4.0.18",
     "aws-cdk": "2.1109.0",
-    "aws-cdk-lib": "2.241.0",
-    "cdk-nag": "^2.37.55",
-    "constructs": "^10.5.1",
     "eslint": "^10.0.2",
-    "source-map-support": "^0.5.21",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",
