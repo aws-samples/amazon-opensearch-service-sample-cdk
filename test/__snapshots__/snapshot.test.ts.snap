@@ -1074,7 +1074,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
             },
             {
               "id": "AwsSolutions-OS9",
-              "reason": "Slow log publishing is user-configurable via loggingAppLogEnabled context option",
+              "reason": "Log publishing is user-configurable via loggingAppLogEnabled, slowSearchLogEnabled, and auditLogEnabled context options",
             },
           ],
         },
@@ -2272,7 +2272,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
             },
             {
               "id": "AwsSolutions-OS9",
-              "reason": "Slow log publishing is user-configurable via loggingAppLogEnabled context option",
+              "reason": "Log publishing is user-configurable via loggingAppLogEnabled, slowSearchLogEnabled, and auditLogEnabled context options",
             },
           ],
         },

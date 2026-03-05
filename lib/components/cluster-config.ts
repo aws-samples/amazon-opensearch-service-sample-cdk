@@ -51,6 +51,14 @@ export interface ManagedClusterConfig extends BaseClusterConfig {
     encryptionAtRestKmsKeyARN?: string;
     loggingAppLogEnabled?: boolean;
     loggingAppLogGroupARN?: string;
+    /** Enable slow search log publishing */
+    slowSearchLogEnabled?: boolean;
+    /** CloudWatch Log Group ARN for slow search logs */
+    slowSearchLogGroupARN?: string;
+    /** Enable audit log publishing */
+    auditLogEnabled?: boolean;
+    /** CloudWatch Log Group ARN for audit logs */
+    auditLogGroupARN?: string;
     nodeToNodeEncryptionEnabled?: boolean;
     openAccessPolicyEnabled?: boolean;
     accessPolicies?: object;
@@ -66,6 +74,18 @@ export interface ManagedClusterConfig extends BaseClusterConfig {
     samlRolesKey?: string;
     samlSubjectKey?: string;
     samlSessionTimeoutMinutes?: number;
+    /** Cognito User Pool ID for Dashboards authentication */
+    cognitoUserPoolId?: string;
+    /** Cognito Identity Pool ID for Dashboards authentication */
+    cognitoIdentityPoolId?: string;
+    /** IAM Role ARN for Cognito authentication */
+    cognitoRoleArn?: string;
+    /** Custom domain endpoint (e.g. search.example.com) */
+    customEndpoint?: string;
+    /** ACM certificate ARN for the custom endpoint */
+    customEndpointCertificateArn?: string;
+    /** Enable Auto-Tune for automatic performance optimization */
+    autoTuneEnabled?: boolean;
 }
 
 /** A single collection within a serverless collection group */
@@ -85,6 +105,8 @@ export interface ServerlessClusterConfig extends BaseClusterConfig {
     collections?: CollectionEntry[];
     /** IAM principal ARNs for data access policy (default: account root) */
     dataAccessPrincipals?: string[];
+    /** Source IP addresses for network policy restriction (CIDR notation) */
+    sourceIPAddresses?: string[];
 }
 
 /** Discriminated union — use `config.clusterType` to narrow the type */

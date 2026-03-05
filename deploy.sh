@@ -2,20 +2,17 @@
 # deploy.sh — Build and deploy OpenSearch infrastructure via CDK.
 #
 # Usage:
-#   ./deploy.sh --stage dev --context-file config/dev.json
-#   ./deploy.sh --stage prod --context-file config/prod.json --dry-run
-#   ./deploy.sh --stage dev                                   # uses cdk.context.json
+#   ./deploy.sh --context-file config/dev.json
+#   ./deploy.sh --context-file config/prod.json --dry-run
 #
 # Options:
-#   --stage          Required. Deployment stage name (e.g. dev, staging, prod).
-#   --context-file   Optional. Path to a JSON config file (passed as contextFile).
-#   --dry-run        Optional. Run cdk diff instead of cdk deploy.
+#   --context-file      Required. Path to a JSON config file (must contain "stage").
+#   --dry-run           Optional. Run cdk diff instead of cdk deploy.
 #   --require-approval  Optional. CDK approval level (default: broadening).
-#   -h, --help       Show this help message.
+#   -h, --help          Show this help message.
 
 set -euo pipefail
 
-STAGE=""
 CONTEXT_FILE=""
 DRY_RUN=false
 REQUIRE_APPROVAL="broadening"
@@ -27,7 +24,6 @@ usage() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --stage)            STAGE="$2"; shift 2 ;;
     --context-file)     CONTEXT_FILE="$2"; shift 2 ;;
     --dry-run)          DRY_RUN=true; shift ;;
     --require-approval) REQUIRE_APPROVAL="$2"; shift 2 ;;
@@ -36,8 +32,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$STAGE" ]]; then
-  echo "Error: --stage is required" >&2
+if [[ -z "$CONTEXT_FILE" ]]; then
+  echo "Error: --context-file is required" >&2
+  echo "Usage: ./deploy.sh --context-file <path-to-config.json>" >&2
+  exit 1
+fi
+
+if [[ ! -f "$CONTEXT_FILE" ]]; then
+  echo "Error: context file not found: $CONTEXT_FILE" >&2
   exit 1
 fi
 
@@ -46,19 +48,12 @@ echo "Building..."
 npm run build
 
 # Assemble CDK context args
-CDK_ARGS=(-c "stage=$STAGE")
-if [[ -n "$CONTEXT_FILE" ]]; then
-  if [[ ! -f "$CONTEXT_FILE" ]]; then
-    echo "Error: context file not found: $CONTEXT_FILE" >&2
-    exit 1
-  fi
-  CDK_ARGS+=(-c "contextFile=$CONTEXT_FILE")
-fi
+CDK_ARGS=(-c "contextFile=$CONTEXT_FILE")
 
 if [[ "$DRY_RUN" == true ]]; then
   echo "Running cdk diff (dry run)..."
   npx cdk diff "${CDK_ARGS[@]}"
 else
-  echo "Deploying stage '$STAGE'..."
+  echo "Deploying..."
   npx cdk deploy "${CDK_ARGS[@]}" --require-approval "$REQUIRE_APPROVAL"
 fi

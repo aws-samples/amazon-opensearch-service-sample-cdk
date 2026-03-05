@@ -139,7 +139,7 @@
         },
         "enableDemoAdmin": {
           "type": "boolean",
-          "description": "Create a demo admin user (insecure — for testing only)"
+          "description": "Create a demo admin user (insecure - for testing only)"
         },
         "enforceHTTPS": {
           "type": "boolean",
@@ -189,6 +189,22 @@
         "loggingAppLogGroupARN": {
           "type": "string",
           "description": "CloudWatch Log Group ARN for application logs"
+        },
+        "slowSearchLogEnabled": {
+          "type": "boolean",
+          "description": "Enable slow search log publishing"
+        },
+        "slowSearchLogGroupARN": {
+          "type": "string",
+          "description": "CloudWatch Log Group ARN for slow search logs"
+        },
+        "auditLogEnabled": {
+          "type": "boolean",
+          "description": "Enable audit log publishing (requires fine-grained access control)"
+        },
+        "auditLogGroupARN": {
+          "type": "string",
+          "description": "CloudWatch Log Group ARN for audit logs"
         },
         "nodeToNodeEncryptionEnabled": {
           "type": "boolean",
@@ -243,6 +259,30 @@
           "minimum": 1,
           "maximum": 1440,
           "description": "SAML session timeout in minutes (default: 60)"
+        },
+        "cognitoUserPoolId": {
+          "type": "string",
+          "description": "Cognito User Pool ID for Dashboards authentication"
+        },
+        "cognitoIdentityPoolId": {
+          "type": "string",
+          "description": "Cognito Identity Pool ID for Dashboards authentication"
+        },
+        "cognitoRoleArn": {
+          "type": "string",
+          "description": "IAM Role ARN for Cognito authentication"
+        },
+        "customEndpoint": {
+          "type": "string",
+          "description": "Custom domain endpoint (e.g. search.example.com)"
+        },
+        "customEndpointCertificateArn": {
+          "type": "string",
+          "description": "ACM certificate ARN for the custom domain endpoint"
+        },
+        "autoTuneEnabled": {
+          "type": "boolean",
+          "description": "Enable Auto-Tune for automatic performance optimization"
         }
       },
       "additionalProperties": false
@@ -272,12 +312,12 @@
         },
         "vpcEndpointId": {
           "type": "string",
-          "description": "VPC endpoint ID — restricts access to this endpoint (disables public access)"
+          "description": "VPC endpoint ID - restricts access to this endpoint (disables public access)"
         },
         "collections": {
           "type": "array",
           "minItems": 1,
-          "description": "Collection group — multiple collections sharing encryption, network, and data-access policies",
+          "description": "Collection group - multiple collections sharing encryption, network, and data-access policies",
           "items": {
             "type": "object",
             "required": ["collectionName"],
@@ -299,6 +339,11 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "IAM principal ARNs for data access policy (default: account root)"
+        },
+        "sourceIPAddresses": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Source IP addresses (CIDR notation) for network policy restriction"
         }
       },
       "additionalProperties": false

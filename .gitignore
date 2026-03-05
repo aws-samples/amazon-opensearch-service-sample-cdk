@@ -8,6 +8,7 @@ coverage
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+cfn.out
 
 # Intellij
 .idea

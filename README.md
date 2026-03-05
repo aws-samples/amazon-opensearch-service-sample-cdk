@@ -131,40 +131,32 @@ cdk destroy "*"
 <details>
 <summary>Deploy using pre-synthesized CloudFormation templates from GitHub Releases</summary>
 
-Every [GitHub Release](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/releases) includes pre-synthesized, minified CloudFormation templates with full parameter support. No CDK, Node.js, or TypeScript required.
+Every [GitHub Release](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/releases) includes pre-synthesized, minified CloudFormation templates. No CDK, Node.js, or TypeScript required.
 
-**Download the templates** from the latest release, then:
+Since v0.3.0, the architecture uses a **single CloudFormation stack** containing VPC, managed domains, and serverless collections. The release includes separate templates for each deployment type:
+
+| Template | Description |
+|----------|-------------|
+| `cfn-managed-domain.min.json` | Managed domain with VPC networking |
+| `cfn-serverless-collection.min.json` | Serverless collection (no VPC) |
+| `cfn-openSearchStack.min.json` | Combined (managed + serverless) |
+
+**Download the template** from the [latest release](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/releases), then:
 
 ```bash
-# 1. Deploy the VPC
+# Deploy a managed domain (single stack — includes VPC + domain)
 aws cloudformation create-stack \
-  --stack-name opensearch-network \
-  --template-body file://cfn-NetworkStack.min.json \
-  --parameters ParameterKey=Stage,ParameterValue=prod
+  --stack-name opensearch-prod \
+  --template-body file://cfn-managed-domain.min.json \
+  --capabilities CAPABILITY_IAM
 
-# 2. Get the VPC outputs
-SUBNETS=$(aws cloudformation describe-stacks --stack-name opensearch-network \
-  --query 'Stacks[0].Outputs[?OutputKey==`PrivateSubnetIds`].OutputValue' --output text)
-SG=$(aws cloudformation describe-stacks --stack-name opensearch-network \
-  --query 'Stacks[0].Outputs[?OutputKey==`SecurityGroupId`].OutputValue' --output text)
-
-# 3. Deploy the OpenSearch domain
+# Or deploy a serverless collection
 aws cloudformation create-stack \
-  --stack-name opensearch-domain \
-  --template-body file://cfn-OpenSearchDomainStack.min.json \
-  --parameters \
-    ParameterKey=Stage,ParameterValue=prod \
-    ParameterKey=SubnetIds,ParameterValue="$SUBNETS" \
-    ParameterKey=SecurityGroupId,ParameterValue="$SG" \
-    ParameterKey=DataNodeInstanceType,ParameterValue=r6g.xlarge.search \
-    ParameterKey=EBSVolumeSize,ParameterValue=200
+  --stack-name opensearch-serverless \
+  --template-body file://cfn-serverless-collection.min.json
 ```
 
-### CFN Template Parameters
-
-**NetworkStack:** `Stage`, `VpcCidr`, `PublicSubnet1Cidr`, `PublicSubnet2Cidr`, `PrivateSubnet1Cidr`, `PrivateSubnet2Cidr`
-
-**OpenSearchDomainStack:** `Stage`, `SubnetIds`, `SecurityGroupId`, `DomainName`, `EngineVersion`, `DataNodeInstanceType`, `DataNodeCount`, `DedicatedManagerNodeType`, `DedicatedManagerNodeCount`, `EBSVolumeSize`, `EBSVolumeType`, `EBSIops`, `EBSThroughput`
+> **Note:** The pre-built templates use the sample defaults from `bin/cfn-synth.ts`. To customize, clone the repo, edit your JSON config, and run `npx cdk synth` to produce a template tailored to your needs.
 
 </details>
 
@@ -503,8 +495,9 @@ Automated via GitHub Actions. Each release includes:
 | Artifact | Description |
 |----------|-------------|
 | `opensearch-service-domain-cdk-<version>.tgz` | npm package tarball |
-| `cfn-NetworkStack.min.json` | Minified CloudFormation template |
-| `cfn-OpenSearchDomainStack.min.json` | Minified CloudFormation template |
+| `cfn-openSearchStack.min.json` | Combined CloudFormation template (managed + serverless) |
+| `cfn-managed-domain.min.json` | Managed domain only CloudFormation template |
+| `cfn-serverless-collection.min.json` | Serverless collection only CloudFormation template |
 
 **One-click release:** Actions → "Version Bump" → Run workflow → select `patch` / `minor` / `prerelease`
 
