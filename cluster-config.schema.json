@@ -201,6 +201,48 @@
         "accessPolicies": {
           "type": "object",
           "description": "IAM access policy document for the domain"
+        },
+        "coldStorageEnabled": {
+          "type": "boolean",
+          "description": "Enable UltraWarm cold storage"
+        },
+        "multiAZWithStandbyEnabled": {
+          "type": "boolean",
+          "description": "Enable Multi-AZ with Standby"
+        },
+        "offPeakWindowEnabled": {
+          "type": "boolean",
+          "description": "Enable off-peak maintenance window"
+        },
+        "samlEntityId": {
+          "type": "string",
+          "description": "SAML identity provider entity ID"
+        },
+        "samlMetadataContent": {
+          "type": "string",
+          "description": "SAML metadata XML content"
+        },
+        "samlMasterUserName": {
+          "type": "string",
+          "description": "SAML master username for OpenSearch Dashboards"
+        },
+        "samlMasterBackendRole": {
+          "type": "string",
+          "description": "SAML master backend role"
+        },
+        "samlRolesKey": {
+          "type": "string",
+          "description": "SAML assertion element for backend roles"
+        },
+        "samlSubjectKey": {
+          "type": "string",
+          "description": "SAML assertion element for user name"
+        },
+        "samlSessionTimeoutMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1440,
+          "description": "SAML session timeout in minutes (default: 60)"
         }
       },
       "additionalProperties": false

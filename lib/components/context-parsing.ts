@@ -128,6 +128,9 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         'encryptionAtRestEnabled', 'encryptionAtRestKmsKeyARN', 'loggingAppLogEnabled',
         'loggingAppLogGroupARN', 'nodeToNodeEncryptionEnabled', 'openAccessPolicyEnabled',
         'accessPolicies', 'clusterSubnetIds', 'clusterSecurityGroupIds',
+        'coldStorageEnabled', 'multiAZWithStandbyEnabled', 'offPeakWindowEnabled',
+        'samlEntityId', 'samlMetadataContent', 'samlMasterUserName', 'samlMasterBackendRole',
+        'samlRolesKey', 'samlSubjectKey', 'samlSessionTimeoutMinutes',
     ];
     const serverlessOnlyFields = ['collectionType', 'standbyReplicas'];
 
@@ -206,6 +209,16 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         nodeToNodeEncryptionEnabled: getContextForType('nodeToNodeEncryptionEnabled', 'boolean', defaults, config),
         openAccessPolicyEnabled: getContextForType('openAccessPolicyEnabled', 'boolean', defaults, config),
         accessPolicies: getContextForType('accessPolicies', 'object', defaults, config),
+        coldStorageEnabled: getContextForType('coldStorageEnabled', 'boolean', defaults, config),
+        multiAZWithStandbyEnabled: getContextForType('multiAZWithStandbyEnabled', 'boolean', defaults, config),
+        offPeakWindowEnabled: getContextForType('offPeakWindowEnabled', 'boolean', defaults, config),
+        samlEntityId: getContextForType('samlEntityId', 'string', defaults, config),
+        samlMetadataContent: getContextForType('samlMetadataContent', 'string', defaults, config),
+        samlMasterUserName: getContextForType('samlMasterUserName', 'string', defaults, config),
+        samlMasterBackendRole: getContextForType('samlMasterBackendRole', 'string', defaults, config),
+        samlRolesKey: getContextForType('samlRolesKey', 'string', defaults, config),
+        samlSubjectKey: getContextForType('samlSubjectKey', 'string', defaults, config),
+        samlSessionTimeoutMinutes: getContextForType('samlSessionTimeoutMinutes', 'number', defaults, config),
         domainRemovalPolicy,
     } satisfies ManagedClusterConfig;
 }

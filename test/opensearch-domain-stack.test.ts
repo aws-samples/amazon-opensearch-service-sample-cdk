@@ -225,3 +225,63 @@ function assertAlternateDomainTemplate(template: Template) {
         }
     })
 }
+
+describe('Cold Storage, Multi-AZ Standby, Off-Peak Window Tests', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.resetModules();
+    jest.restoreAllMocks();
+  });
+
+  test('Test cold storage enabled', () => {
+    const composer = createStackComposerWithSingleDomainContext({
+      coldStorageEnabled: true,
+      warmNodeType: "ultrawarm1.medium.search",
+      warmNodeCount: 2,
+      dedicatedManagerNodeType: "r6g.large.search",
+      dedicatedManagerNodeCount: 2,
+    })
+    Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchService::Domain", {
+      ClusterConfig: {ColdStorageOptions: {Enabled: true}},
+    })
+  })
+
+  test('Test multi-AZ with standby enabled', () => {
+    const composer = createStackComposerWithSingleDomainContext({multiAZWithStandbyEnabled: true})
+    Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchService::Domain", {
+      ClusterConfig: {MultiAZWithStandbyEnabled: true},
+    })
+  })
+
+  test('Test off-peak window enabled', () => {
+    const composer = createStackComposerWithSingleDomainContext({offPeakWindowEnabled: true})
+    Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchService::Domain", {
+      OffPeakWindowOptions: {Enabled: true},
+    })
+  })
+
+  test('Test SAML authentication', () => {
+    const composer = createStackComposerWithSingleDomainContext({
+      fineGrainedManagerUserARN: "arn:aws:iam::123456789012:user/admin",
+      samlEntityId: "https://idp.example.com",
+      samlMetadataContent: "<xml>metadata</xml>",
+      samlMasterUserName: "admin",
+      samlRolesKey: "Role",
+      samlSessionTimeoutMinutes: 120,
+    })
+    Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchService::Domain", {
+      AdvancedSecurityOptions: {
+        SAMLOptions: {
+          Enabled: true,
+          Idp: {
+            EntityId: "https://idp.example.com",
+            MetadataContent: "<xml>metadata</xml>",
+          },
+          MasterUserName: "admin",
+          RolesKey: "Role",
+          SessionTimeoutMinutes: 120,
+        },
+      },
+    })
+  })
+})

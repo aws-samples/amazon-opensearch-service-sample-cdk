@@ -6,7 +6,7 @@ import {
     IpAddresses, IpProtocol, ISecurityGroup, Port,
     SecurityGroup, SubnetSelection, Vpc,
 } from "aws-cdk-lib/aws-ec2";
-import {Domain, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
+import {Domain, SAMLOptionsProperty, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
 import {IKey, Key} from "aws-cdk-lib/aws-kms";
 import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
@@ -172,6 +172,20 @@ export class OpenSearchStack extends Stack {
             accessPolicies = config.accessPolicies ? this.parseAccessPolicies(config.accessPolicies, config.clusterId) : undefined;
         }
 
+        // SAML authentication
+        let samlAuthenticationOptions: SAMLOptionsProperty | undefined;
+        if (config.samlEntityId && config.samlMetadataContent) {
+            samlAuthenticationOptions = {
+                idpEntityId: config.samlEntityId,
+                idpMetadataContent: config.samlMetadataContent,
+                masterUserName: config.samlMasterUserName,
+                masterBackendRole: config.samlMasterBackendRole,
+                rolesKey: config.samlRolesKey,
+                subjectKey: config.samlSubjectKey,
+                sessionTimeoutMinutes: config.samlSessionTimeoutMinutes,
+            };
+        }
+
         const domain = new Domain(this, `${prefix}-Domain`, {
             version,
             domainName: config.clusterName,
@@ -184,11 +198,14 @@ export class OpenSearchStack extends Stack {
                 masterNodes: config.dedicatedManagerNodeCount,
                 warmInstanceType: config.warmNodeType,
                 warmNodes: config.warmNodeCount,
+                multiAzWithStandbyEnabled: config.multiAZWithStandbyEnabled,
             },
             fineGrainedAccessControl: {
                 masterUserArn: config.fineGrainedManagerUserARN,
                 masterUserName: adminUserSecret ? adminUserSecret.secretValueFromJson('username').toString() : undefined,
                 masterUserPassword: adminUserSecret ? adminUserSecret.secretValueFromJson('password') : undefined,
+                samlAuthenticationEnabled: samlAuthenticationOptions ? true : undefined,
+                samlAuthenticationOptions,
             },
             nodeToNodeEncryption: config.nodeToNodeEncryptionEnabled,
             encryptionAtRest: {
@@ -212,6 +229,8 @@ export class OpenSearchStack extends Stack {
             vpcSubnets: domainSubnets,
             securityGroups,
             zoneAwareness: zoneAwarenessConfig,
+            coldStorageEnabled: config.coldStorageEnabled,
+            offPeakWindowEnabled: config.offPeakWindowEnabled,
             removalPolicy: config.domainRemovalPolicy,
         });
 
