@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Version Series Overview
+
+| Series | Theme | Key Highlights |
+|--------|-------|---------------|
+| **0.3.x** | Single-stack simplification | 4 stacks → 1 `OpenSearchStack`, removed monitoring + VPC Lambda, discriminated JSON Schema, collection groups, SAML auth, cold storage, deploy script |
+| **0.2.x** | Feature expansion + DX | Serverless support, discriminated union types, config validation, cdk-nag, example configs, README rewrite, tagging, snapshot tests |
+| **0.1.x** | Initial stabilization | CI/CD, release workflows, CFN templates, VPC mismatch protection, Node matrix, supply chain hardening |
+
+<details>
+<summary>What changed between 0.2.x and 0.3.x</summary>
+
+- **Architecture**: `NetworkStack` + `OpenSearchDomainStack` + `ServerlessCollectionStack` + `MonitoringStack` consolidated into a single `OpenSearchStack`
+- **Removed**: `MonitoringStack` (CloudWatch alarms), VPC mismatch validation Lambda
+- **Added**: JSON Schema `if/then/else` discriminated validation, serverless collection groups, SAML authentication, cold storage, Multi-AZ with Standby, off-peak window, scoped data access (`dataAccessPrincipals`), `deploy.sh` script, CDK diff in CI
+- **Code**: `common-utilities.ts` slimmed down, `createBasicAuthSecret`/`generateClusterExports` moved to private methods
+
+</details>
+
+<details>
+<summary>What changed between 0.1.x and 0.2.x</summary>
+
+- **Architecture**: Added OpenSearch Serverless support, smart VPC creation (only when managed clusters exist)
+- **API**: `StackPropsExt` → inline props, `VpcDetails` rewritten as immutable, factory functions removed
+- **DX**: README rewrite, example configs, `npm run validate`, `.editorconfig`, cdk-nag, cfn-lint, custom tagging, snapshot tests, JSON Schema, discriminated union types
+- **CI**: Node version matrix, CodeQL security fixes, Dependabot auto-merge, link-checker
+
+</details>
+
 ## 0.3.0 - 2026-07-03
 
 ### Breaking Changes
