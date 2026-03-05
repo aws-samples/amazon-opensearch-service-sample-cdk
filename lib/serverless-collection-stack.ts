@@ -5,11 +5,11 @@ import {
     CfnCollection,
     CfnSecurityPolicy,
 } from "aws-cdk-lib/aws-opensearchserverless";
-import {ClusterConfig} from "./components/cluster-config";
+import {ServerlessClusterConfig} from "./components/cluster-config";
 
 export interface ServerlessCollectionStackProps extends StackProps {
     readonly stage: string;
-    readonly config: ClusterConfig;
+    readonly config: ServerlessClusterConfig;
 }
 
 export class ServerlessCollectionStack extends Stack {

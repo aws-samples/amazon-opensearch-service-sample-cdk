@@ -16,7 +16,7 @@ import {
 } from "./components/context-parsing"
 import {CdkLogger} from "./components/cdk-logger";
 import {VpcDetails} from "./components/vpc-details";
-import {ClusterConfig} from "./components/cluster-config";
+import {ClusterConfig, ManagedClusterConfig, ServerlessClusterConfig} from "./components/cluster-config";
 
 export class StackComposer {
     public stacks: Stack[] = [];
@@ -91,9 +91,10 @@ export class StackComposer {
         for (const { config, type } of parsedClusters) {
             switch (type) {
                 case ClusterType.OPENSEARCH_MANAGED_SERVICE: {
+                    const managedConfig = config as ManagedClusterConfig;
                     const clusterStack = networkStack
                         ? new OpenSearchDomainStack(scope, `openSearchDomainStack-${config.clusterId}`, {
-                            config,
+                            config: managedConfig,
                             vpcDetails: VpcDetails.fromCreatedVpc(networkStack.vpc, networkStack.clusterAccessSecurityGroup),
                             stage,
                             stackName: `OpenSearchDomain-${config.clusterId}-${stage}-${region}`,
@@ -101,7 +102,7 @@ export class StackComposer {
                             env: props.env,
                         })
                         : new OpenSearchDomainStack(scope, `openSearchDomainStack-${config.clusterId}`, {
-                            config,
+                            config: managedConfig,
                             vpcId: vpcId as string,
                             stage,
                             stackName: `OpenSearchDomain-${config.clusterId}-${stage}-${region}`,
@@ -115,8 +116,9 @@ export class StackComposer {
                     break
                 }
                 case ClusterType.OPENSEARCH_SERVERLESS: {
+                    const serverlessConfig = config as ServerlessClusterConfig;
                     const serverlessStack = new ServerlessCollectionStack(scope, `serverlessCollectionStack-${config.clusterId}`, {
-                        config,
+                        config: serverlessConfig,
                         stage,
                         stackName: `OpenSearchServerless-${config.clusterId}-${stage}-${region}`,
                         description: 'This stack contains resources to create/manage an OpenSearch Serverless collection',
