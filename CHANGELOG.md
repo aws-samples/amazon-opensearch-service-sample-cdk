@@ -32,6 +32,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 </details>
 
+## 0.3.2 - 2026-03-05
+
+### Added
+- **DomainEndpoint output**: Full HTTPS endpoint URL (`https://` prefixed) for each managed domain
+- **DomainVpcEndpoint output**: VPC endpoint URL via `DomainEndpoints.vpc` CloudFormation attribute for VPC-enabled domains
+- **DomainArn output**: Domain ARN for IAM policy references
+
+## 0.3.1 - 2026-03-05
+
+### Changed
+- **Documentation**: Added v0.2.x vs v0.3.x migration guide with breaking changes table
+- **Documentation**: Added collapsible `<details>`/`<summary>` sections throughout README for examples, config reference, and migration guides
+- **CHANGELOG**: Added Version Series Overview table and collapsible comparison summaries
+
 ## 0.3.0 - 2026-07-03
 
 ### Breaking Changes
