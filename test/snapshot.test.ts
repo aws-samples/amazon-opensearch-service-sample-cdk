@@ -1,6 +1,6 @@
 import { Template } from "aws-cdk-lib/assertions";
 import { createStackComposer, getStack } from "./test-utils";
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 import { ClusterType } from "../lib/components/common-utilities";
 
 describe('Snapshot Tests', () => {

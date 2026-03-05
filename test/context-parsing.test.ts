@@ -1,11 +1,11 @@
 import { getContextForType, parseClusterConfig } from "../lib/components/context-parsing";
-import { describe, test, expect, jest, afterEach } from '@jest/globals';
+import { describe, test, expect, vi, afterEach } from 'vitest';
 import { CdkLogger } from "../lib/components/cdk-logger";
 
 describe('context-parsing', () => {
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('getContextForType', () => {
@@ -77,7 +77,7 @@ describe('context-parsing', () => {
 
     test('warns when serverless cluster has managed-only fields', () => {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      const warnSpy = jest.spyOn(CdkLogger, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(CdkLogger, 'warn').mockImplementation(() => {});
       parseClusterConfig({
         clusterId: 'test',
         clusterType: 'OPENSEARCH_SERVERLESS',
@@ -91,7 +91,7 @@ describe('context-parsing', () => {
 
     test('warns when managed cluster has serverless-only fields', () => {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      const warnSpy = jest.spyOn(CdkLogger, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(CdkLogger, 'warn').mockImplementation(() => {});
       parseClusterConfig({
         clusterId: 'test',
         clusterType: 'OPENSEARCH_MANAGED_SERVICE',
@@ -104,7 +104,7 @@ describe('context-parsing', () => {
 
     test('does not warn when fields match cluster type', () => {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      const warnSpy = jest.spyOn(CdkLogger, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(CdkLogger, 'warn').mockImplementation(() => {});
       parseClusterConfig({
         clusterId: 'test',
         clusterType: 'OPENSEARCH_SERVERLESS',

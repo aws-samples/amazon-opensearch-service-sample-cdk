@@ -14,7 +14,8 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "experimentalDecorators": true,
-    "typeRoots": ["./node_modules/@types"]
+    "typeRoots": ["./node_modules/@types"],
+    "skipLibCheck": true
   },
   "exclude": ["node_modules", "cdk.out", "dist", "test", "bin"]
 }
