@@ -1,0 +1,19 @@
+{
+  "$schema": "../cluster-config.schema.json",
+  "stage": "prod",
+  "vpcAZCount": 2,
+  "clusters": [
+    {
+      "clusterId": "search",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "clusterVersion": "OS_2.19",
+      "dataNodeType": "r6g.xlarge.search",
+      "dataNodeCount": 2,
+      "ebsEnabled": true,
+      "ebsVolumeSize": 500,
+      "customEndpoint": "search.example.com",
+      "customEndpointCertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000",
+      "domainRemovalPolicy": "RETAIN"
+    }
+  ]
+}

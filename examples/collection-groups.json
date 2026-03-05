@@ -1,0 +1,22 @@
+{
+  "$schema": "../cluster-config.schema.json",
+  "stage": "dev",
+  "clusters": [
+    {
+      "clusterId": "my-group",
+      "clusterType": "OPENSEARCH_SERVERLESS",
+      "collectionType": "SEARCH",
+      "collections": [
+        { "collectionName": "logs", "collectionType": "TIMESERIES" },
+        { "collectionName": "products" },
+        { "collectionName": "embeddings", "collectionType": "VECTORSEARCH" }
+      ],
+      "dataAccessPrincipals": [
+        "arn:aws:iam::123456789012:role/AppRole",
+        "arn:aws:iam::123456789012:role/DataScienceRole"
+      ],
+      "standbyReplicas": "DISABLED",
+      "domainRemovalPolicy": "DESTROY"
+    }
+  ]
+}

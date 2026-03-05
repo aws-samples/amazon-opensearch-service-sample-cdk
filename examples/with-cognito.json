@@ -1,0 +1,20 @@
+{
+  "$schema": "../cluster-config.schema.json",
+  "stage": "dev",
+  "vpcAZCount": 2,
+  "clusters": [
+    {
+      "clusterId": "search",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "clusterVersion": "OS_2.19",
+      "dataNodeType": "r6g.large.search",
+      "dataNodeCount": 2,
+      "ebsEnabled": true,
+      "ebsVolumeSize": 100,
+      "cognitoUserPoolId": "us-east-1_ExAmPlE",
+      "cognitoIdentityPoolId": "us-east-1:00000000-0000-0000-0000-000000000000",
+      "cognitoRoleArn": "arn:aws:iam::123456789012:role/CognitoAccessForAmazonOpenSearch",
+      "domainRemovalPolicy": "DESTROY"
+    }
+  ]
+}

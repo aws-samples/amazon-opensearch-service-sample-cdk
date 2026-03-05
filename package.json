@@ -45,7 +45,8 @@
     "clean": "rm -rf dist",
     "validate": "npx cdk synth --no-staging -q",
     "prepublishOnly": "npm run build",
-    "cdk": "npx cdk"
+    "cdk": "npx cdk",
+    "config-coverage": "node scripts/config-coverage.js"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

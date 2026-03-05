@@ -105,7 +105,7 @@ npm run validate -- --context contextFile=my-cluster.json
 ### 5. Deploy
 
 ```bash
-./deploy.sh --stage dev --context-file my-cluster.json
+./deploy.sh --context-file my-cluster.json
 ```
 
 Or directly with CDK:
@@ -172,6 +172,15 @@ Ready-to-use config files are in the [`examples/`](examples/) directory:
 | [`serverless.json`](examples/serverless.json) | Serverless vector search collection — no VPC |
 | [`multi-cluster.json`](examples/multi-cluster.json) | Mixed managed + serverless in one config |
 | [`bring-your-own-vpc.json`](examples/bring-your-own-vpc.json) | Import an existing VPC |
+| [`production-logging.json`](examples/production-logging.json) | All logging (app, slow search, audit) + Auto-Tune + off-peak window |
+| [`warm-cold-storage.json`](examples/warm-cold-storage.json) | Warm nodes, cold storage, Multi-AZ Standby, provisioned IOPS |
+| [`security-hardened.json`](examples/security-hardened.json) | Custom KMS key, TLS 1.2 PFS, custom VPC CIDR, resource tags |
+| [`with-saml.json`](examples/with-saml.json) | SAML authentication for OpenSearch Dashboards |
+| [`with-cognito.json`](examples/with-cognito.json) | Cognito authentication for OpenSearch Dashboards |
+| [`custom-domain.json`](examples/custom-domain.json) | Custom domain endpoint with ACM certificate |
+| [`serverless-vpc.json`](examples/serverless-vpc.json) | Serverless collection with auto-created VPC endpoint |
+| [`serverless-ip-restricted.json`](examples/serverless-ip-restricted.json) | Serverless with IP-based access restriction + scoped data access |
+| [`collection-groups.json`](examples/collection-groups.json) | Multiple serverless collections sharing policies |
 
 ```bash
 # Deploy any example
@@ -368,11 +377,21 @@ A single CloudFormation stack `OpenSearch-prod-<region>` containing:
 | `enableDemoAdmin` | boolean | `false` | Enable demo admin credentials |
 | `loggingAppLogEnabled` | boolean | — | Enable application logging |
 | `loggingAppLogGroupARN` | string | — | CloudWatch log group ARN |
+| `slowSearchLogEnabled` | boolean | — | Enable slow search log publishing |
+| `slowSearchLogGroupARN` | string | — | CloudWatch log group ARN for slow search logs |
+| `auditLogEnabled` | boolean | — | Enable audit log publishing (requires fine-grained access) |
+| `auditLogGroupARN` | string | — | CloudWatch log group ARN for audit logs |
 | `clusterSubnetIds` | string[] | — | Subnet IDs (for imported VPC) |
 | `clusterSecurityGroupIds` | string[] | — | Security group IDs (for imported VPC) |
 | `coldStorageEnabled` | boolean | — | Enable UltraWarm cold storage (requires warm nodes + dedicated managers) |
 | `multiAZWithStandbyEnabled` | boolean | — | Enable Multi-AZ with Standby |
 | `offPeakWindowEnabled` | boolean | — | Enable off-peak maintenance window |
+| `autoTuneEnabled` | boolean | — | Enable Auto-Tune for automatic performance optimization |
+| `cognitoUserPoolId` | string | — | Cognito User Pool ID for Dashboards authentication |
+| `cognitoIdentityPoolId` | string | — | Cognito Identity Pool ID for Dashboards authentication |
+| `cognitoRoleArn` | string | — | IAM Role ARN for Cognito authentication |
+| `customEndpoint` | string | — | Custom domain endpoint (e.g. `search.example.com`) |
+| `customEndpointCertificateArn` | string | — | ACM certificate ARN for the custom endpoint |
 
 </details>
 
@@ -403,7 +422,9 @@ A single CloudFormation stack `OpenSearch-prod-<region>` containing:
 | `collectionType` | string | `SEARCH` | `SEARCH`, `TIMESERIES`, or `VECTORSEARCH` |
 | `standbyReplicas` | string | `ENABLED` | `ENABLED` or `DISABLED` |
 | `vpcEndpointId` | string | — | VPC endpoint ID (disables public access) |
+| `createVpcEndpoint` | boolean | — | Create an OpenSearch Serverless VPC endpoint (requires VPC) |
 | `dataAccessPrincipals` | string[] | Account root | IAM principal ARNs for data access policy |
+| `sourceIPAddresses` | string[] | — | Source IP addresses (CIDR notation) for network policy restriction |
 | `collections` | array | — | Collection group (see below) |
 
 #### Collection Groups
@@ -531,6 +552,7 @@ npm run build      # Compile TypeScript
 npm run test       # Lint + Jest with coverage
 npm run watch      # Watch mode
 npm run validate   # Validate config (cdk synth dry run)
+npm run config-coverage  # Show which schema fields are covered by examples
 cdk synth          # Synthesize CloudFormation templates
 cdk diff           # Compare with deployed stacks
 ```
@@ -555,7 +577,9 @@ cdk diff           # Compare with deployed stacks
 │       ├── context-parsing.ts   # CDK context → typed config
 │       ├── common-utilities.ts  # Engine version + removal policy parsing
 │       └── cdk-logger.ts       # Logging utility
-├── examples/               # Ready-to-use config files
+├── examples/               # Ready-to-use config files (13 examples)
+├── scripts/
+│   └── config-coverage.js  # Schema field coverage report
 ├── deploy.sh               # Build + deploy wrapper script
 ├── cluster-config.schema.json  # JSON Schema with discriminated validation
 ├── test/                   # Jest test suites

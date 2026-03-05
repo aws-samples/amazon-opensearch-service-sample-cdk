@@ -1,0 +1,29 @@
+{
+  "$schema": "../cluster-config.schema.json",
+  "stage": "prod",
+  "vpcAZCount": 3,
+  "clusters": [
+    {
+      "clusterId": "analytics",
+      "clusterType": "OPENSEARCH_MANAGED_SERVICE",
+      "clusterVersion": "OS_2.19",
+      "dataNodeType": "r6g.2xlarge.search",
+      "dataNodeCount": 6,
+      "dedicatedManagerNodeType": "m6g.large.search",
+      "dedicatedManagerNodeCount": 3,
+      "warmNodeType": "ultrawarm1.medium.search",
+      "warmNodeCount": 3,
+      "coldStorageEnabled": true,
+      "multiAZWithStandbyEnabled": true,
+      "ebsEnabled": true,
+      "ebsVolumeSize": 1000,
+      "ebsVolumeType": "GP3",
+      "ebsIops": 5000,
+      "ebsThroughput": 400,
+      "nodeToNodeEncryptionEnabled": true,
+      "encryptionAtRestEnabled": true,
+      "autoTuneEnabled": true,
+      "domainRemovalPolicy": "RETAIN"
+    }
+  ]
+}
