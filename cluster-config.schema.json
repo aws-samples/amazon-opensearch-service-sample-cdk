@@ -283,6 +283,10 @@
         "autoTuneEnabled": {
           "type": "boolean",
           "description": "Enable Auto-Tune for automatic performance optimization"
+        },
+        "allowAllVpcTraffic": {
+          "type": "boolean",
+          "description": "Allow all traffic from the VPC CIDR to the cluster security group"
         }
       },
       "additionalProperties": false

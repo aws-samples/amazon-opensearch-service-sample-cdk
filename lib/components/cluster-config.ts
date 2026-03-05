@@ -86,6 +86,8 @@ export interface ManagedClusterConfig extends BaseClusterConfig {
     customEndpointCertificateArn?: string;
     /** Enable Auto-Tune for automatic performance optimization */
     autoTuneEnabled?: boolean;
+    /** Allow all traffic from the VPC CIDR to the cluster */
+    allowAllVpcTraffic?: boolean;
 }
 
 /** A single collection within a serverless collection group */
