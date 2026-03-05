@@ -1,5 +1,5 @@
 import {Construct} from "constructs";
-import {CfnOutput, Fn, RemovalPolicy, SecretValue, Stack, StackProps, Tags} from "aws-cdk-lib";
+import {CfnOutput, RemovalPolicy, SecretValue, Stack, StackProps, Tags} from "aws-cdk-lib";
 import {
     CfnInternetGateway, CfnNatGateway, CfnEIP, CfnRouteTable,
     EbsDeviceVolumeType,
@@ -7,7 +7,7 @@ import {
     IpAddresses, IpProtocol, ISecurityGroup, Port,
     SecurityGroup, SubnetSelection, Vpc,
 } from "aws-cdk-lib/aws-ec2";
-import {CfnDomain, Domain, SAMLOptionsProperty, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
+import {Domain, SAMLOptionsProperty, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
 import {IKey, Key} from "aws-cdk-lib/aws-kms";
 import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
@@ -438,14 +438,6 @@ export class OpenSearchStack extends Stack {
             exportName: `DomainEndpoint-${stage}-${clusterId}`,
             value: `https://${domain.domainEndpoint}`,
             description: 'The full HTTPS endpoint URL of the domain',
-        });
-
-        // VPC endpoint — all managed domains in this project are VPC-enabled
-        const cfnDomain = domain.node.defaultChild as CfnDomain;
-        new CfnOutput(this, `DomainVpcEndpointExport-${stage}-${clusterId}`, {
-            exportName: `DomainVpcEndpoint-${stage}-${clusterId}`,
-            value: Fn.join('', ['https://', cfnDomain.getAtt('DomainEndpoints.vpc').toString()]),
-            description: 'The VPC endpoint URL of the domain',
         });
 
         // Domain ARN

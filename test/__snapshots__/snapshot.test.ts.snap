@@ -80,26 +80,6 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
         ],
       },
     },
-    "DomainVpcEndpointExportunittestsnap": {
-      "Description": "The VPC endpoint URL of the domain",
-      "Export": {
-        "Name": "DomainVpcEndpoint-unit-test-snap",
-      },
-      "Value": {
-        "Fn::Join": [
-          "",
-          [
-            "https://",
-            {
-              "Fn::GetAtt": [
-                "snapDomainB8500AAC",
-                "DomainEndpoints.vpc",
-              ],
-            },
-          ],
-        ],
-      },
-    },
     "VpcIdExportunittest": {
       "Description": "The VPC id of the created VPC",
       "Export": {
@@ -1292,26 +1272,6 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
               "Fn::GetAtt": [
                 "domainDomainC2AEA276",
                 "DomainEndpoint",
-              ],
-            },
-          ],
-        ],
-      },
-    },
-    "DomainVpcEndpointExportunittestdomain": {
-      "Description": "The VPC endpoint URL of the domain",
-      "Export": {
-        "Name": "DomainVpcEndpoint-unit-test-domain",
-      },
-      "Value": {
-        "Fn::Join": [
-          "",
-          [
-            "https://",
-            {
-              "Fn::GetAtt": [
-                "domainDomainC2AEA276",
-                "DomainEndpoints.vpc",
               ],
             },
           ],
