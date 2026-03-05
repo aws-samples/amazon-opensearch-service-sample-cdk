@@ -184,7 +184,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "vpc-unit-test",
+            "Value": "igw-unit-test",
           },
           {
             "Key": "Project",
@@ -254,7 +254,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "vpc-private-subnet-1-unit-test",
+            "Value": "rt-private-1-unit-test",
           },
           {
             "Key": "Project",
@@ -376,7 +376,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "vpc-private-subnet-2-unit-test",
+            "Value": "rt-private-2-unit-test",
           },
           {
             "Key": "Project",
@@ -514,7 +514,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-1-unit-test",
+            "Value": "eip-public-1-unit-test",
           },
           {
             "Key": "Project",
@@ -552,7 +552,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-1-unit-test",
+            "Value": "nat-public-1-unit-test",
           },
           {
             "Key": "Project",
@@ -578,7 +578,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-1-unit-test",
+            "Value": "rt-public-1-unit-test",
           },
           {
             "Key": "Project",
@@ -716,7 +716,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-2-unit-test",
+            "Value": "eip-public-2-unit-test",
           },
           {
             "Key": "Project",
@@ -754,7 +754,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-2-unit-test",
+            "Value": "nat-public-2-unit-test",
           },
           {
             "Key": "Project",
@@ -780,7 +780,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-2-unit-test",
+            "Value": "rt-public-2-unit-test",
           },
           {
             "Key": "Project",
@@ -1040,6 +1040,10 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
           {
             "Key": "ManagedBy",
             "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "cluster-access-sg-unit-test",
           },
           {
             "Key": "Project",
@@ -1398,7 +1402,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
           },
           {
             "Key": "Name",
-            "Value": "vpc-unit-test",
+            "Value": "igw-unit-test",
           },
           {
             "Key": "Project",
@@ -1468,7 +1472,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
           },
           {
             "Key": "Name",
-            "Value": "vpc-private-subnet-1-unit-test",
+            "Value": "rt-private-1-unit-test",
           },
           {
             "Key": "Project",
@@ -1590,7 +1594,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
           },
           {
             "Key": "Name",
-            "Value": "vpc-private-subnet-2-unit-test",
+            "Value": "rt-private-2-unit-test",
           },
           {
             "Key": "Project",
@@ -1728,7 +1732,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-1-unit-test",
+            "Value": "eip-public-1-unit-test",
           },
           {
             "Key": "Project",
@@ -1766,7 +1770,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-1-unit-test",
+            "Value": "nat-public-1-unit-test",
           },
           {
             "Key": "Project",
@@ -1792,7 +1796,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-1-unit-test",
+            "Value": "rt-public-1-unit-test",
           },
           {
             "Key": "Project",
@@ -1930,7 +1934,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-2-unit-test",
+            "Value": "eip-public-2-unit-test",
           },
           {
             "Key": "Project",
@@ -1968,7 +1972,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-2-unit-test",
+            "Value": "nat-public-2-unit-test",
           },
           {
             "Key": "Project",
@@ -1994,7 +1998,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
           },
           {
             "Key": "Name",
-            "Value": "vpc-public-subnet-2-unit-test",
+            "Value": "rt-public-2-unit-test",
           },
           {
             "Key": "Project",
@@ -2254,6 +2258,10 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
           {
             "Key": "ManagedBy",
             "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "cluster-access-sg-unit-test",
           },
           {
             "Key": "Project",

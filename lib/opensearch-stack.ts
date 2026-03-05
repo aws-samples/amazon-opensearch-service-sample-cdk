@@ -1,6 +1,7 @@
 import {Construct} from "constructs";
 import {CfnOutput, Fn, RemovalPolicy, SecretValue, Stack, StackProps, Tags} from "aws-cdk-lib";
 import {
+    CfnInternetGateway, CfnNatGateway, CfnEIP, CfnRouteTable,
     EbsDeviceVolumeType,
     FlowLogDestination, FlowLogTrafficType,
     IpAddresses, IpProtocol, ISecurityGroup, Port,
@@ -75,6 +76,9 @@ export class OpenSearchStack extends Stack {
                     Tags.of(subnet).add("Name", `vpc-private-subnet-${index + 1}-${stage}`);
                 });
 
+                // Name tags for all VPC child resources so they show up named in AWS Console
+                this.tagVpcChildResources(vpc, stage);
+
                 const sg = new SecurityGroup(this, 'clusterAccessVpcSecurityGroup', {
                     vpc,
                     allowAllOutbound: false,
@@ -82,6 +86,7 @@ export class OpenSearchStack extends Stack {
                     securityGroupName: `cluster-access-security-group-${stage}`,
                 });
                 sg.addIngressRule(sg, Port.allTraffic());
+                Tags.of(sg).add("Name", `cluster-access-sg-${stage}`);
 
                 new CfnOutput(this, `VpcIdExport-${stage}`, {
                     exportName: `VpcId-${stage}`,
@@ -465,5 +470,37 @@ export class OpenSearchStack extends Stack {
                 description: 'The cluster access security group id',
             });
         }
+    }
+
+    private tagVpcChildResources(vpc: Vpc, stage: string) {
+        // Internet Gateway
+        const igw = vpc.node.tryFindChild('IGW') as CfnInternetGateway | undefined;
+        if (igw) {
+            Tags.of(igw).add("Name", `igw-${stage}`);
+        }
+
+        // NAT Gateways, EIPs, and Route Tables on public subnets
+        vpc.publicSubnets.forEach((subnet, index) => {
+            const natGw = subnet.node.tryFindChild('NATGateway') as CfnNatGateway | undefined;
+            if (natGw) {
+                Tags.of(natGw).add("Name", `nat-public-${index + 1}-${stage}`);
+            }
+            const eip = subnet.node.tryFindChild('EIP') as CfnEIP | undefined;
+            if (eip) {
+                Tags.of(eip).add("Name", `eip-public-${index + 1}-${stage}`);
+            }
+            const rt = subnet.node.tryFindChild('RouteTable') as CfnRouteTable | undefined;
+            if (rt) {
+                Tags.of(rt).add("Name", `rt-public-${index + 1}-${stage}`);
+            }
+        });
+
+        // Route Tables on private subnets
+        vpc.privateSubnets.forEach((subnet, index) => {
+            const rt = subnet.node.tryFindChild('RouteTable') as CfnRouteTable | undefined;
+            if (rt) {
+                Tags.of(rt).add("Name", `rt-private-${index + 1}-${stage}`);
+            }
+        });
     }
 }
