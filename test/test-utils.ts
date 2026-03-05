@@ -1,5 +1,5 @@
 import {StackComposer} from "../lib/stack-composer";
-import {App} from "aws-cdk-lib";
+import {App, Stack} from "aws-cdk-lib";
 import {ClusterType} from "../lib/components/common-utilities";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,4 +26,13 @@ export function createStackComposerWithSingleDomainContext(clusterContext: Recor
     return new StackComposer(app, {
         env: {account: "test-account", region: "us-east-1"},
     })
+}
+
+/** Get the first (and only) stack from a StackComposer — throws if not found */
+export function getStack(composer: StackComposer): Stack {
+    const stack = composer.stacks[0];
+    if (!stack) {
+        throw new Error("Expected at least one stack in StackComposer");
+    }
+    return stack;
 }

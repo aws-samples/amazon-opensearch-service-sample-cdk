@@ -1,12 +1,13 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
-exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
+exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
 {
-  "Description": "This stack contains resources to create/manage VPC networking",
+  "Description": "OpenSearch Service infrastructure — managed domains, serverless collections, and networking",
   "Outputs": {
-    "ExportsOutputFnGetAttclusterAccessVpcSecurityGroup2362D017GroupId54C3071E": {
+    "ClusterAccessSecurityGroupIdExportunittestsnap": {
+      "Description": "The cluster access security group id",
       "Export": {
-        "Name": "NetworkInfra-unit-test-us-east-1:ExportsOutputFnGetAttclusterAccessVpcSecurityGroup2362D017GroupId54C3071E",
+        "Name": "ClusterAccessSecurityGroupId-unit-test-snap",
       },
       "Value": {
         "Fn::GetAtt": [
@@ -15,28 +16,36 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
         ],
       },
     },
-    "ExportsOutputRefVpc8378EB38272D6E3A": {
+    "ClusterEndpointExportunittestsnap": {
+      "Description": "The endpoint URL of the cluster",
       "Export": {
-        "Name": "NetworkInfra-unit-test-us-east-1:ExportsOutputRefVpc8378EB38272D6E3A",
+        "Name": "ClusterEndpoint-unit-test-snap",
       },
       "Value": {
-        "Ref": "Vpc8378EB38",
+        "Fn::GetAtt": [
+          "snapDomainB8500AAC",
+          "DomainEndpoint",
+        ],
       },
     },
-    "ExportsOutputRefVpcPrivateSubnet1Subnet536B997AFD4CC940": {
+    "ClusterSubnetsunittestsnap": {
+      "Description": "The subnet ids of the deployed cluster",
       "Export": {
-        "Name": "NetworkInfra-unit-test-us-east-1:ExportsOutputRefVpcPrivateSubnet1Subnet536B997AFD4CC940",
+        "Name": "ClusterSubnets-unit-test-snap",
       },
       "Value": {
-        "Ref": "VpcPrivateSubnet1Subnet536B997A",
-      },
-    },
-    "ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3": {
-      "Export": {
-        "Name": "NetworkInfra-unit-test-us-east-1:ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3",
-      },
-      "Value": {
-        "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Ref": "VpcPrivateSubnet1Subnet536B997A",
+            },
+            ",",
+            {
+              "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
+            },
+          ],
+        ],
       },
     },
     "VpcIdExportunittest": {
@@ -847,7 +856,7 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "networkStack/Vpc/defaultFlowLog",
+            "Value": "openSearchStack/Vpc/defaultFlowLog",
           },
           {
             "Key": "Project",
@@ -883,7 +892,7 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "networkStack/Vpc/defaultFlowLog",
+            "Value": "openSearchStack/Vpc/defaultFlowLog",
           },
           {
             "Key": "Project",
@@ -938,7 +947,7 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
           },
           {
             "Key": "Name",
-            "Value": "networkStack/Vpc/defaultFlowLog",
+            "Value": "openSearchStack/Vpc/defaultFlowLog",
           },
           {
             "Key": "Project",
@@ -960,7 +969,7 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
     },
     "clusterAccessVpcSecurityGroup2362D017": {
       "Properties": {
-        "GroupDescription": "networkStack/clusterAccessVpcSecurityGroup",
+        "GroupDescription": "openSearchStack/clusterAccessVpcSecurityGroup",
         "GroupName": "cluster-access-security-group-unit-test",
         "SecurityGroupEgress": [
           {
@@ -991,9 +1000,9 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
       },
       "Type": "AWS::EC2::SecurityGroup",
     },
-    "clusterAccessVpcSecurityGroupfromnetworkStackclusterAccessVpcSecurityGroupE7AE00DEALLTRAFFIC856285EE": {
+    "clusterAccessVpcSecurityGroupfromopenSearchStackclusterAccessVpcSecurityGroupAA3B51ECALLTRAFFICC4E46A09": {
       "Properties": {
-        "Description": "from networkStackclusterAccessVpcSecurityGroupE7AE00DE:ALL TRAFFIC",
+        "Description": "from openSearchStackclusterAccessVpcSecurityGroupAA3B51EC:ALL TRAFFIC",
         "GroupId": {
           "Fn::GetAtt": [
             "clusterAccessVpcSecurityGroup2362D017",
@@ -1010,96 +1019,8 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
     },
-  },
-  "Rules": {
-    "CheckBootstrapVersion": {
-      "Assertions": [
-        {
-          "Assert": {
-            "Fn::Not": [
-              {
-                "Fn::Contains": [
-                  [
-                    "1",
-                    "2",
-                    "3",
-                    "4",
-                    "5",
-                  ],
-                  {
-                    "Ref": "BootstrapVersion",
-                  },
-                ],
-              },
-            ],
-          },
-          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
-        },
-      ],
-    },
-  },
-}
-`;
-
-exports[`Snapshot Tests OpenSearchDomainStack template snapshot 1`] = `
-{
-  "Description": "This stack contains resources to create/manage an OpenSearch Service domain",
-  "Outputs": {
-    "ClusterAccessSecurityGroupIdExportunittestsnap": {
-      "Description": "The cluster access security group id",
-      "Export": {
-        "Name": "ClusterAccessSecurityGroupId-unit-test-snap",
-      },
-      "Value": {
-        "Fn::ImportValue": "NetworkInfra-unit-test-us-east-1:ExportsOutputFnGetAttclusterAccessVpcSecurityGroup2362D017GroupId54C3071E",
-      },
-    },
-    "ClusterEndpointExportunittestsnap": {
-      "Description": "The endpoint URL of the cluster",
-      "Export": {
-        "Name": "ClusterEndpoint-unit-test-snap",
-      },
-      "Value": {
-        "Fn::GetAtt": [
-          "Domain66AC69E0",
-          "DomainEndpoint",
-        ],
-      },
-    },
-    "ClusterSubnetsunittestsnap": {
-      "Description": "The subnet ids of the deployed cluster",
-      "Export": {
-        "Name": "ClusterSubnets-unit-test-snap",
-      },
-      "Value": {
-        "Fn::Join": [
-          "",
-          [
-            {
-              "Fn::ImportValue": "NetworkInfra-unit-test-us-east-1:ExportsOutputRefVpcPrivateSubnet1Subnet536B997AFD4CC940",
-            },
-            ",",
-            {
-              "Fn::ImportValue": "NetworkInfra-unit-test-us-east-1:ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3",
-            },
-          ],
-        ],
-      },
-    },
-  },
-  "Parameters": {
-    "BootstrapVersion": {
-      "Default": "/cdk-bootstrap/hnb659fds/version",
-      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
-      "Type": "AWS::SSM::Parameter::Value<String>",
-    },
-  },
-  "Resources": {
-    "Domain66AC69E0": {
+    "snapDomainB8500AAC": {
       "DeletionPolicy": "Retain",
-      "DependsOn": [
-        "VpcValidation",
-      ],
       "Metadata": {
         "cdk_nag": {
           "rules_to_suppress": [
@@ -1118,21 +1039,6 @@ exports[`Snapshot Tests OpenSearchDomainStack template snapshot 1`] = `
             {
               "id": "AwsSolutions-OS9",
               "reason": "Slow log publishing is user-configurable via loggingAppLogEnabled context option",
-            },
-            {
-              "applies_to": [
-                "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-              "id": "AwsSolutions-IAM4",
-              "reason": "VPC validation custom resource uses AWSLambdaBasicExecutionRole managed policy for CloudWatch Logs access",
-            },
-            {
-              "id": "AwsSolutions-IAM5",
-              "reason": "CDK custom resource framework requires invoke permission with :* suffix on the Lambda ARN",
-            },
-            {
-              "id": "AwsSolutions-L1",
-              "reason": "VPC validation Lambda uses Node.js 22.x (current LTS); CDK Provider framework Lambda runtime is managed by aws-cdk-lib",
             },
           ],
         },
@@ -1182,473 +1088,24 @@ exports[`Snapshot Tests OpenSearchDomainStack template snapshot 1`] = `
         "VPCOptions": {
           "SecurityGroupIds": [
             {
-              "Fn::ImportValue": "NetworkInfra-unit-test-us-east-1:ExportsOutputFnGetAttclusterAccessVpcSecurityGroup2362D017GroupId54C3071E",
+              "Fn::GetAtt": [
+                "clusterAccessVpcSecurityGroup2362D017",
+                "GroupId",
+              ],
             },
           ],
           "SubnetIds": [
             {
-              "Fn::ImportValue": "NetworkInfra-unit-test-us-east-1:ExportsOutputRefVpcPrivateSubnet1Subnet536B997AFD4CC940",
+              "Ref": "VpcPrivateSubnet1Subnet536B997A",
             },
             {
-              "Fn::ImportValue": "NetworkInfra-unit-test-us-east-1:ExportsOutputRefVpcPrivateSubnet2Subnet3788AAA1380949A3",
+              "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
             },
           ],
         },
       },
       "Type": "AWS::OpenSearchService::Domain",
       "UpdateReplacePolicy": "Retain",
-    },
-    "VpcValidation": {
-      "DeletionPolicy": "Delete",
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "applies_to": [
-                "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-              "id": "AwsSolutions-IAM4",
-              "reason": "VPC validation custom resource uses AWSLambdaBasicExecutionRole managed policy for CloudWatch Logs access",
-            },
-            {
-              "id": "AwsSolutions-IAM5",
-              "reason": "CDK custom resource framework requires invoke permission with :* suffix on the Lambda ARN",
-            },
-            {
-              "id": "AwsSolutions-L1",
-              "reason": "VPC validation Lambda uses Node.js 22.x (current LTS); CDK Provider framework Lambda runtime is managed by aws-cdk-lib",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "DomainName": "cluster-unit-test-snap",
-        "ExpectedVpcId": {
-          "Fn::ImportValue": "NetworkInfra-unit-test-us-east-1:ExportsOutputRefVpc8378EB38272D6E3A",
-        },
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "VpcValidationProviderframeworkonEventC21097AA",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "AWS::CloudFormation::CustomResource",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "VpcValidationFunction87308FAB": {
-      "DependsOn": [
-        "VpcValidationFunctionServiceRoleDefaultPolicy3813232D",
-        "VpcValidationFunctionServiceRole1918C7CB",
-      ],
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "applies_to": [
-                "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-              "id": "AwsSolutions-IAM4",
-              "reason": "VPC validation custom resource uses AWSLambdaBasicExecutionRole managed policy for CloudWatch Logs access",
-            },
-            {
-              "id": "AwsSolutions-IAM5",
-              "reason": "CDK custom resource framework requires invoke permission with :* suffix on the Lambda ARN",
-            },
-            {
-              "id": "AwsSolutions-L1",
-              "reason": "VPC validation Lambda uses Node.js 22.x (current LTS); CDK Provider framework Lambda runtime is managed by aws-cdk-lib",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "Code": {
-          "ZipFile": "
-const { OpenSearchClient, DescribeDomainCommand } = require("@aws-sdk/client-opensearch");
-exports.handler = async (event) => {
-  if (event.RequestType === "Delete") {
-    return { PhysicalResourceId: event.PhysicalResourceId };
-  }
-  const domainName = event.ResourceProperties.DomainName;
-  const expectedVpcId = event.ResourceProperties.ExpectedVpcId;
-  const client = new OpenSearchClient();
-  try {
-    const resp = await client.send(new DescribeDomainCommand({ DomainName: domainName }));
-    const existingVpcId = resp.DomainStatus?.VPCOptions?.VPCId;
-    if (existingVpcId && existingVpcId !== expectedVpcId) {
-      throw new Error(
-        "VPC mismatch: OpenSearch domain '" + domainName + "' exists in VPC " + existingVpcId +
-        " but the deployment targets VPC " + expectedVpcId + ". OpenSearch domains cannot be moved " +
-        "between VPCs. Delete the existing domain (and its CloudFormation stack) first, then redeploy."
-      );
-    }
-  } catch (e) {
-    if (e.name === "ResourceNotFoundException") {
-      // Domain doesn't exist yet — no validation needed
-    } else {
-      throw e;
-    }
-  }
-  return { PhysicalResourceId: domainName + "-vpc-check" };
-};
-      ",
-        },
-        "Handler": "index.handler",
-        "Role": {
-          "Fn::GetAtt": [
-            "VpcValidationFunctionServiceRole1918C7CB",
-            "Arn",
-          ],
-        },
-        "Runtime": "nodejs22.x",
-        "Tags": [
-          {
-            "Key": "Environment",
-            "Value": "unit-test",
-          },
-          {
-            "Key": "ManagedBy",
-            "Value": "CDK",
-          },
-          {
-            "Key": "Project",
-            "Value": "opensearch-sample",
-          },
-        ],
-        "Timeout": 30,
-      },
-      "Type": "AWS::Lambda::Function",
-    },
-    "VpcValidationFunctionServiceRole1918C7CB": {
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "applies_to": [
-                "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-              "id": "AwsSolutions-IAM4",
-              "reason": "VPC validation custom resource uses AWSLambdaBasicExecutionRole managed policy for CloudWatch Logs access",
-            },
-            {
-              "id": "AwsSolutions-IAM5",
-              "reason": "CDK custom resource framework requires invoke permission with :* suffix on the Lambda ARN",
-            },
-            {
-              "id": "AwsSolutions-L1",
-              "reason": "VPC validation Lambda uses Node.js 22.x (current LTS); CDK Provider framework Lambda runtime is managed by aws-cdk-lib",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-            ],
-          },
-        ],
-        "Tags": [
-          {
-            "Key": "Environment",
-            "Value": "unit-test",
-          },
-          {
-            "Key": "ManagedBy",
-            "Value": "CDK",
-          },
-          {
-            "Key": "Project",
-            "Value": "opensearch-sample",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "VpcValidationFunctionServiceRoleDefaultPolicy3813232D": {
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "applies_to": [
-                "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-              "id": "AwsSolutions-IAM4",
-              "reason": "VPC validation custom resource uses AWSLambdaBasicExecutionRole managed policy for CloudWatch Logs access",
-            },
-            {
-              "id": "AwsSolutions-IAM5",
-              "reason": "CDK custom resource framework requires invoke permission with :* suffix on the Lambda ARN",
-            },
-            {
-              "id": "AwsSolutions-L1",
-              "reason": "VPC validation Lambda uses Node.js 22.x (current LTS); CDK Provider framework Lambda runtime is managed by aws-cdk-lib",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": "es:DescribeDomain",
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:",
-                    {
-                      "Ref": "AWS::Partition",
-                    },
-                    ":es:us-east-1:test-account:domain/cluster-unit-test-snap",
-                  ],
-                ],
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "VpcValidationFunctionServiceRoleDefaultPolicy3813232D",
-        "Roles": [
-          {
-            "Ref": "VpcValidationFunctionServiceRole1918C7CB",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
-    "VpcValidationProviderframeworkonEventC21097AA": {
-      "DependsOn": [
-        "VpcValidationProviderframeworkonEventServiceRoleDefaultPolicyE973E14F",
-        "VpcValidationProviderframeworkonEventServiceRole67C32679",
-      ],
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "applies_to": [
-                "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-              "id": "AwsSolutions-IAM4",
-              "reason": "VPC validation custom resource uses AWSLambdaBasicExecutionRole managed policy for CloudWatch Logs access",
-            },
-            {
-              "id": "AwsSolutions-IAM5",
-              "reason": "CDK custom resource framework requires invoke permission with :* suffix on the Lambda ARN",
-            },
-            {
-              "id": "AwsSolutions-L1",
-              "reason": "VPC validation Lambda uses Node.js 22.x (current LTS); CDK Provider framework Lambda runtime is managed by aws-cdk-lib",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "Code": {
-          "S3Bucket": "cdk-hnb659fds-assets-test-account-us-east-1",
-          "S3Key": "07a90cc3efdfc34da22208dcd9d211f06f5b0e01b21e778edc7c3966b1f61d57.zip",
-        },
-        "Description": "AWS CDK resource provider framework - onEvent (openSearchDomainStack-snap/VpcValidationProvider)",
-        "Environment": {
-          "Variables": {
-            "USER_ON_EVENT_FUNCTION_ARN": {
-              "Fn::GetAtt": [
-                "VpcValidationFunction87308FAB",
-                "Arn",
-              ],
-            },
-          },
-        },
-        "Handler": "framework.onEvent",
-        "LoggingConfig": {
-          "ApplicationLogLevel": "FATAL",
-          "LogFormat": "JSON",
-        },
-        "Role": {
-          "Fn::GetAtt": [
-            "VpcValidationProviderframeworkonEventServiceRole67C32679",
-            "Arn",
-          ],
-        },
-        "Runtime": "nodejs22.x",
-        "Tags": [
-          {
-            "Key": "Environment",
-            "Value": "unit-test",
-          },
-          {
-            "Key": "ManagedBy",
-            "Value": "CDK",
-          },
-          {
-            "Key": "Project",
-            "Value": "opensearch-sample",
-          },
-        ],
-        "Timeout": 900,
-      },
-      "Type": "AWS::Lambda::Function",
-    },
-    "VpcValidationProviderframeworkonEventServiceRole67C32679": {
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "applies_to": [
-                "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-              "id": "AwsSolutions-IAM4",
-              "reason": "VPC validation custom resource uses AWSLambdaBasicExecutionRole managed policy for CloudWatch Logs access",
-            },
-            {
-              "id": "AwsSolutions-IAM5",
-              "reason": "CDK custom resource framework requires invoke permission with :* suffix on the Lambda ARN",
-            },
-            {
-              "id": "AwsSolutions-L1",
-              "reason": "VPC validation Lambda uses Node.js 22.x (current LTS); CDK Provider framework Lambda runtime is managed by aws-cdk-lib",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-            ],
-          },
-        ],
-        "Tags": [
-          {
-            "Key": "Environment",
-            "Value": "unit-test",
-          },
-          {
-            "Key": "ManagedBy",
-            "Value": "CDK",
-          },
-          {
-            "Key": "Project",
-            "Value": "opensearch-sample",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "VpcValidationProviderframeworkonEventServiceRoleDefaultPolicyE973E14F": {
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "applies_to": [
-                "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-              "id": "AwsSolutions-IAM4",
-              "reason": "VPC validation custom resource uses AWSLambdaBasicExecutionRole managed policy for CloudWatch Logs access",
-            },
-            {
-              "id": "AwsSolutions-IAM5",
-              "reason": "CDK custom resource framework requires invoke permission with :* suffix on the Lambda ARN",
-            },
-            {
-              "id": "AwsSolutions-L1",
-              "reason": "VPC validation Lambda uses Node.js 22.x (current LTS); CDK Provider framework Lambda runtime is managed by aws-cdk-lib",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": "lambda:InvokeFunction",
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "VpcValidationFunction87308FAB",
-                    "Arn",
-                  ],
-                },
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      {
-                        "Fn::GetAtt": [
-                          "VpcValidationFunction87308FAB",
-                          "Arn",
-                        ],
-                      },
-                      ":*",
-                    ],
-                  ],
-                },
-              ],
-            },
-            {
-              "Action": "lambda:GetFunction",
-              "Effect": "Allow",
-              "Resource": {
-                "Fn::GetAtt": [
-                  "VpcValidationFunction87308FAB",
-                  "Arn",
-                ],
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "VpcValidationProviderframeworkonEventServiceRoleDefaultPolicyE973E14F",
-        "Roles": [
-          {
-            "Ref": "VpcValidationProviderframeworkonEventServiceRole67C32679",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
     },
   },
   "Rules": {
@@ -1681,9 +1138,1232 @@ exports.handler = async (event) => {
 }
 `;
 
-exports[`Snapshot Tests ServerlessCollectionStack template snapshot 1`] = `
+exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] = `
 {
-  "Description": "This stack contains resources to create/manage an OpenSearch Serverless collection",
+  "Description": "OpenSearch Service infrastructure — managed domains, serverless collections, and networking",
+  "Outputs": {
+    "ClusterAccessSecurityGroupIdExportunittestdomain": {
+      "Description": "The cluster access security group id",
+      "Export": {
+        "Name": "ClusterAccessSecurityGroupId-unit-test-domain",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "clusterAccessVpcSecurityGroup2362D017",
+          "GroupId",
+        ],
+      },
+    },
+    "ClusterEndpointExportunittestdomain": {
+      "Description": "The endpoint URL of the cluster",
+      "Export": {
+        "Name": "ClusterEndpoint-unit-test-domain",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "domainDomainC2AEA276",
+          "DomainEndpoint",
+        ],
+      },
+    },
+    "ClusterSubnetsunittestdomain": {
+      "Description": "The subnet ids of the deployed cluster",
+      "Export": {
+        "Name": "ClusterSubnets-unit-test-domain",
+      },
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Ref": "VpcPrivateSubnet1Subnet536B997A",
+            },
+            ",",
+            {
+              "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
+            },
+          ],
+        ],
+      },
+    },
+    "CollectionArnExportunittestsearch": {
+      "Description": "The ARN of the serverless collection",
+      "Export": {
+        "Name": "CollectionArn-unit-test-search",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "searchCollection",
+          "Arn",
+        ],
+      },
+    },
+    "CollectionEndpointExportunittestsearch": {
+      "Description": "The endpoint URL of the serverless collection",
+      "Export": {
+        "Name": "CollectionEndpoint-unit-test-search",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "searchCollection",
+          "CollectionEndpoint",
+        ],
+      },
+    },
+    "VpcIdExportunittest": {
+      "Description": "The VPC id of the created VPC",
+      "Export": {
+        "Name": "VpcId-unit-test",
+      },
+      "Value": {
+        "Ref": "Vpc8378EB38",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.212.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcEIGW61416F369": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::EgressOnlyInternetGateway",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcPrivateSubnet1DefaultRoute6B45CB740": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "DestinationIpv6CidrBlock": "::/0",
+        "EgressOnlyInternetGatewayId": {
+          "Ref": "VpcEIGW61416F369",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTableB2C5B500",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet1DefaultRouteBE02A9ED": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcPublicSubnet1NATGateway4D7517AA",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTableB2C5B500",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet1RouteTableAssociation70C59FA6": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTableB2C5B500",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet1Subnet536B997A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet1RouteTableB2C5B500": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-private-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet1Subnet536B997A": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "AssignIpv6AddressOnCreation": true,
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.212.128.0/18",
+        "Ipv6CidrBlock": {
+          "Fn::Select": [
+            2,
+            {
+              "Fn::Cidr": [
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::GetAtt": [
+                        "Vpc8378EB38",
+                        "Ipv6CidrBlocks",
+                      ],
+                    },
+                  ],
+                },
+                4,
+                "64",
+              ],
+            },
+          ],
+        },
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-private-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPrivateSubnet2DefaultRoute060D2087": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcPublicSubnet2NATGateway9182C01D",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTableA678073B",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet2DefaultRoute6DDF1236D": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "DestinationIpv6CidrBlock": "::/0",
+        "EgressOnlyInternetGatewayId": {
+          "Ref": "VpcEIGW61416F369",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTableA678073B",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet2RouteTableA678073B": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-private-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet2RouteTableAssociationA89CAD56": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTableA678073B",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet2Subnet3788AAA1": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "AssignIpv6AddressOnCreation": true,
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.212.192.0/18",
+        "Ipv6CidrBlock": {
+          "Fn::Select": [
+            3,
+            {
+              "Fn::Cidr": [
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::GetAtt": [
+                        "Vpc8378EB38",
+                        "Ipv6CidrBlocks",
+                      ],
+                    },
+                  ],
+                },
+                4,
+                "64",
+              ],
+            },
+          ],
+        },
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-private-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet1DefaultRoute3DA9E72A": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet1DefaultRoute6A21265FB": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "DestinationIpv6CidrBlock": "::/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet1EIPD7E02669": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-public-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "VpcPublicSubnet1NATGateway4D7517AA": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+        "VpcPublicSubnet1DefaultRoute3DA9E72A",
+        "VpcPublicSubnet1DefaultRoute6A21265FB",
+        "VpcPublicSubnet1RouteTableAssociation97140677",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcPublicSubnet1EIPD7E02669",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-public-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VpcPublicSubnet1RouteTable6C95E38E": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-public-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet1RouteTableAssociation97140677": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet1Subnet5C2D37C4": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "AssignIpv6AddressOnCreation": true,
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.212.0.0/18",
+        "Ipv6CidrBlock": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::Cidr": [
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::GetAtt": [
+                        "Vpc8378EB38",
+                        "Ipv6CidrBlocks",
+                      ],
+                    },
+                  ],
+                },
+                4,
+                "64",
+              ],
+            },
+          ],
+        },
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-public-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet2DefaultRoute63E63096C": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "DestinationIpv6CidrBlock": "::/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable94F7E489",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet2DefaultRoute97F91067": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable94F7E489",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet2EIP3C605A87": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-public-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "VpcPublicSubnet2NATGateway9182C01D": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+        "VpcPublicSubnet2DefaultRoute97F91067",
+        "VpcPublicSubnet2DefaultRoute63E63096C",
+        "VpcPublicSubnet2RouteTableAssociationDD5762D8",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcPublicSubnet2EIP3C605A87",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet2Subnet691E08A3",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-public-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VpcPublicSubnet2RouteTable94F7E489": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-public-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet2RouteTableAssociationDD5762D8": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable94F7E489",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet2Subnet691E08A3",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet2Subnet691E08A3": {
+      "DependsOn": [
+        "Vpcipv6cidr40D3CB78",
+      ],
+      "Properties": {
+        "AssignIpv6AddressOnCreation": true,
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.212.64.0/18",
+        "Ipv6CidrBlock": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::Cidr": [
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::GetAtt": [
+                        "Vpc8378EB38",
+                        "Ipv6CidrBlocks",
+                      ],
+                    },
+                  ],
+                },
+                4,
+                "64",
+              ],
+            },
+          ],
+        },
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "vpc-public-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "VpcdefaultFlowLog405CE7E9": {
+      "Properties": {
+        "DeliverLogsPermissionArn": {
+          "Fn::GetAtt": [
+            "VpcdefaultFlowLogIAMRole4FCEF0C3",
+            "Arn",
+          ],
+        },
+        "LogDestinationType": "cloud-watch-logs",
+        "LogGroupName": {
+          "Ref": "VpcdefaultFlowLogLogGroup8AE8D022",
+        },
+        "ResourceId": {
+          "Ref": "Vpc8378EB38",
+        },
+        "ResourceType": "VPC",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "openSearchStack/Vpc/defaultFlowLog",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "TrafficType": "REJECT",
+      },
+      "Type": "AWS::EC2::FlowLog",
+    },
+    "VpcdefaultFlowLogIAMRole4FCEF0C3": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "vpc-flow-logs.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "openSearchStack/Vpc/defaultFlowLog",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "VpcdefaultFlowLogIAMRoleDefaultPolicy6376988E": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "VpcdefaultFlowLogLogGroup8AE8D022",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "VpcdefaultFlowLogIAMRoleDefaultPolicy6376988E",
+        "Roles": [
+          {
+            "Ref": "VpcdefaultFlowLogIAMRole4FCEF0C3",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "VpcdefaultFlowLogLogGroup8AE8D022": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "RetentionInDays": 731,
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "openSearchStack/Vpc/defaultFlowLog",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "Vpcipv6cidr40D3CB78": {
+      "Properties": {
+        "AmazonProvidedIpv6CidrBlock": true,
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCCidrBlock",
+    },
+    "clusterAccessVpcSecurityGroup2362D017": {
+      "Properties": {
+        "GroupDescription": "openSearchStack/clusterAccessVpcSecurityGroup",
+        "GroupName": "cluster-access-security-group-unit-test",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "clusterAccessVpcSecurityGroupfromopenSearchStackclusterAccessVpcSecurityGroupAA3B51ECALLTRAFFICC4E46A09": {
+      "Properties": {
+        "Description": "from openSearchStackclusterAccessVpcSecurityGroupAA3B51EC:ALL TRAFFIC",
+        "GroupId": {
+          "Fn::GetAtt": [
+            "clusterAccessVpcSecurityGroup2362D017",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "-1",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "clusterAccessVpcSecurityGroup2362D017",
+            "GroupId",
+          ],
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "domainDomainC2AEA276": {
+      "DeletionPolicy": "Retain",
+      "Metadata": {
+        "cdk_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "AwsSolutions-OS3",
+              "reason": "IP-based access policies are user-configurable via accessPolicies context option",
+            },
+            {
+              "id": "AwsSolutions-OS4",
+              "reason": "Dedicated master nodes are user-configurable via dedicatedManagerNodeType/Count context options",
+            },
+            {
+              "id": "AwsSolutions-OS5",
+              "reason": "Unsigned basic auth and fine-grained access control are user-configurable context options",
+            },
+            {
+              "id": "AwsSolutions-OS9",
+              "reason": "Slow log publishing is user-configurable via loggingAppLogEnabled context option",
+            },
+          ],
+        },
+      },
+      "Properties": {
+        "ClusterConfig": {
+          "DedicatedMasterEnabled": false,
+          "InstanceCount": 2,
+          "InstanceType": "r6g.large.search",
+          "ZoneAwarenessConfig": {
+            "AvailabilityZoneCount": 2,
+          },
+          "ZoneAwarenessEnabled": true,
+        },
+        "DomainEndpointOptions": {
+          "EnforceHTTPS": true,
+          "TLSSecurityPolicy": "Policy-Min-TLS-1-2-2019-07",
+        },
+        "DomainName": "cluster-unit-test-domain",
+        "EBSOptions": {
+          "EBSEnabled": true,
+          "VolumeSize": 100,
+          "VolumeType": "gp3",
+        },
+        "EncryptionAtRestOptions": {
+          "Enabled": true,
+        },
+        "EngineVersion": "OpenSearch_2.19",
+        "LogPublishingOptions": {},
+        "NodeToNodeEncryptionOptions": {
+          "Enabled": true,
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "VPCOptions": {
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "clusterAccessVpcSecurityGroup2362D017",
+                "GroupId",
+              ],
+            },
+          ],
+          "SubnetIds": [
+            {
+              "Ref": "VpcPrivateSubnet1Subnet536B997A",
+            },
+            {
+              "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::OpenSearchService::Domain",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "searchCollection": {
+      "DependsOn": [
+        "searchEncryptionPolicy",
+        "searchNetworkPolicy",
+      ],
+      "Properties": {
+        "Name": "cluster-unit-test-search",
+        "StandbyReplicas": "DISABLED",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
+        "Type": "SEARCH",
+      },
+      "Type": "AWS::OpenSearchServerless::Collection",
+    },
+    "searchDataAccessPolicy": {
+      "Properties": {
+        "Name": "cluster-unit-test-search-access",
+        "Policy": {
+          "Fn::Join": [
+            "",
+            [
+              "[{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-search"],"Permission":["aoss:CreateCollectionItems","aoss:DeleteCollectionItems","aoss:UpdateCollectionItems","aoss:DescribeCollectionItems"]},{"ResourceType":"index","Resource":["index/cluster-unit-test-search/*"],"Permission":["aoss:CreateIndex","aoss:DeleteIndex","aoss:UpdateIndex","aoss:DescribeIndex","aoss:ReadDocument","aoss:WriteDocument"]}],"Principal":["arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":iam::test-account:root"]}]",
+            ],
+          ],
+        },
+        "Type": "data",
+      },
+      "Type": "AWS::OpenSearchServerless::AccessPolicy",
+    },
+    "searchEncryptionPolicy": {
+      "Properties": {
+        "Name": "cluster-unit-test-search-enc",
+        "Policy": "{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-search"]}],"AWSOwnedKey":true}",
+        "Type": "encryption",
+      },
+      "Type": "AWS::OpenSearchServerless::SecurityPolicy",
+    },
+    "searchNetworkPolicy": {
+      "Properties": {
+        "Name": "cluster-unit-test-search-net",
+        "Policy": "[{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-search"]},{"ResourceType":"dashboard","Resource":["collection/cluster-unit-test-search"]}],"AllowFromPublic":true}]",
+        "Type": "network",
+      },
+      "Type": "AWS::OpenSearchServerless::SecurityPolicy",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
+exports[`Snapshot Tests Serverless collection stack template snapshot 1`] = `
+{
+  "Description": "OpenSearch Service infrastructure — managed domains, serverless collections, and networking",
   "Outputs": {
     "CollectionArnExportunittestsnap": {
       "Description": "The ARN of the serverless collection",
@@ -1692,7 +2372,7 @@ exports[`Snapshot Tests ServerlessCollectionStack template snapshot 1`] = `
       },
       "Value": {
         "Fn::GetAtt": [
-          "Collection",
+          "snapCollection",
           "Arn",
         ],
       },
@@ -1704,7 +2384,7 @@ exports[`Snapshot Tests ServerlessCollectionStack template snapshot 1`] = `
       },
       "Value": {
         "Fn::GetAtt": [
-          "Collection",
+          "snapCollection",
           "CollectionEndpoint",
         ],
       },
@@ -1718,11 +2398,11 @@ exports[`Snapshot Tests ServerlessCollectionStack template snapshot 1`] = `
     },
   },
   "Resources": {
-    "Collection": {
+    "snapCollection": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "EncryptionPolicy",
-        "NetworkPolicy",
+        "snapEncryptionPolicy",
+        "snapNetworkPolicy",
       ],
       "Properties": {
         "Name": "cluster-unit-test-snap",
@@ -1746,7 +2426,7 @@ exports[`Snapshot Tests ServerlessCollectionStack template snapshot 1`] = `
       "Type": "AWS::OpenSearchServerless::Collection",
       "UpdateReplacePolicy": "Delete",
     },
-    "DataAccessPolicy": {
+    "snapDataAccessPolicy": {
       "Properties": {
         "Name": "cluster-unit-test-snap-access",
         "Policy": {
@@ -1765,7 +2445,7 @@ exports[`Snapshot Tests ServerlessCollectionStack template snapshot 1`] = `
       },
       "Type": "AWS::OpenSearchServerless::AccessPolicy",
     },
-    "EncryptionPolicy": {
+    "snapEncryptionPolicy": {
       "Properties": {
         "Name": "cluster-unit-test-snap-enc",
         "Policy": "{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-snap"]}],"AWSOwnedKey":true}",
@@ -1773,7 +2453,7 @@ exports[`Snapshot Tests ServerlessCollectionStack template snapshot 1`] = `
       },
       "Type": "AWS::OpenSearchServerless::SecurityPolicy",
     },
-    "NetworkPolicy": {
+    "snapNetworkPolicy": {
       "Properties": {
         "Name": "cluster-unit-test-snap-net",
         "Policy": "[{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-snap"]},{"ResourceType":"dashboard","Resource":["collection/cluster-unit-test-snap"]}],"AllowFromPublic":true}]",

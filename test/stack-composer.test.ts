@@ -1,10 +1,8 @@
 import { Template } from "aws-cdk-lib/assertions";
-import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
-import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
+import {createStackComposer, createStackComposerWithSingleDomainContext, getStack} from "./test-utils";
 import { describe, afterEach, test, expect, jest } from '@jest/globals';
-import {NetworkStack} from "../lib/network-stack";
-import {ServerlessCollectionStack} from "../lib/serverless-collection-stack";
 import {ClusterType} from "../lib/components/common-utilities";
+import {OpenSearchStack} from "../lib/opensearch-stack";
 
 describe('Stack Composer Tests', () => {
   afterEach(() => {
@@ -14,283 +12,114 @@ describe('Stack Composer Tests', () => {
   });
 
   test('Test invalid engine version format throws error', () => {
-    const contextOptions = {
-      // Should be OS_1.3
-      clusterVersion: "OpenSearch_1.3"
-    }
-
-    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
-
-    expect(createStackFunc).toThrow()
+    expect(() => createStackComposerWithSingleDomainContext({clusterVersion: "OpenSearch_1.3"})).toThrow()
   })
 
   test('Test ES_7.10 engine version format is parsed', () => {
-    const contextOptions = {
-      clusterVersion: "ES_7.10",
-    }
-
-    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
-
-    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
-    const domainTemplate = Template.fromStack(domainStack)
-    domainTemplate.resourceCountIs("AWS::OpenSearchService::Domain", 1)
+    const composer = createStackComposerWithSingleDomainContext({clusterVersion: "ES_7.10"})
+    const template = Template.fromStack(getStack(composer))
+    template.resourceCountIs("AWS::OpenSearchService::Domain", 1)
   })
 
   test('Test OS 1.3 engine version format is parsed', () => {
-    const contextOptions = {
-      clusterVersion: "OS_1.3",
-    }
-
-    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
-
-    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
-    const domainTemplate = Template.fromStack(domainStack)
-    domainTemplate.resourceCountIs("AWS::OpenSearchService::Domain", 1)
+    const composer = createStackComposerWithSingleDomainContext({clusterVersion: "OS_1.3"})
+    const template = Template.fromStack(getStack(composer))
+    template.resourceCountIs("AWS::OpenSearchService::Domain", 1)
   })
 
   test('Test access policy is parsed for proper array format', () => {
-    const contextOptions = {
-      accessPolicies:
-        {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {"AWS": "arn:aws:iam::12345678912:user/test-user"},
-              "Action": "es:ESHttp*",
-              "Resource": "arn:aws:es:us-east-1:12345678912:domain/test-os-domain/*"
-            },
-            {
-              "Effect": "Allow",
-              "Principal": {"AWS": "arn:aws:iam::12345678912:user/test-user2"},
-              "Action": "es:ESHttp*",
-              "Resource": "arn:aws:es:us-east-1:12345678912:domain/test-os-domain/*"
-            }]
-        }
-    }
-
-    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
-
-    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
-    const domainTemplate = Template.fromStack(domainStack)
-    // Check that accessPolicies policy is created
-    domainTemplate.resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
+    const composer = createStackComposerWithSingleDomainContext({
+      accessPolicies: {
+        "Version": "2012-10-17",
+        "Statement": [
+          {"Effect": "Allow", "Principal": {"AWS": "arn:aws:iam::12345678912:user/test-user"}, "Action": "es:ESHttp*", "Resource": "arn:aws:es:us-east-1:12345678912:domain/test-os-domain/*"},
+          {"Effect": "Allow", "Principal": {"AWS": "arn:aws:iam::12345678912:user/test-user2"}, "Action": "es:ESHttp*", "Resource": "arn:aws:es:us-east-1:12345678912:domain/test-os-domain/*"}
+        ]
+      }
+    })
+    Template.fromStack(getStack(composer)).resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
   })
 
   test('Test access policy is parsed for proper block format', () => {
-    const contextOptions = {
-      accessPolicies:
-        {
-          "Version": "2012-10-17",
-          "Statement": {
-            "Effect": "Allow",
-            "Principal": {"AWS": "*"},
-            "Action": "es:ESHttp*",
-            "Resource": "arn:aws:es:us-east-1:12345678912:domain/test-os-domain/*"
-          }
-        }
-    }
-
-    const openSearchStacks = createStackComposerWithSingleDomainContext(contextOptions)
-
-    const domainStack = openSearchStacks.stacks.filter((s) => s instanceof OpenSearchDomainStack)[0]
-    const domainTemplate = Template.fromStack(domainStack)
-    // Check that accessPolicies policy is created
-    domainTemplate.resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
+    const composer = createStackComposerWithSingleDomainContext({
+      accessPolicies: {
+        "Version": "2012-10-17",
+        "Statement": {"Effect": "Allow", "Principal": {"AWS": "*"}, "Action": "es:ESHttp*", "Resource": "arn:aws:es:us-east-1:12345678912:domain/test-os-domain/*"}
+      }
+    })
+    Template.fromStack(getStack(composer)).resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
   })
 
   test('Test access policy missing Statement throws error', () => {
-    const contextOptions = {
-      accessPolicies: {"Version": "2012-10-17"}
-    }
-
-    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
-
-    expect(createStackFunc).toThrow()
+    expect(() => createStackComposerWithSingleDomainContext({accessPolicies: {"Version": "2012-10-17"}})).toThrow()
   })
 
   test('Test access policy with empty Statement array throws error', () => {
-    const contextOptions = {
-      accessPolicies: {"Version": "2012-10-17", "Statement": []}
-    }
-
-    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
-
-    expect(createStackFunc).toThrow()
+    expect(() => createStackComposerWithSingleDomainContext({accessPolicies: {"Version": "2012-10-17", "Statement": []}})).toThrow()
   })
 
   test('Test access policy with empty Statement block throws error', () => {
-    const contextOptions = {
-      accessPolicies: {"Version": "2012-10-17", "Statement": {}}
-    }
-
-    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
-
-    expect(createStackFunc).toThrow()
+    expect(() => createStackComposerWithSingleDomainContext({accessPolicies: {"Version": "2012-10-17", "Statement": {}}})).toThrow()
   })
 
   test('Test access policy with improper Statement throws error', () => {
-    const contextOptions = {
-      // Missing required fields in Statement
-      accessPolicies: {"Version": "2012-10-17", "Statement": [{"Effect": "Allow"}]}
-    }
-
-    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
-
-    expect(createStackFunc).toThrow()
+    expect(() => createStackComposerWithSingleDomainContext({accessPolicies: {"Version": "2012-10-17", "Statement": [{"Effect": "Allow"}]}})).toThrow()
   })
 
   test('Test invalid TLS security policy throws error', () => {
-    const contextOptions = {
-      tlsSecurityPolicy: "TLS_0_9"
-    }
-
-    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
-
-    expect(createStackFunc).toThrow()
+    expect(() => createStackComposerWithSingleDomainContext({tlsSecurityPolicy: "TLS_0_9"})).toThrow()
   })
 
   test('Test invalid EBS volume type throws error', () => {
-    const contextOptions = {
-      ebsVolumeType: "GP0",
-    }
-
-    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
-
-    expect(createStackFunc).toThrow()
+    expect(() => createStackComposerWithSingleDomainContext({ebsVolumeType: "GP0"})).toThrow()
   })
 
   test('Test invalid domain removal policy type throws error', () => {
-    const contextOptions = {
-      domainRemovalPolicy: "DELETE",
-    }
-
-    const createStackFunc = () => createStackComposerWithSingleDomainContext(contextOptions)
-
-    expect(createStackFunc).toThrow()
+    expect(() => createStackComposerWithSingleDomainContext({domainRemovalPolicy: "DELETE"})).toThrow()
   })
 
-
   test('Test that loading context via a file is successful', () => {
-    const contextOptions = {
-      contextFile: './test/resources/sample-context-file.json',
-    }
-    const stacks = createStackComposer(contextOptions)
-    const networkStack = stacks.stacks.filter((s) => s instanceof NetworkStack)
-    expect(networkStack.length).toEqual(1)
+    const composer = createStackComposer({contextFile: './test/resources/sample-context-file.json'})
+    expect(composer.stacks.length).toBe(1)
+    Template.fromStack(getStack(composer)).resourceCountIs("AWS::EC2::VPC", 1)
   })
 
   test('Test that loading context via a file errors if file does not exist', () => {
-    const contextOptions = {
-      contextFile: './test/resources/missing-file.json',
-    }
-
-    const createStackFunc = () => createStackComposer(contextOptions)
-
-    expect(createStackFunc).toThrow()
+    expect(() => createStackComposer({contextFile: './test/resources/missing-file.json'})).toThrow()
   })
 
   test('Test that loading context via a file errors if file is not proper json', () => {
-    const contextOptions = {
-      contextFile: './test/resources/invalid-context-file.json',
-    }
-
-    const createStackFunc = () => createStackComposer(contextOptions)
-
-    expect(createStackFunc).toThrow()
+    expect(() => createStackComposer({contextFile: './test/resources/invalid-context-file.json'})).toThrow()
   })
 
-  test('Test importing VPC does not create a Network Stack', () => {
-    const contextOptions = {
-      vpcId: "vpc-345ljlsfkj232423",
+  test('Test single stack is created for all deployment types', () => {
+    const composer = createStackComposer({
       clusters: [
-        {
-          clusterId: "unittest",
-          clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE
-        }
+        {clusterId: "managed", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE},
+        {clusterId: "serverless", clusterType: ClusterType.OPENSEARCH_SERVERLESS},
       ]
-    }
-
-    const stackComposer = createStackComposer(contextOptions)
-
-    const networkStacks = stackComposer.stacks.filter((s) => s instanceof NetworkStack)
-    expect(networkStacks.length).toBe(0)
+    })
+    expect(composer.stacks.length).toBe(1)
+    expect(composer.stacks[0]).toBeInstanceOf(OpenSearchStack)
   })
 
-  test('Test serverless-only deployment does not create NetworkStack', () => {
-    const contextOptions = {
-      clusters: [
-        {
-          clusterId: "search",
-          clusterType: ClusterType.OPENSEARCH_SERVERLESS,
-        }
-      ]
-    }
-
-    const stackComposer = createStackComposer(contextOptions)
-
-    const networkStacks = stackComposer.stacks.filter((s) => s instanceof NetworkStack)
-    const serverlessStacks = stackComposer.stacks.filter((s) => s instanceof ServerlessCollectionStack)
-    expect(networkStacks.length).toBe(0)
-    expect(serverlessStacks.length).toBe(1)
-  })
-
-  test('Test mixed managed + serverless creates NetworkStack', () => {
-    const contextOptions = {
-      clusters: [
-        {
-          clusterId: "managed",
-          clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE,
-        },
-        {
-          clusterId: "serverless",
-          clusterType: ClusterType.OPENSEARCH_SERVERLESS,
-        }
-      ]
-    }
-
-    const stackComposer = createStackComposer(contextOptions)
-
-    const networkStacks = stackComposer.stacks.filter((s) => s instanceof NetworkStack)
-    const serverlessStacks = stackComposer.stacks.filter((s) => s instanceof ServerlessCollectionStack)
-    const domainStacks = stackComposer.stacks.filter((s) => s instanceof OpenSearchDomainStack)
-    expect(networkStacks.length).toBe(1)
-    expect(serverlessStacks.length).toBe(1)
-    expect(domainStacks.length).toBe(1)
-  })
-
-  test('Test auto-tags and custom tags are applied to all stacks', () => {
-    const contextOptions = {
-      tags: {
-        CostCenter: '12345',
-        Team: 'search-platform',
-      },
-      clusters: [
-        {
-          clusterId: "tagged",
-          clusterType: ClusterType.OPENSEARCH_SERVERLESS,
-        }
-      ]
-    }
-
-    const stackComposer = createStackComposer(contextOptions)
-
-    expect(stackComposer.stacks.length).toBe(1)
-    const template = Template.fromStack(stackComposer.stacks[0])
-    // Serverless collection supports tags — check the Collection resource
+  test('Test auto-tags and custom tags are applied', () => {
+    const composer = createStackComposer({
+      tags: {CostCenter: '12345', Team: 'search-platform'},
+      clusters: [{clusterId: "tagged", clusterType: ClusterType.OPENSEARCH_SERVERLESS}]
+    })
+    expect(composer.stacks.length).toBe(1)
+    const template = Template.fromStack(getStack(composer))
     const collections = template.findResources('AWS::OpenSearchServerless::Collection')
     const collection = Object.values(collections)[0]
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tags = (collection as any).Properties.Tags
-    const tagMap = Object.fromEntries(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      tags.map((t: any) => [t.Key, t.Value])
-    )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tagMap = Object.fromEntries(tags.map((t: any) => [t.Key, t.Value]))
     expect(tagMap['Environment']).toBe('unit-test')
     expect(tagMap['ManagedBy']).toBe('CDK')
     expect(tagMap['Project']).toBe('opensearch-sample')
     expect(tagMap['CostCenter']).toBe('12345')
     expect(tagMap['Team']).toBe('search-platform')
   })
-
 })
