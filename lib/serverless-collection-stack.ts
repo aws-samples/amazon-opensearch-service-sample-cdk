@@ -49,20 +49,28 @@ export class ServerlessCollectionStack extends Stack {
             }),
         });
 
-        // Network policy — public access (VPC endpoints can be configured separately)
+        // Network policy — public access or VPC endpoint restricted
+        const networkPolicyRules = [{
+            ResourceType: 'collection',
+            Resource: [`collection/${config.clusterName}`],
+        }, {
+            ResourceType: 'dashboard',
+            Resource: [`collection/${config.clusterName}`],
+        }];
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const networkPolicyEntry: Record<string, any> = { Rules: networkPolicyRules };
+        if (config.vpcEndpointId) {
+            networkPolicyEntry.AllowFromPublic = false;
+            networkPolicyEntry.SourceVPCEs = [config.vpcEndpointId];
+        } else {
+            networkPolicyEntry.AllowFromPublic = true;
+        }
+
         const networkPolicy = new CfnSecurityPolicy(this, 'NetworkPolicy', {
             name: `${config.clusterName}-net`,
             type: 'network',
-            policy: JSON.stringify([{
-                Rules: [{
-                    ResourceType: 'collection',
-                    Resource: [`collection/${config.clusterName}`],
-                }, {
-                    ResourceType: 'dashboard',
-                    Resource: [`collection/${config.clusterName}`],
-                }],
-                AllowFromPublic: true,
-            }]),
+            policy: JSON.stringify([networkPolicyEntry]),
         });
 
         const collection = new CfnCollection(this, 'Collection', {

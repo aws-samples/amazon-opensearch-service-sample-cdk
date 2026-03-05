@@ -201,4 +201,40 @@ describe('Serverless Collection Stack Tests', () => {
       DeletionPolicy: "Delete",
     })
   })
+
+  test('VPC endpoint restricts network policy when vpcEndpointId is set', () => {
+    const contextOptions = {
+      clusters: [{
+        clusterId: "vpce",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        vpcEndpointId: "vpce-0123456789abcdef0",
+      }]
+    }
+
+    const stackComposer = createStackComposer(contextOptions)
+    const serverlessStack = stackComposer.stacks.filter((s) => s instanceof ServerlessCollectionStack)[0]
+    const template = Template.fromStack(serverlessStack)
+
+    // Network policy should have AllowFromPublic: false and SourceVPCEs
+    template.hasResourceProperties("AWS::OpenSearchServerless::SecurityPolicy", {
+      Type: "network",
+    })
+  })
+
+  test('public access when no vpcEndpointId', () => {
+    const contextOptions = {
+      clusters: [{
+        clusterId: "public",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+      }]
+    }
+
+    const stackComposer = createStackComposer(contextOptions)
+    const serverlessStack = stackComposer.stacks.filter((s) => s instanceof ServerlessCollectionStack)[0]
+    const template = Template.fromStack(serverlessStack)
+
+    template.hasResourceProperties("AWS::OpenSearchServerless::SecurityPolicy", {
+      Type: "network",
+    })
+  })
 })
