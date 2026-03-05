@@ -32,7 +32,7 @@ export class VpcDetails {
      * Create VpcDetails by looking up an existing VPC by ID.
      * Must be called within a Stack scope (Vpc.fromLookup requires it).
      */
-    static fromVpcLookup(scope: Construct, vpcId: string, clusterId: string, subnetIds?: string[]): VpcDetails {
+    static fromVpcLookup(scope: Construct, vpcId: string, clusterId: string, subnetIds?: string[], clusterAccessSecurityGroup?: ISecurityGroup): VpcDetails {
         const vpc = Vpc.fromLookup(scope, `VPC-${clusterId}`, { vpcId });
 
         // Skip VPC validations for first synthesis stage (dummy VPC)
@@ -44,10 +44,10 @@ export class VpcDetails {
 
         if (subnetIds) {
             const subnetSelection = VpcDetails.validateProvidedSubnetIds(vpc, subnetIds);
-            return new VpcDetails(vpc, subnetSelection);
+            return new VpcDetails(vpc, subnetSelection, clusterAccessSecurityGroup);
         }
 
-        return new VpcDetails(vpc, VpcDetails.selectBestSubnets(vpc));
+        return new VpcDetails(vpc, VpcDetails.selectBestSubnets(vpc), clusterAccessSecurityGroup);
     }
 
     private static validateProvidedSubnetIds(vpc: IVpc, subnetIds: string[]): SubnetSelection {
