@@ -169,6 +169,7 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
             standbyReplicas: getContextForType('standbyReplicas', 'string', defaults, config),
             vpcEndpointId: getContextForType('vpcEndpointId', 'string', defaults, config),
             collections,
+            dataAccessPrincipals: getContextForType('dataAccessPrincipals', 'object', defaults, config),
         } satisfies ServerlessClusterConfig;
     }
 
