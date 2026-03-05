@@ -28,13 +28,15 @@ export class OpenSearchStack extends Stack {
 
         const {stage, managedClusters, serverlessClusters} = props;
         const hasManagedClusters = managedClusters.length > 0;
+        const serverlessNeedsVpc = serverlessClusters.some(c => c.createVpcEndpoint);
 
-        // --- VPC (only when managed clusters need it) ---
+        // --- VPC (when managed clusters need it or serverless needs a VPC endpoint) ---
         let vpcDetails: VpcDetails | undefined;
-        if (hasManagedClusters) {
+        if (hasManagedClusters || serverlessNeedsVpc) {
             if (props.vpcId) {
-                const firstConfig = managedClusters[0];
-                vpcDetails = VpcDetails.fromVpcLookup(this, props.vpcId, firstConfig.clusterId, firstConfig.clusterSubnetIds);
+                const clusterId = hasManagedClusters ? managedClusters[0].clusterId : serverlessClusters[0].clusterId;
+                const subnetIds = hasManagedClusters ? managedClusters[0].clusterSubnetIds : undefined;
+                vpcDetails = VpcDetails.fromVpcLookup(this, props.vpcId, clusterId, subnetIds);
             } else {
                 vpcDetails = this.createVpc(stage, props.vpcAZCount, props.vpcCidr);
             }
@@ -50,7 +52,7 @@ export class OpenSearchStack extends Stack {
 
         // --- Serverless collections ---
         for (const config of serverlessClusters) {
-            createServerlessCollection(this, config, stage);
+            createServerlessCollection(this, config, stage, vpcDetails);
         }
     }
 
