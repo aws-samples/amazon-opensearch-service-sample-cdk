@@ -2,14 +2,11 @@
 /**
  * Synthesizes standalone CloudFormation templates from the real CDK stacks.
  *
- * Instead of maintaining parallel L1 constructs, this script uses the actual
- * StackComposer with example configs to produce CFN templates that exactly
- * match what `cdk deploy` would create.
+ * Uses the actual StackComposer with example configs to produce CFN templates
+ * that exactly match what `cdk deploy` would create.
  *
- * Produces three stacks:
- *   - NetworkStack: VPC, subnets, NAT gateways, security group, flow logs
- *   - OpenSearchDomainStack: Managed OpenSearch Service domain
- *   - ServerlessCollectionStack: OpenSearch Serverless collection
+ * Produces a single consolidated stack containing VPC, managed domains,
+ * and serverless collections.
  *
  * Usage:
  *   npx cdk synth --app "npx ts-node bin/cfn-synth.ts" --no-staging -o cfn.out

@@ -16,7 +16,7 @@ function createNagApp(context: Record<string, unknown>) {
 }
 
 describe('cdk-nag AWS Solutions Checks', () => {
-    test('NetworkStack + OpenSearchDomainStack have no errors', () => {
+    test('Managed domain stack has no errors', () => {
         const composer = createNagApp({
             clusters: [{
                 clusterId: 'nag-domain',
@@ -35,7 +35,7 @@ describe('cdk-nag AWS Solutions Checks', () => {
         }
     });
 
-    test('ServerlessCollectionStack has no errors', () => {
+    test('Serverless collection stack has no errors', () => {
         const composer = createNagApp({
             clusters: [{
                 clusterId: 'nag-serverless',

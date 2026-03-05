@@ -1,9 +1,6 @@
 // Public API
 export { StackComposer } from './stack-composer';
-export { NetworkStack, NetworkStackProps } from './network-stack';
-export { OpenSearchDomainStack, OpenSearchDomainStackProps } from './opensearch-domain-stack';
-export { ServerlessCollectionStack, ServerlessCollectionStackProps } from './serverless-collection-stack';
-export { MonitoringStack, MonitoringStackProps } from './monitoring-stack';
+export { OpenSearchStack, OpenSearchStackProps } from './opensearch-stack';
 export { ClusterConfig, ManagedClusterConfig, ServerlessClusterConfig, BaseClusterConfig } from './components/cluster-config';
 export { ClusterType, parseClusterType } from './components/common-utilities';
 export { VpcDetails } from './components/vpc-details';
