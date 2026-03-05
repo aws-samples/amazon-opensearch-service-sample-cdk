@@ -1,12 +1,12 @@
 import {Construct} from "constructs";
-import {CfnOutput, RemovalPolicy, SecretValue, Stack, StackProps, Tags} from "aws-cdk-lib";
+import {CfnOutput, Fn, RemovalPolicy, SecretValue, Stack, StackProps, Tags} from "aws-cdk-lib";
 import {
     EbsDeviceVolumeType,
     FlowLogDestination, FlowLogTrafficType,
     IpAddresses, IpProtocol, ISecurityGroup, Port,
     SecurityGroup, SubnetSelection, Vpc,
 } from "aws-cdk-lib/aws-ec2";
-import {Domain, SAMLOptionsProperty, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
+import {CfnDomain, Domain, SAMLOptionsProperty, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
 import {IKey, Key} from "aws-cdk-lib/aws-kms";
 import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
@@ -239,7 +239,7 @@ export class OpenSearchStack extends Stack {
             {id: 'AwsSolutions-OS9', reason: 'Slow log publishing is user-configurable via loggingAppLogEnabled context option'},
         ]);
 
-        this.generateClusterExports(domain.domainEndpoint, config.clusterId, stage, vpcDetails.subnetSelection, vpcDetails.clusterAccessSecurityGroup?.securityGroupId);
+        this.generateClusterExports(domain, config.clusterId, stage, vpcDetails.subnetSelection, vpcDetails.clusterAccessSecurityGroup?.securityGroupId);
     }
 
     private createServerlessCollection(config: ServerlessClusterConfig, stage: string) {
@@ -421,12 +421,35 @@ export class OpenSearchStack extends Stack {
         });
     }
 
-    private generateClusterExports(clusterEndpoint: string, clusterId: string, stage: string, subnetSelection: SubnetSelection, clusterAccessSecurityGroupId?: string) {
+    private generateClusterExports(domain: Domain, clusterId: string, stage: string, subnetSelection: SubnetSelection, clusterAccessSecurityGroupId?: string) {
         new CfnOutput(this, `ClusterEndpointExport-${stage}-${clusterId}`, {
             exportName: `ClusterEndpoint-${stage}-${clusterId}`,
-            value: clusterEndpoint,
+            value: domain.domainEndpoint,
             description: 'The endpoint URL of the cluster',
         });
+
+        // Domain endpoint with https:// prefix for direct use
+        new CfnOutput(this, `DomainEndpointExport-${stage}-${clusterId}`, {
+            exportName: `DomainEndpoint-${stage}-${clusterId}`,
+            value: `https://${domain.domainEndpoint}`,
+            description: 'The full HTTPS endpoint URL of the domain',
+        });
+
+        // VPC endpoint — all managed domains in this project are VPC-enabled
+        const cfnDomain = domain.node.defaultChild as CfnDomain;
+        new CfnOutput(this, `DomainVpcEndpointExport-${stage}-${clusterId}`, {
+            exportName: `DomainVpcEndpoint-${stage}-${clusterId}`,
+            value: Fn.join('', ['https://', cfnDomain.getAtt('DomainEndpoints.vpc').toString()]),
+            description: 'The VPC endpoint URL of the domain',
+        });
+
+        // Domain ARN
+        new CfnOutput(this, `DomainArnExport-${stage}-${clusterId}`, {
+            exportName: `DomainArn-${stage}-${clusterId}`,
+            value: domain.domainArn,
+            description: 'The ARN of the OpenSearch domain',
+        });
+
         if (subnetSelection.subnets) {
             const subnetIds = subnetSelection.subnets.map(s => s.subnetId);
             new CfnOutput(this, `ClusterSubnets-${stage}-${clusterId}`, {
