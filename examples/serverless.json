@@ -1,4 +1,5 @@
 {
+  "$schema": "../cluster-config.schema.json",
   "stage": "dev",
   "clusters": [
     {
