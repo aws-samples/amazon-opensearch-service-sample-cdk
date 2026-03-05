@@ -126,13 +126,18 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         'ebsVolumeType', 'clusterVersion', 'useUnsignedBasicAuth', 'fineGrainedManagerUserARN',
         'fineGrainedManagerUserSecretARN', 'enableDemoAdmin', 'enforceHTTPS', 'tlsSecurityPolicy',
         'encryptionAtRestEnabled', 'encryptionAtRestKmsKeyARN', 'loggingAppLogEnabled',
-        'loggingAppLogGroupARN', 'nodeToNodeEncryptionEnabled', 'openAccessPolicyEnabled',
+        'loggingAppLogGroupARN', 'slowSearchLogEnabled', 'slowSearchLogGroupARN',
+        'auditLogEnabled', 'auditLogGroupARN',
+        'nodeToNodeEncryptionEnabled', 'openAccessPolicyEnabled',
         'accessPolicies', 'clusterSubnetIds', 'clusterSecurityGroupIds',
         'coldStorageEnabled', 'multiAZWithStandbyEnabled', 'offPeakWindowEnabled',
         'samlEntityId', 'samlMetadataContent', 'samlMasterUserName', 'samlMasterBackendRole',
         'samlRolesKey', 'samlSubjectKey', 'samlSessionTimeoutMinutes',
+        'cognitoUserPoolId', 'cognitoIdentityPoolId', 'cognitoRoleArn',
+        'customEndpoint', 'customEndpointCertificateArn',
+        'autoTuneEnabled',
     ];
-    const serverlessOnlyFields = ['collectionType', 'standbyReplicas'];
+    const serverlessOnlyFields = ['collectionType', 'standbyReplicas', 'sourceIPAddresses'];
 
     if (clusterType === 'OPENSEARCH_SERVERLESS') {
         const invalidFields = managedOnlyFields.filter(f => config[f] !== undefined);
@@ -170,6 +175,7 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
             vpcEndpointId: getContextForType('vpcEndpointId', 'string', defaults, config),
             collections,
             dataAccessPrincipals: getContextForType('dataAccessPrincipals', 'object', defaults, config),
+            sourceIPAddresses: getContextForType('sourceIPAddresses', 'object', defaults, config),
         } satisfies ServerlessClusterConfig;
     }
 
@@ -220,6 +226,16 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         samlRolesKey: getContextForType('samlRolesKey', 'string', defaults, config),
         samlSubjectKey: getContextForType('samlSubjectKey', 'string', defaults, config),
         samlSessionTimeoutMinutes: getContextForType('samlSessionTimeoutMinutes', 'number', defaults, config),
+        cognitoUserPoolId: getContextForType('cognitoUserPoolId', 'string', defaults, config),
+        cognitoIdentityPoolId: getContextForType('cognitoIdentityPoolId', 'string', defaults, config),
+        cognitoRoleArn: getContextForType('cognitoRoleArn', 'string', defaults, config),
+        customEndpoint: getContextForType('customEndpoint', 'string', defaults, config),
+        customEndpointCertificateArn: getContextForType('customEndpointCertificateArn', 'string', defaults, config),
+        autoTuneEnabled: getContextForType('autoTuneEnabled', 'boolean', defaults, config),
+        slowSearchLogEnabled: getContextForType('slowSearchLogEnabled', 'boolean', defaults, config),
+        slowSearchLogGroupARN: getContextForType('slowSearchLogGroupARN', 'string', defaults, config),
+        auditLogEnabled: getContextForType('auditLogEnabled', 'boolean', defaults, config),
+        auditLogGroupARN: getContextForType('auditLogGroupARN', 'string', defaults, config),
         domainRemovalPolicy,
     } satisfies ManagedClusterConfig;
 }
