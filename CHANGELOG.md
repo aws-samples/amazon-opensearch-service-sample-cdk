@@ -9,6 +9,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 | Series | Theme | Key Highlights |
 |--------|-------|---------------|
 | **0.3.x** | Single-stack simplification | 4 stacks → 1 `OpenSearchStack`, removed monitoring + VPC Lambda, discriminated JSON Schema, collection groups, SAML auth, cold storage, deploy script |
+
+## [0.3.4] - 2026-03-05
+
+### Added
+- Slow search log support (`slowSearchLogEnabled`, `slowSearchLogGroupARN`)
+- Audit log support (`auditLogEnabled`, `auditLogGroupARN`)
+- Cognito authentication (`cognitoUserPoolId`, `cognitoIdentityPoolId`, `cognitoRoleArn`)
+- Custom domain endpoint (`customEndpoint`, `customEndpointCertificateArn`)
+- Auto-Tune support (`autoTuneEnabled`)
+- IP-based serverless access restriction (`sourceIPAddresses`)
+- Per-type CFN templates in releases (managed-only, serverless-only, combined)
+
+### Changed
+- Decomposed `opensearch-stack.ts` into `managed-domain.ts` and `serverless-collection.ts` components (still one CFN stack)
+- `deploy.sh` no longer accepts `--stage` — stage comes from the context file only
+- `default-values.json` no longer provides a silent `stage: "dev"` default — missing stage now throws an error
+- README "Deploy Without CDK" and "Releasing" sections updated for single-stack architecture
+
+### Fixed
+- README referenced stale `cfn-NetworkStack.min.json` and `cfn-OpenSearchDomainStack.min.json` template names
 | **0.2.x** | Feature expansion + DX | Serverless support, discriminated union types, config validation, cdk-nag, example configs, README rewrite, tagging, snapshot tests |
 | **0.1.x** | Initial stabilization | CI/CD, release workflows, CFN templates, VPC mismatch protection, Node matrix, supply chain hardening |
 
