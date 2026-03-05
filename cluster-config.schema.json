@@ -221,7 +221,7 @@
         "collectionType": {
           "type": "string",
           "enum": ["SEARCH", "TIMESERIES", "VECTORSEARCH"],
-          "description": "Serverless collection type"
+          "description": "Serverless collection type (default for all collections in the group)"
         },
         "standbyReplicas": {
           "type": "string",
@@ -231,6 +231,27 @@
         "vpcEndpointId": {
           "type": "string",
           "description": "VPC endpoint ID — restricts access to this endpoint (disables public access)"
+        },
+        "collections": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Collection group — multiple collections sharing encryption, network, and data-access policies",
+          "items": {
+            "type": "object",
+            "required": ["collectionName"],
+            "properties": {
+              "collectionName": {
+                "type": "string",
+                "description": "Name of the collection"
+              },
+              "collectionType": {
+                "type": "string",
+                "enum": ["SEARCH", "TIMESERIES", "VECTORSEARCH"],
+                "description": "Collection type (overrides the cluster-level collectionType)"
+              }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

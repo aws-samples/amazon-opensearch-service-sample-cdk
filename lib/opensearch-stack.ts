@@ -228,13 +228,26 @@ export class OpenSearchStack extends Stack {
     private createServerlessCollection(config: ServerlessClusterConfig, stage: string) {
         const prefix = config.clusterId;
 
-        const collectionType = config.collectionType ?? 'SEARCH';
-        const validTypes = ['SEARCH', 'TIMESERIES', 'VECTORSEARCH'];
-        if (!validTypes.includes(collectionType)) {
-            throw new Error(
-                `Invalid 'collectionType' for cluster '${config.clusterId}': '${collectionType}'. ` +
-                `Valid options are: ${validTypes.join(', ')}`
-            );
+        // Build the list of collections to create.
+        // When `collections` is provided, each entry becomes a separate CfnCollection
+        // sharing the same encryption, network, and data-access policies.
+        // Otherwise, fall back to a single collection using the top-level fields.
+        const entries: { name: string; type: string }[] = [];
+        if (config.collections && config.collections.length > 0) {
+            for (const c of config.collections) {
+                if (!c.collectionName) {
+                    throw new Error(`Each entry in 'collections' for cluster '${config.clusterId}' must have a 'collectionName'`);
+                }
+                entries.push({
+                    name: c.collectionName,
+                    type: this.validateCollectionType(c.collectionType ?? config.collectionType ?? 'SEARCH', config.clusterId),
+                });
+            }
+        } else {
+            entries.push({
+                name: config.clusterName,
+                type: this.validateCollectionType(config.collectionType ?? 'SEARCH', config.clusterId),
+            });
         }
 
         const standbyReplicas = config.standbyReplicas ?? 'ENABLED';
@@ -245,18 +258,21 @@ export class OpenSearchStack extends Stack {
             );
         }
 
+        // Shared encryption policy covering all collections in the group
+        const collectionResources = entries.map(e => `collection/${e.name}`);
         const encryptionPolicy = new CfnSecurityPolicy(this, `${prefix}-EncryptionPolicy`, {
             name: `${config.clusterName}-enc`,
             type: 'encryption',
             policy: JSON.stringify({
-                Rules: [{ResourceType: 'collection', Resource: [`collection/${config.clusterName}`]}],
+                Rules: [{ResourceType: 'collection', Resource: collectionResources}],
                 AWSOwnedKey: true,
             }),
         });
 
+        // Shared network policy
         const networkPolicyRules = [
-            {ResourceType: 'collection', Resource: [`collection/${config.clusterName}`]},
-            {ResourceType: 'dashboard', Resource: [`collection/${config.clusterName}`]},
+            {ResourceType: 'collection', Resource: collectionResources},
+            {ResourceType: 'dashboard', Resource: collectionResources},
         ];
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -274,33 +290,52 @@ export class OpenSearchStack extends Stack {
             policy: JSON.stringify([networkPolicyEntry]),
         });
 
-        const collection = new CfnCollection(this, `${prefix}-Collection`, {
-            name: config.clusterName,
-            type: collectionType,
-            standbyReplicas: standbyReplicas,
-        });
+        // Create each collection
+        for (const entry of entries) {
+            const collectionId = entries.length > 1 ? `${prefix}-${entry.name}` : prefix;
 
-        collection.addDependency(encryptionPolicy);
-        collection.addDependency(networkPolicy);
+            const collection = new CfnCollection(this, `${collectionId}-Collection`, {
+                name: entry.name,
+                type: entry.type,
+                standbyReplicas: standbyReplicas,
+            });
 
-        if (config.domainRemovalPolicy === RemovalPolicy.DESTROY) {
-            collection.applyRemovalPolicy(RemovalPolicy.DESTROY);
+            collection.addDependency(encryptionPolicy);
+            collection.addDependency(networkPolicy);
+
+            if (config.domainRemovalPolicy === RemovalPolicy.DESTROY) {
+                collection.applyRemovalPolicy(RemovalPolicy.DESTROY);
+            }
+
+            new CfnOutput(this, `CollectionEndpointExport-${stage}-${collectionId}`, {
+                exportName: `CollectionEndpoint-${stage}-${collectionId}`,
+                value: collection.attrCollectionEndpoint,
+                description: `The endpoint URL of the ${entry.name} serverless collection`,
+            });
+
+            new CfnOutput(this, `CollectionArnExport-${stage}-${collectionId}`, {
+                exportName: `CollectionArn-${stage}-${collectionId}`,
+                value: collection.attrArn,
+                description: `The ARN of the ${entry.name} serverless collection`,
+            });
         }
 
+        // Shared data access policy covering all collections
+        const indexResources = entries.map(e => `index/${e.name}/*`);
         new CfnAccessPolicy(this, `${prefix}-DataAccessPolicy`, {
             name: `${config.clusterName}-access`,
             type: 'data',
             policy: JSON.stringify([{
                 Rules: [{
                     ResourceType: 'collection',
-                    Resource: [`collection/${config.clusterName}`],
+                    Resource: collectionResources,
                     Permission: [
                         'aoss:CreateCollectionItems', 'aoss:DeleteCollectionItems',
                         'aoss:UpdateCollectionItems', 'aoss:DescribeCollectionItems',
                     ],
                 }, {
                     ResourceType: 'index',
-                    Resource: [`index/${config.clusterName}/*`],
+                    Resource: indexResources,
                     Permission: [
                         'aoss:CreateIndex', 'aoss:DeleteIndex', 'aoss:UpdateIndex',
                         'aoss:DescribeIndex', 'aoss:ReadDocument', 'aoss:WriteDocument',
@@ -309,18 +344,17 @@ export class OpenSearchStack extends Stack {
                 Principal: [`arn:${this.partition}:iam::${this.account}:root`],
             }]),
         });
+    }
 
-        new CfnOutput(this, `CollectionEndpointExport-${stage}-${prefix}`, {
-            exportName: `CollectionEndpoint-${stage}-${prefix}`,
-            value: collection.attrCollectionEndpoint,
-            description: 'The endpoint URL of the serverless collection',
-        });
-
-        new CfnOutput(this, `CollectionArnExport-${stage}-${prefix}`, {
-            exportName: `CollectionArn-${stage}-${prefix}`,
-            value: collection.attrArn,
-            description: 'The ARN of the serverless collection',
-        });
+    private validateCollectionType(collectionType: string, clusterId: string): string {
+        const validTypes = ['SEARCH', 'TIMESERIES', 'VECTORSEARCH'];
+        if (!validTypes.includes(collectionType)) {
+            throw new Error(
+                `Invalid 'collectionType' for cluster '${clusterId}': '${collectionType}'. ` +
+                `Valid options are: ${validTypes.join(', ')}`
+            );
+        }
+        return collectionType;
     }
 
     private getEbsVolumeType(ebsVolumeTypeName: string): EbsDeviceVolumeType | undefined {
