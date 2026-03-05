@@ -1,7 +1,7 @@
 import {Construct} from "constructs";
 import {readFileSync} from "fs";
 import {CdkLogger} from "./cdk-logger";
-import {ClusterConfig} from "./cluster-config";
+import {ClusterConfig, ManagedClusterConfig, ServerlessClusterConfig} from "./cluster-config";
 import {TLSSecurityPolicy} from "aws-cdk-lib/aws-opensearchservice";
 import {MAX_CLUSTER_ID_LENGTH, parseRemovalPolicy} from "./common-utilities";
 
@@ -124,6 +124,18 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
     const domainRemovalPolicyName = getContextForType('domainRemovalPolicy', 'string', defaults, config)
     const domainRemovalPolicy = parseRemovalPolicy("domainRemovalPolicy", domainRemovalPolicyName)
 
+    // Return the correct discriminated union variant based on clusterType
+    if (clusterType === 'OPENSEARCH_SERVERLESS') {
+        return {
+            clusterId,
+            clusterType: 'OPENSEARCH_SERVERLESS',
+            clusterName,
+            domainRemovalPolicy,
+            collectionType: getContextForType('collectionType', 'string', defaults, config),
+            standbyReplicas: getContextForType('standbyReplicas', 'string', defaults, config),
+        } satisfies ServerlessClusterConfig;
+    }
+
     const tlsSecurityPolicyName = getContextForType('tlsSecurityPolicy', 'string', defaults, config)
     const tlsSecurityPolicy: TLSSecurityPolicy|undefined = tlsSecurityPolicyName ? TLSSecurityPolicy[tlsSecurityPolicyName as keyof typeof TLSSecurityPolicy] : undefined
     if (tlsSecurityPolicyName && !tlsSecurityPolicy) {
@@ -132,13 +144,11 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
 
     return {
         clusterId,
-        clusterType,
+        clusterType: 'OPENSEARCH_MANAGED_SERVICE',
         clusterName,
         clusterVersion: getContextForType('clusterVersion', 'string', defaults, config),
         clusterSubnetIds: getContextForType('clusterSubnetIds', 'object', defaults, config),
         clusterSecurityGroupIds: getContextForType('clusterSecurityGroupIds', 'object', defaults, config),
-
-        // OpenSearch-specific
         dataNodeType: getContextForType('dataNodeType', 'string', defaults, config),
         dataNodeCount: getContextForType('dataNodeCount', 'number', defaults, config),
         dedicatedManagerNodeType: getContextForType('dedicatedManagerNodeType', 'string', defaults, config),
@@ -164,9 +174,5 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         openAccessPolicyEnabled: getContextForType('openAccessPolicyEnabled', 'boolean', defaults, config),
         accessPolicies: getContextForType('accessPolicies', 'object', defaults, config),
         domainRemovalPolicy,
-
-        // Serverless
-        collectionType: getContextForType('collectionType', 'string', defaults, config),
-        standbyReplicas: getContextForType('standbyReplicas', 'string', defaults, config),
-    };
+    } satisfies ManagedClusterConfig;
 }

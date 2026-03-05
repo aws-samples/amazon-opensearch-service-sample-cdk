@@ -16,11 +16,11 @@ import {
   getEngineVersion,
   LATEST_AOS_VERSION,
 } from "./components/common-utilities";
-import {ClusterConfig} from "./components/cluster-config";
+import {ManagedClusterConfig} from "./components/cluster-config";
 
 export interface OpenSearchDomainStackProps extends StackProps {
   readonly stage: string;
-  readonly config: ClusterConfig;
+  readonly config: ManagedClusterConfig;
   readonly vpcDetails?: VpcDetails;
   readonly vpcId?: string;
 }
@@ -61,7 +61,7 @@ export class OpenSearchDomainStack extends Stack {
     return accessPolicies;
   }
 
-  private validateNodeCounts(numAZs: number, config: ClusterConfig) {
+  private validateNodeCounts(numAZs: number, config: ManagedClusterConfig) {
     if (config.dataNodeCount && config.dataNodeCount % numAZs !== 0) {
       throw new Error(`The number of data nodes must be a multiple of the number of Availability Zones. Received 'dataNodeCount' of ${config.dataNodeCount} with AZ count of ${numAZs}`);
     }

@@ -1,16 +1,20 @@
 import { TLSSecurityPolicy } from "aws-cdk-lib/aws-opensearchservice";
-import {RemovalPolicy} from "aws-cdk-lib";
+import { RemovalPolicy } from "aws-cdk-lib";
 
-export interface ClusterConfig {
-    // General cluster options
+/** Fields shared by all cluster types */
+export interface BaseClusterConfig {
     clusterId: string;
     clusterType: string;
     clusterName: string;
+    domainRemovalPolicy?: RemovalPolicy;
+}
+
+/** Configuration for managed OpenSearch Service domains */
+export interface ManagedClusterConfig extends BaseClusterConfig {
+    clusterType: 'OPENSEARCH_MANAGED_SERVICE';
     clusterVersion?: string;
     clusterSubnetIds?: string[];
     clusterSecurityGroupIds?: string[];
-
-    // OpenSearch-specific options
     dataNodeType?: string;
     dataNodeCount?: number;
     dedicatedManagerNodeType?: string;
@@ -35,9 +39,14 @@ export interface ClusterConfig {
     nodeToNodeEncryptionEnabled?: boolean;
     openAccessPolicyEnabled?: boolean;
     accessPolicies?: object;
-    domainRemovalPolicy?: RemovalPolicy;
+}
 
-    // OpenSearch Serverless options
+/** Configuration for OpenSearch Serverless collections */
+export interface ServerlessClusterConfig extends BaseClusterConfig {
+    clusterType: 'OPENSEARCH_SERVERLESS';
     collectionType?: string;
     standbyReplicas?: string;
 }
+
+/** Discriminated union — use `config.clusterType` to narrow the type */
+export type ClusterConfig = ManagedClusterConfig | ServerlessClusterConfig;
