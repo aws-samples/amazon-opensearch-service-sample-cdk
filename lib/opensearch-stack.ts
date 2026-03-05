@@ -51,6 +51,9 @@ export class OpenSearchStack extends Stack {
                     sg.addIngressRule(sg, Port.allTraffic());
                     Tags.of(sg).add("Name", `cluster-access-sg-${stage}`);
                     sg.addIngressRule(Peer.ipv4(importedVpc.vpcCidrBlock), Port.allTraffic(), 'Allow all traffic from VPC CIDR');
+                    if (props.supportIpv6 !== false) {
+                        sg.addIngressRule(Peer.anyIpv6(), Port.allTraffic(), 'Allow all IPv6 traffic from VPC');
+                    }
                 }
                 vpcDetails = VpcDetails.fromVpcLookup(this, props.vpcId, clusterId, subnetIds, sg);
             } else {
