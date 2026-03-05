@@ -2,6 +2,7 @@ import {Construct} from "constructs";
 import {Stack, StackProps, Tags} from "aws-cdk-lib";
 import {OpenSearchDomainStack} from "./opensearch-domain-stack";
 import {ServerlessCollectionStack} from "./serverless-collection-stack";
+import {MonitoringStack} from "./monitoring-stack";
 import * as defaultValuesJson from "../default-values.json"
 import * as defaultClusterValuesJson from "../default-cluster-values.json"
 import {NetworkStack} from "./network-stack";
@@ -46,6 +47,10 @@ export class StackComposer {
 
         // Custom tags
         const customTags: Record<string, string> | undefined = getContextForType('tags', 'object', defaultValues, contextJSON)
+
+        // Monitoring options
+        const monitoringEnabled = getContextForType('monitoringEnabled', 'boolean', defaultValues, contextJSON)
+        const snsTopicArn = getContextForType('snsTopicArn', 'string', defaultValues, contextJSON)
 
         if (!stage) {
             throw new Error(`Required CDK context field 'stage' is not present`)
@@ -113,6 +118,21 @@ export class StackComposer {
                         clusterStack.addDependency(networkStack)
                     }
                     this.stacks.push(clusterStack)
+
+                    // Optional monitoring stack
+                    if (monitoringEnabled) {
+                        const monitoringStack = new MonitoringStack(scope, `monitoringStack-${config.clusterId}`, {
+                            stage,
+                            domainName: managedConfig.clusterName,
+                            clusterId: config.clusterId,
+                            snsTopicArn,
+                            stackName: `Monitoring-${config.clusterId}-${stage}-${region}`,
+                            description: 'CloudWatch alarms for OpenSearch domain monitoring',
+                            env: props.env,
+                        })
+                        monitoringStack.addDependency(clusterStack)
+                        this.stacks.push(monitoringStack)
+                    }
                     break
                 }
                 case ClusterType.OPENSEARCH_SERVERLESS: {
