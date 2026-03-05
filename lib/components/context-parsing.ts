@@ -5,65 +5,100 @@ import {ClusterConfig} from "./cluster-config";
 import {TLSSecurityPolicy} from "aws-cdk-lib/aws-opensearchservice";
 import {MAX_CLUSTER_ID_LENGTH, parseRemovalPolicy} from "./common-utilities";
 
+/**
+ * Coerce a CLI-provided string value to the expected type.
+ *
+ * CDK CLI passes all `--context` values as strings. When the caller expects
+ * a number, boolean, or object we need to parse the string into the right JS type.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function coerceCliString(value: string, expectedType: string, optionName: string): any {
+    if (expectedType === 'number') {
+        return parseInt(value)
+    }
+    if (expectedType === 'boolean' || expectedType === 'object') {
+        try {
+            return JSON.parse(value)
+        } catch (e) {
+            if (e instanceof SyntaxError) {
+                CdkLogger.error(`Unable to parse option: ${optionName} with expected type: ${expectedType}`)
+            }
+            throw e
+        }
+    }
+    return value
+}
+
+/**
+ * Retrieve a typed context value, falling back to defaults.
+ *
+ * Resolution order:
+ * 1. Value from contextJSON (parsed from file or CDK context)
+ * 2. Value from defaultValues
+ * 3. undefined
+ *
+ * CLI-provided strings are automatically coerced to the expected type.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getContextForType(optionName: string, expectedType: string, defaultValues: Record<string, any>, contextJSON: Record<string, any>): any {
     const option = contextJSON[optionName]
 
-    // If no context is provided (undefined or empty string) and a default value exists, use it
+    // Fall back to default when context value is missing or empty string
     if ((option === undefined || option === "") && defaultValues[optionName]) {
         return defaultValues[optionName]
     }
 
-    // Filter out invalid or missing options by setting undefined (empty strings, null, undefined, NaN)
+    // Treat null, undefined, empty string, and NaN as absent (but preserve false and 0)
     if (option !== false && option !== 0 && !option) {
         return undefined
     }
-    // Values provided by the CLI will always be represented as a string and need to be parsed
+
+    // CLI values arrive as strings — coerce to the expected type
     if (typeof option === 'string') {
-        if (expectedType === 'number') {
-            return parseInt(option)
-        }
-        if (expectedType === 'boolean' || expectedType === 'object') {
-            try {
-                return JSON.parse(option)
-            } catch (e) {
-                if (e instanceof SyntaxError) {
-                    CdkLogger.error(`Unable to parse option: ${optionName} with expected type: ${expectedType}`)
-                }
-                throw e
-            }
-        }
+        return coerceCliString(option, expectedType, optionName)
     }
-    // Values provided by the cdk.context.json should be of the desired type
+
+    // Context file / cdk.context.json values should already be the right type
     if (typeof option !== expectedType) {
         throw new Error(`Type provided by cdk.context.json for ${optionName} was ${typeof option} but expected ${expectedType}`)
     }
     return option
 }
 
+/**
+ * Parse the CDK context into a plain JSON object.
+ *
+ * Supports two input modes:
+ * 1. **Context file** (`--context contextFile=path.json`) — reads and parses the file directly.
+ * 2. **Inline CDK context** — filters out internal AWS/CDK keys, then handles the
+ *    double-escaped string case that occurs when the entire context block is passed
+ *    as a single CLI string (e.g. `--context '{"stage":"dev"}'`).
+ *
+ *    The double-parse on line ~85 is intentional: the CDK CLI wraps the value in an
+ *    extra layer of JSON escaping, so the first `JSON.parse` unwraps the escaping and
+ *    the second produces the actual object.
+ */
 export function parseContextJson(scope: Construct) {
     const contextFile = scope.node.tryGetContext("contextFile")
     if (contextFile) {
         const fileString = readFileSync(contextFile, 'utf-8');
-        let fileJSON
         try {
-            fileJSON = JSON.parse(fileString)
+            return JSON.parse(fileString)
         } catch (error) {
             throw new Error(`Unable to parse context file ${contextFile} into JSON`, { cause: error });
         }
-        return fileJSON
     }
 
     const fullContext = scope.node.getAllContext();
-    // Filter out internal AWS/CDK keys
     let contextJSON = Object.fromEntries(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        Object.entries(fullContext).filter(([key, _]) => {
+        Object.entries(fullContext).filter(([key]) => {
             return !key.startsWith('@aws-sdk') && !key.startsWith('@aws-cdk') && !key.startsWith('aws:cdk');
         })
     );
-    // For a context block to be provided as a string (as in the case of providing via command line) it will need to be properly escaped
-    // to be captured. This requires JSON to parse twice, 1. Returns a normal JSON string with no escaping 2. Returns a JSON object for use
+
+    // CDK CLI double-escapes context passed as a single string argument.
+    // First parse: unwrap the outer escaping → yields a JSON string.
+    // Second parse: convert that JSON string → yields the actual object.
     if (typeof contextJSON === 'string') {
         contextJSON = JSON.parse(JSON.parse(contextJSON))
     }
