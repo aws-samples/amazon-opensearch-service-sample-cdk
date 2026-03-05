@@ -1,5 +1,5 @@
 import {Construct} from "constructs";
-import {CfnOutput, Stack, StackProps, Tags} from "aws-cdk-lib";
+import {CfnOutput, Fn, Stack, StackProps, Tags} from "aws-cdk-lib";
 import {
     CfnInternetGateway, CfnNatGateway, CfnEIP, CfnRouteTable,
     FlowLogDestination, FlowLogTrafficType,
@@ -97,6 +97,7 @@ export class OpenSearchStack extends Stack {
         // Allow all traffic from VPC CIDR when any managed cluster requests it
         if (allowAllVpcTraffic) {
             sg.addIngressRule(Peer.ipv4(cidr), Port.allTraffic(), 'Allow all traffic from VPC CIDR');
+            sg.addIngressRule(Peer.ipv6(Fn.select(0, vpc.vpcIpv6CidrBlocks)), Port.allTraffic(), 'Allow all IPv6 traffic from VPC CIDR');
         }
 
         new CfnOutput(this, `VpcIdExport-${stage}`, {
