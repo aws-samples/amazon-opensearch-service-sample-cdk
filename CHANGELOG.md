@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.3.0 - 2026-07-03
+
+### Breaking Changes
+- **Single stack architecture**: `NetworkStack`, `OpenSearchDomainStack`, `ServerlessCollectionStack`, and `MonitoringStack` replaced by a single `OpenSearchStack`. Stack name pattern: `OpenSearch-<stage>-<region>`.
+- **MonitoringStack removed**: CloudWatch alarms are no longer deployed. Remove `monitoringEnabled` and `snsTopicArn` from your config.
+- **VPC validation Lambda removed**: The custom resource that checked for VPC mismatches is gone.
+- **`ClusterType` moved**: Now exported from `cluster-config.ts` (re-exported from `common-utilities.ts` for backward compat).
+- **`createBasicAuthSecret` / `generateClusterExports` removed from public API**: Now private methods on `OpenSearchStack`.
+
+### Added
+- **JSON Schema discriminated validation** (`if/then/else`): Managed clusters only accept managed fields, serverless only accepts serverless fields. Cross-type fields are rejected. `additionalProperties: false` enforced everywhere.
+- **Serverless collection groups**: `collections` array on serverless configs — multiple collections sharing encryption, network, and data-access policies.
+- **SAML authentication**: `samlEntityId`, `samlMetadataContent`, `samlMasterUserName`, `samlMasterBackendRole`, `samlRolesKey`, `samlSubjectKey`, `samlSessionTimeoutMinutes`.
+- **Cold storage**: `coldStorageEnabled` (requires UltraWarm + dedicated managers).
+- **Multi-AZ with Standby**: `multiAZWithStandbyEnabled`.
+- **Off-peak maintenance window**: `offPeakWindowEnabled`.
+- **Scoped data access**: `dataAccessPrincipals` on serverless configs — scope data access policies to specific IAM principals instead of account root.
+- **Deploy script**: `deploy.sh` with `--stage`, `--context-file`, `--dry-run`, `--require-approval` flags.
+- **CDK diff in CI**: `cfn-diff` job runs `cdk diff` on PRs.
+- **Construct library docs**: README documents install from GitHub Release tarball and direct `OpenSearchStack` usage.
+
+### Changed
+- `common-utilities.ts` slimmed down — only engine version parsing and removal policy parsing remain.
+- README updated for single-stack architecture, new features, and updated project structure.
+
 ## 0.2.10 - 2026-03-05
 
 ### Added
