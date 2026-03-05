@@ -29,6 +29,10 @@
       "type": "string",
       "description": "CIDR block for the VPC (default: 10.212.0.0/16)"
     },
+    "supportIpv6": {
+      "type": "boolean",
+      "description": "Enable dual-stack (IPv4+IPv6) VPC. When false, creates an IPv4-only VPC (default: true)"
+    },
     "tags": {
       "type": "object",
       "additionalProperties": { "type": "string" },

@@ -19,6 +19,8 @@ export interface OpenSearchStackProps extends StackProps {
     readonly vpcId?: string;
     readonly vpcAZCount?: number;
     readonly vpcCidr?: string;
+    /** Enable dual-stack (IPv4+IPv6) VPC — when false, creates IPv4-only (default: true) */
+    readonly supportIpv6?: boolean;
 }
 
 export class OpenSearchStack extends Stack {
@@ -39,7 +41,7 @@ export class OpenSearchStack extends Stack {
                 vpcDetails = VpcDetails.fromVpcLookup(this, props.vpcId, clusterId, subnetIds);
             } else {
                 const allowAllVpcTraffic = managedClusters.some(c => c.allowAllVpcTraffic);
-                vpcDetails = this.createVpc(stage, props.vpcAZCount, props.vpcCidr, allowAllVpcTraffic);
+                vpcDetails = this.createVpc(stage, props.vpcAZCount, props.vpcCidr, allowAllVpcTraffic, props.supportIpv6);
             }
         }
 
@@ -57,15 +59,16 @@ export class OpenSearchStack extends Stack {
         }
     }
 
-    private createVpc(stage: string, vpcAZCount?: number, vpcCidr?: string, allowAllVpcTraffic?: boolean): VpcDetails {
+    private createVpc(stage: string, vpcAZCount?: number, vpcCidr?: string, allowAllVpcTraffic?: boolean, supportIpv6?: boolean): VpcDetails {
         const zoneCount = vpcAZCount ?? 2;
         if (zoneCount < 1 || zoneCount > 3) {
             throw new Error(`The 'vpcAZCount' option must be a number between 1 - 3, but received an AZ count of ${zoneCount}`);
         }
         const cidr = vpcCidr ?? '10.212.0.0/16';
+        const dualStack = supportIpv6 !== false; // default true
         const vpc = new Vpc(this, 'Vpc', {
             ipAddresses: IpAddresses.cidr(cidr),
-            ipProtocol: IpProtocol.DUAL_STACK,
+            ipProtocol: dualStack ? IpProtocol.DUAL_STACK : IpProtocol.IPV4_ONLY,
             vpcName: `vpc-${stage}`,
             maxAzs: zoneCount,
             flowLogs: {
@@ -97,7 +100,9 @@ export class OpenSearchStack extends Stack {
         // Allow all traffic from VPC CIDR when any managed cluster requests it
         if (allowAllVpcTraffic) {
             sg.addIngressRule(Peer.ipv4(cidr), Port.allTraffic(), 'Allow all traffic from VPC CIDR');
-            sg.addIngressRule(Peer.ipv6(Fn.select(0, vpc.vpcIpv6CidrBlocks)), Port.allTraffic(), 'Allow all IPv6 traffic from VPC CIDR');
+            if (dualStack) {
+                sg.addIngressRule(Peer.ipv6(Fn.select(0, vpc.vpcIpv6CidrBlocks)), Port.allTraffic(), 'Allow all IPv6 traffic from VPC CIDR');
+            }
         }
 
         new CfnOutput(this, `VpcIdExport-${stage}`, {

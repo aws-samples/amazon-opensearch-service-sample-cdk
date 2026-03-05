@@ -335,6 +335,7 @@ A single CloudFormation stack `OpenSearch-prod-<region>` containing:
 | `vpcId` | string | — | Import an existing VPC. Mutually exclusive with `vpcAZCount`/`vpcCidr`. |
 | `vpcAZCount` | number | — | Number of AZs for the created VPC (1–3). |
 | `vpcCidr` | string | `10.212.0.0/16` | CIDR block for the created VPC. |
+| `supportIpv6` | boolean | `true` | Enable dual-stack (IPv4+IPv6) VPC. Set `false` for IPv4-only. |
 
 ### Cluster Options (All Types)
 

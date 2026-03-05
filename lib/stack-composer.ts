@@ -43,6 +43,7 @@ export class StackComposer {
         const vpcId = getContextForType('vpcId', 'string', defaultValues, contextJSON)
         const vpcAZCount = getContextForType('vpcAZCount', 'number', defaultValues, contextJSON)
         const vpcCidr = getContextForType('vpcCidr', 'string', defaultValues, contextJSON)
+        const supportIpv6 = getContextForType('supportIpv6', 'boolean', defaultValues, contextJSON)
 
         // Custom tags
         const customTags: Record<string, string> | undefined = getContextForType('tags', 'object', defaultValues, contextJSON)
@@ -90,6 +91,7 @@ export class StackComposer {
             vpcId,
             vpcAZCount,
             vpcCidr,
+            supportIpv6,
             stackName: `OpenSearch-${stage}-${region}`,
             description: 'OpenSearch Service infrastructure - managed domains, serverless collections, and networking',
             env: props.env,
