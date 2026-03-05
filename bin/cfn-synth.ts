@@ -8,7 +8,7 @@
  * 3. Serverless collection only — serverlessStack
  *
  * Usage:
- *   npx cdk synth --app "npx ts-node bin/cfn-synth.ts" --no-staging -o cfn.out
+ *   npx cdk synth --app "node dist/bin/cfn-synth.js" --no-staging -o cfn.out
  */
 import 'source-map-support/register';
 import { App } from 'aws-cdk-lib';
