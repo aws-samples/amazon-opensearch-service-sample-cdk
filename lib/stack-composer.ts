@@ -1,5 +1,5 @@
 import {Construct} from "constructs";
-import {Stack, StackProps} from "aws-cdk-lib";
+import {Stack, StackProps, Tags} from "aws-cdk-lib";
 import {OpenSearchDomainStack} from "./opensearch-domain-stack";
 import {ServerlessCollectionStack} from "./serverless-collection-stack";
 import * as defaultValuesJson from "../default-values.json"
@@ -43,6 +43,9 @@ export class StackComposer {
         const vpcId = getContextForType('vpcId', 'string', defaultValues, contextJSON)
         const vpcAZCount = getContextForType('vpcAZCount', 'number', defaultValues, contextJSON)
         const vpcCidr = getContextForType('vpcCidr', 'string', defaultValues, contextJSON)
+
+        // Custom tags
+        const customTags: Record<string, string> | undefined = getContextForType('tags', 'object', defaultValues, contextJSON)
 
         if (!stage) {
             throw new Error(`Required CDK context field 'stage' is not present`)
@@ -121,6 +124,18 @@ export class StackComposer {
                     })
                     this.stacks.push(serverlessStack)
                     break
+                }
+            }
+        }
+
+        // Apply tags to all stacks
+        for (const stack of this.stacks) {
+            Tags.of(stack).add('Environment', stage)
+            Tags.of(stack).add('ManagedBy', 'CDK')
+            Tags.of(stack).add('Project', 'opensearch-sample')
+            if (customTags) {
+                for (const [key, value] of Object.entries(customTags)) {
+                    Tags.of(stack).add(key, value)
                 }
             }
         }
