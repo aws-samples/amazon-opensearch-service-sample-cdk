@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.2.10 - 2026-03-05
+
+### Added
+- Integration test workflow (`workflow_dispatch`) — deploys serverless example, verifies endpoint, tears down
+- Uses OIDC for AWS credentials, always cleans up even on failure
+
 ## 0.2.9 - 2026-03-05
 
 ### Added
