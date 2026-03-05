@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.2.7 - 2026-03-05
+
+### Added
+- Custom tagging strategy: auto-applies `Environment`, `ManagedBy`, `Project` tags to all stacks
+- User-defined tags via `tags` config option (key-value map applied to all resources)
+- Snapshot tests for NetworkStack, OpenSearchDomainStack, and ServerlessCollectionStack
+- Dependabot auto-merge workflow for semver-patch updates
+- 14 unit tests for `getContextForType` covering CLI string coercion, defaults, and error cases
+
+### Changed
+- Refactored `context-parsing.ts`: extracted `coerceCliString` helper, added JSDoc documentation
+- Documented the double-parse behavior in `parseContextJson` with clear explanation
+
 ## 0.2.6 - 2026-03-04
 
 ### Changed
