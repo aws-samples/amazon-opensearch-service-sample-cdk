@@ -38,7 +38,21 @@ export class OpenSearchStack extends Stack {
             if (props.vpcId) {
                 const clusterId = hasManagedClusters ? managedClusters[0].clusterId : serverlessClusters[0].clusterId;
                 const subnetIds = hasManagedClusters ? managedClusters[0].clusterSubnetIds : undefined;
-                vpcDetails = VpcDetails.fromVpcLookup(this, props.vpcId, clusterId, subnetIds);
+                const allowAllVpcTraffic = managedClusters.some(c => c.allowAllVpcTraffic);
+                let sg: SecurityGroup | undefined;
+                if (allowAllVpcTraffic) {
+                    const importedVpc = Vpc.fromLookup(this, 'ImportedVpc', { vpcId: props.vpcId });
+                    sg = new SecurityGroup(this, 'clusterAccessVpcSecurityGroup', {
+                        vpc: importedVpc,
+                        allowAllOutbound: false,
+                        allowAllIpv6Outbound: false,
+                        securityGroupName: `cluster-access-security-group-${stage}`,
+                    });
+                    sg.addIngressRule(sg, Port.allTraffic());
+                    Tags.of(sg).add("Name", `cluster-access-sg-${stage}`);
+                    sg.addIngressRule(Peer.ipv4(importedVpc.vpcCidrBlock), Port.allTraffic(), 'Allow all traffic from VPC CIDR');
+                }
+                vpcDetails = VpcDetails.fromVpcLookup(this, props.vpcId, clusterId, subnetIds, sg);
             } else {
                 const allowAllVpcTraffic = managedClusters.some(c => c.allowAllVpcTraffic);
                 vpcDetails = this.createVpc(stage, props.vpcAZCount, props.vpcCidr, allowAllVpcTraffic, props.supportIpv6);
