@@ -1,4 +1,5 @@
 {
+  "$schema": "../cluster-config.schema.json",
   "stage": "prod",
   "vpcId": "vpc-0123456789abcdef0",
   "clusters": [

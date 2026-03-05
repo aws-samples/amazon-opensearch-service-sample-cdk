@@ -119,6 +119,31 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         throw new Error(`The 'clusterType' setting is required for each cluster.`);
     }
 
+    // Cross-field validation: serverless clusters should not have managed-only fields
+    const managedOnlyFields = [
+        'dataNodeType', 'dataNodeCount', 'dedicatedManagerNodeType', 'dedicatedManagerNodeCount',
+        'warmNodeType', 'warmNodeCount', 'ebsEnabled', 'ebsIops', 'ebsThroughput', 'ebsVolumeSize',
+        'ebsVolumeType', 'clusterVersion', 'useUnsignedBasicAuth', 'fineGrainedManagerUserARN',
+        'fineGrainedManagerUserSecretARN', 'enableDemoAdmin', 'enforceHTTPS', 'tlsSecurityPolicy',
+        'encryptionAtRestEnabled', 'encryptionAtRestKmsKeyARN', 'loggingAppLogEnabled',
+        'loggingAppLogGroupARN', 'nodeToNodeEncryptionEnabled', 'openAccessPolicyEnabled',
+        'accessPolicies', 'clusterSubnetIds', 'clusterSecurityGroupIds',
+    ];
+    const serverlessOnlyFields = ['collectionType', 'standbyReplicas'];
+
+    if (clusterType === 'OPENSEARCH_SERVERLESS') {
+        const invalidFields = managedOnlyFields.filter(f => config[f] !== undefined);
+        if (invalidFields.length > 0) {
+            CdkLogger.warn(`Cluster '${clusterId}': Ignoring managed-only fields on serverless cluster: ${invalidFields.join(', ')}`);
+        }
+    }
+    if (clusterType === 'OPENSEARCH_MANAGED_SERVICE') {
+        const invalidFields = serverlessOnlyFields.filter(f => config[f] !== undefined);
+        if (invalidFields.length > 0) {
+            CdkLogger.warn(`Cluster '${clusterId}': Ignoring serverless-only fields on managed cluster: ${invalidFields.join(', ')}`);
+        }
+    }
+
     const clusterName = config.clusterName ?? `cluster-${stage}-${config.clusterId}`;
 
     const domainRemovalPolicyName = getContextForType('domainRemovalPolicy', 'string', defaults, config)

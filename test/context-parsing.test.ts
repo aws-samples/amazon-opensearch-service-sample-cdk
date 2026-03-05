@@ -1,7 +1,12 @@
-import { getContextForType } from "../lib/components/context-parsing";
-import { describe, test, expect } from '@jest/globals';
+import { getContextForType, parseClusterConfig } from "../lib/components/context-parsing";
+import { describe, test, expect, jest, afterEach } from '@jest/globals';
+import { CdkLogger } from "../lib/components/cdk-logger";
 
 describe('context-parsing', () => {
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
   describe('getContextForType', () => {
     const emptyDefaults = {};
@@ -63,6 +68,61 @@ describe('context-parsing', () => {
     test('throws on type mismatch from context file', () => {
       expect(() => getContextForType('key', 'string', emptyDefaults, { key: 123 })).toThrow(
         /Type provided by cdk.context.json for key was number but expected string/
+      );
+    });
+  });
+
+  describe('parseClusterConfig cross-field validation', () => {
+    const defaults = {};
+
+    test('warns when serverless cluster has managed-only fields', () => {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      const warnSpy = jest.spyOn(CdkLogger, 'warn').mockImplementation(() => {});
+      parseClusterConfig({
+        clusterId: 'test',
+        clusterType: 'OPENSEARCH_SERVERLESS',
+        dataNodeType: 'r6g.large.search',
+        ebsEnabled: true,
+      }, defaults, 'test-stage');
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Ignoring managed-only fields on serverless cluster')
+      );
+    });
+
+    test('warns when managed cluster has serverless-only fields', () => {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      const warnSpy = jest.spyOn(CdkLogger, 'warn').mockImplementation(() => {});
+      parseClusterConfig({
+        clusterId: 'test',
+        clusterType: 'OPENSEARCH_MANAGED_SERVICE',
+        collectionType: 'SEARCH',
+      }, defaults, 'test-stage');
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Ignoring serverless-only fields on managed cluster')
+      );
+    });
+
+    test('does not warn when fields match cluster type', () => {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      const warnSpy = jest.spyOn(CdkLogger, 'warn').mockImplementation(() => {});
+      parseClusterConfig({
+        clusterId: 'test',
+        clusterType: 'OPENSEARCH_SERVERLESS',
+        collectionType: 'SEARCH',
+        standbyReplicas: 'DISABLED',
+      }, defaults, 'test-stage');
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    test('throws when clusterId is missing', () => {
+      expect(() => parseClusterConfig({ clusterType: 'OPENSEARCH_SERVERLESS' }, defaults, 'test')).toThrow(
+        /clusterId.*required/
+      );
+    });
+
+    test('throws when clusterType is missing', () => {
+      expect(() => parseClusterConfig({ clusterId: 'test' }, defaults, 'test')).toThrow(
+        /clusterType.*required/
       );
     });
   });
