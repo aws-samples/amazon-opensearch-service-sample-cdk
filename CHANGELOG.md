@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.2.9 - 2026-03-05
+
+### Added
+- CloudWatch monitoring stack with 7 alarms (cluster red/yellow, free storage, JVM pressure, CPU, search latency, snapshot failures)
+- `monitoringEnabled` and `snsTopicArn` config options for opt-in monitoring
+- Serverless VPC endpoint support via `vpcEndpointId` config field
+- Serverless CFN template now included in release artifacts
+
+### Changed
+- Rewrote `cfn-synth.ts` — replaced 400 lines of L1 constructs with real CDK stack synthesis (-292 lines)
+- CFN templates in releases now exactly match what `cdk deploy` produces
+- New exports: `MonitoringStack`, `MonitoringStackProps`
+
 ## 0.2.8 - 2026-03-05
 
 ### Added
