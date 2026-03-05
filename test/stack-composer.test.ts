@@ -1,5 +1,4 @@
 import { Template } from "aws-cdk-lib/assertions";
-import { Tags } from "aws-cdk-lib";
 import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
 import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
 import { describe, afterEach, test, expect, jest } from '@jest/globals';
