@@ -522,17 +522,51 @@ cdk diff           # Compare with deployed stacks
 
 ### Using as a Library
 
-This sample can also be consumed as a CDK construct library in your own projects:
+This sample can be consumed as a CDK construct library in your own projects.
+
+#### Install from GitHub Release
+
+Every [release](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/releases) publishes an npm tarball:
+
+```bash
+# Install a specific version
+npm install https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/releases/download/v0.3.0/opensearch-service-domain-cdk-0.3.0.tgz
+```
+
+#### Use in your CDK app
 
 ```typescript
-import { StackComposer } from 'opensearch-service-domain-cdk';
+import { App } from 'aws-cdk-lib';
+import { StackComposer, OpenSearchStack } from 'opensearch-service-domain-cdk';
 
-const composer = new StackComposer(app, {
+// Option 1: Use StackComposer (reads config from CDK context)
+const app = new App();
+new StackComposer(app, {
+  env: { account: '123456789012', region: 'us-east-1' },
+});
+
+// Option 2: Use OpenSearchStack directly
+new OpenSearchStack(app, 'MyOpenSearch', {
+  stage: 'prod',
+  managedClusters: [{
+    clusterId: 'search',
+    clusterType: 'OPENSEARCH_MANAGED_SERVICE',
+    clusterName: 'my-domain',
+    dataNodeType: 'r6g.large.search',
+    dataNodeCount: 2,
+  }],
+  serverlessClusters: [],
   env: { account: '123456789012', region: 'us-east-1' },
 });
 ```
 
-Peer dependencies: `aws-cdk-lib` ≥ 2.150.0, `constructs` ≥ 10.4.2
+#### Peer dependencies
+
+| Package | Version |
+|---------|---------|
+| `aws-cdk-lib` | ≥ 2.150.0 |
+| `constructs` | ≥ 10.4.2 |
+| `cdk-nag` | ≥ 2.28.0 |
 
 ---
 
