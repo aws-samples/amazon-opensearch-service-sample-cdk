@@ -8,11 +8,4 @@ export default tseslint.config(
     {
         ignores: ['**/*.js', 'dist/**/*.d.ts'],
     },
-    {
-        languageOptions: {
-            globals: {
-                jest: true
-            }
-        }
-    }
 );

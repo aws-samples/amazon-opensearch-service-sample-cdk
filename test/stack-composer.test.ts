@@ -1,14 +1,14 @@
 import { Template } from "aws-cdk-lib/assertions";
 import {createStackComposer, createStackComposerWithSingleDomainContext, getStack} from "./test-utils";
-import { describe, afterEach, test, expect, jest } from '@jest/globals';
+import { describe, afterEach, test, expect, vi } from 'vitest';
 import {ClusterType} from "../lib/components/common-utilities";
 import {OpenSearchStack} from "../lib/opensearch-stack";
 
 describe('Stack Composer Tests', () => {
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetModules();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.resetModules();
+    vi.restoreAllMocks();
   });
 
   test('Test invalid engine version format throws error', () => {

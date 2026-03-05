@@ -39,9 +39,9 @@
   "scripts": {
     "build": "npx tsc",
     "watch": "npx tsc -w",
-    "test": "npm run test:lint && npm run test:jest",
+    "test": "npm run test:lint && npm run test:vitest",
     "test:lint": "npx eslint .",
-    "test:jest": "npx jest --coverage",
+    "test:vitest": "npx vitest run --coverage",
     "clean": "rm -rf dist",
     "validate": "npx cdk synth --no-staging -q",
     "prepublishOnly": "npm run build",
@@ -50,27 +50,24 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/jest": "^30.0.0",
     "@types/node": "25.3.3",
+    "@vitest/coverage-v8": "^4.0.18",
     "aws-cdk": "2.1109.0",
     "aws-cdk-lib": "2.241.0",
     "cdk-nag": "^2.37.55",
     "constructs": "^10.5.1",
     "eslint": "^10.0.2",
-    "jest": "^30.2.0",
     "source-map-support": "^0.5.21",
-    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.0.18"
   },
   "peerDependencies": {
     "aws-cdk-lib": "^2.150.0",
     "constructs": "^10.4.2"
   },
   "overrides": {
-    "semver": "^7.7.1",
-    "test-exclude": "^7.0.2",
-    "glob": "^13.0.0"
+    "semver": "^7.7.1"
   }
 }

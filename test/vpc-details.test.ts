@@ -1,4 +1,4 @@
-import { describe, test, expect, jest, afterEach, beforeEach } from '@jest/globals';
+import { describe, test, expect, vi, afterEach, beforeEach } from 'vitest';
 import { VpcDetails } from "../lib/components/vpc-details";
 import { App, Stack } from "aws-cdk-lib";
 import { ISecurityGroup, ISubnet, IVpc, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
@@ -14,7 +14,7 @@ function mockSubnet(subnetId: string, az: string): ISubnet {
         node: {} as never,
         env: { account: '123456789012', region: 'us-east-1' },
         stack: {} as never,
-        associateNetworkAcl: jest.fn(),
+        associateNetworkAcl: vi.fn(),
     } as unknown as ISubnet;
 }
 
@@ -34,7 +34,7 @@ function createMockVpc(opts: {
         privateSubnets,
         publicSubnets,
         isolatedSubnets,
-        selectSubnets: jest.fn().mockImplementation((selection: unknown) => {
+        selectSubnets: vi.fn().mockImplementation((selection: unknown) => {
             const sel = selection as { subnetType?: SubnetType; subnetFilters?: unknown[] };
             let subnets: ISubnet[];
             if (sel.subnetType === SubnetType.PRIVATE_WITH_EGRESS) {
@@ -59,8 +59,8 @@ const mockSg = { securityGroupId: 'sg-123' } as unknown as ISecurityGroup;
 
 describe('VpcDetails Tests', () => {
     afterEach(() => {
-        jest.clearAllMocks();
-        jest.restoreAllMocks();
+        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     // --- fromCreatedVpc ---
@@ -83,10 +83,10 @@ describe('VpcDetails Tests', () => {
     // --- fromVpcLookup ---
 
     describe('fromVpcLookup', () => {
-        let fromLookupSpy: jest.SpiedFunction<typeof Vpc.fromLookup>;
+        let fromLookupSpy: ReturnType<typeof vi.spyOn<typeof Vpc, 'fromLookup'>>;
 
         beforeEach(() => {
-            fromLookupSpy = jest.spyOn(Vpc, 'fromLookup');
+            fromLookupSpy = vi.spyOn(Vpc, 'fromLookup');
         });
 
         afterEach(() => {
@@ -203,7 +203,7 @@ describe('VpcDetails Tests', () => {
                 vpcId: 'vpc-imported',
                 privateSubnets: [mockSubnet('subnet-other', 'us-east-1a')],
             });
-            (mockVpc.selectSubnets as jest.Mock).mockImplementation(() => {
+            (mockVpc.selectSubnets as vi.Mock).mockImplementation(() => {
                 return { subnets: [], subnetIds: [], availabilityZones: [] };
             });
             fromLookupSpy.mockReturnValue(mockVpc as unknown as IVpc);

@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
+exports[`Snapshot Tests > Managed domain stack template snapshot 1`] = `
 {
   "Description": "OpenSearch Service infrastructure - managed domains, serverless collections, and networking",
   "Outputs": {
@@ -1174,7 +1174,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
 }
 `;
 
-exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] = `
+exports[`Snapshot Tests > Mixed managed + serverless stack template snapshot 1`] = `
 {
   "Description": "OpenSearch Service infrastructure - managed domains, serverless collections, and networking",
   "Outputs": {
@@ -2433,7 +2433,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
 }
 `;
 
-exports[`Snapshot Tests Serverless collection stack template snapshot 1`] = `
+exports[`Snapshot Tests > Serverless collection stack template snapshot 1`] = `
 {
   "Description": "OpenSearch Service infrastructure - managed domains, serverless collections, and networking",
   "Outputs": {

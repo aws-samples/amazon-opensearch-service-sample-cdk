@@ -1,13 +1,13 @@
 import { Template } from 'aws-cdk-lib/assertions';
 import {createStackComposer, createStackComposerWithSingleDomainContext, getStack} from "./test-utils";
-import {describe, afterEach, test, jest, expect} from '@jest/globals';
+import {describe, afterEach, test, vi, expect} from 'vitest';
 import {ClusterType} from "../lib/components/common-utilities";
 
 describe('Managed Domain Tests', () => {
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetModules();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.resetModules();
+    vi.restoreAllMocks();
   });
 
   test('Test empty string provided for a parameter which has a default value, uses the default value', () => {
@@ -228,9 +228,9 @@ function assertAlternateDomainTemplate(template: Template) {
 
 describe('Cold Storage, Multi-AZ Standby, Off-Peak Window Tests', () => {
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.resetModules();
-    jest.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.resetModules();
+    vi.restoreAllMocks();
   });
 
   test('Test cold storage enabled', () => {

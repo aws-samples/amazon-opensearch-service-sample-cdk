@@ -2,7 +2,7 @@ import { Aspects, App } from 'aws-cdk-lib';
 import { Annotations, Match } from 'aws-cdk-lib/assertions';
 import { AwsSolutionsChecks } from 'cdk-nag';
 import { StackComposer } from '../lib/stack-composer';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 
 function createNagApp(context: Record<string, unknown>) {
     context.stage = context.stage ?? 'nag-test';
