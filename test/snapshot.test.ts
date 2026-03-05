@@ -15,8 +15,9 @@ describe('Snapshot Tests', () => {
         clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE,
       }]
     });
-    const networkStack = stackComposer.stacks.find(s => s instanceof NetworkStack)!;
-    expect(Template.fromStack(networkStack).toJSON()).toMatchSnapshot();
+    const networkStack = stackComposer.stacks.find(s => s instanceof NetworkStack);
+    expect(networkStack).toBeDefined();
+    expect(Template.fromStack(networkStack as NetworkStack).toJSON()).toMatchSnapshot();
   });
 
   test('OpenSearchDomainStack template snapshot', () => {
@@ -33,8 +34,9 @@ describe('Snapshot Tests', () => {
         enforceHTTPS: true,
       }]
     });
-    const domainStack = stackComposer.stacks.find(s => s instanceof OpenSearchDomainStack)!;
-    expect(Template.fromStack(domainStack).toJSON()).toMatchSnapshot();
+    const domainStack = stackComposer.stacks.find(s => s instanceof OpenSearchDomainStack);
+    expect(domainStack).toBeDefined();
+    expect(Template.fromStack(domainStack as OpenSearchDomainStack).toJSON()).toMatchSnapshot();
   });
 
   test('ServerlessCollectionStack template snapshot', () => {
@@ -47,8 +49,9 @@ describe('Snapshot Tests', () => {
         domainRemovalPolicy: "DESTROY",
       }]
     });
-    const serverlessStack = stackComposer.stacks.find(s => s instanceof ServerlessCollectionStack)!;
-    expect(Template.fromStack(serverlessStack).toJSON()).toMatchSnapshot();
+    const serverlessStack = stackComposer.stacks.find(s => s instanceof ServerlessCollectionStack);
+    expect(serverlessStack).toBeDefined();
+    expect(Template.fromStack(serverlessStack as ServerlessCollectionStack).toJSON()).toMatchSnapshot();
   });
 
 });
