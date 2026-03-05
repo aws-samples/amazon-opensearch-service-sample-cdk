@@ -2,7 +2,7 @@
 
 exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
 {
-  "Description": "OpenSearch Service infrastructure — managed domains, serverless collections, and networking",
+  "Description": "OpenSearch Service infrastructure - managed domains, serverless collections, and networking",
   "Outputs": {
     "ClusterAccessSecurityGroupIdExportunittestsnap": {
       "Description": "The cluster access security group id",
@@ -1192,7 +1192,7 @@ exports[`Snapshot Tests Managed domain stack template snapshot 1`] = `
 
 exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] = `
 {
-  "Description": "OpenSearch Service infrastructure — managed domains, serverless collections, and networking",
+  "Description": "OpenSearch Service infrastructure - managed domains, serverless collections, and networking",
   "Outputs": {
     "ClusterAccessSecurityGroupIdExportunittestdomain": {
       "Description": "The cluster access security group id",
@@ -2467,7 +2467,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
 
 exports[`Snapshot Tests Serverless collection stack template snapshot 1`] = `
 {
-  "Description": "OpenSearch Service infrastructure — managed domains, serverless collections, and networking",
+  "Description": "OpenSearch Service infrastructure - managed domains, serverless collections, and networking",
   "Outputs": {
     "CollectionArnExportunittestsnap": {
       "Description": "The ARN of the cluster-unit-test-snap serverless collection",

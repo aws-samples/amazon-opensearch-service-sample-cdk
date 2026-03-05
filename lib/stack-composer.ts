@@ -91,7 +91,7 @@ export class StackComposer {
             vpcAZCount,
             vpcCidr,
             stackName: `OpenSearch-${stage}-${region}`,
-            description: 'OpenSearch Service infrastructure — managed domains, serverless collections, and networking',
+            description: 'OpenSearch Service infrastructure - managed domains, serverless collections, and networking',
             env: props.env,
         });
         this.stacks.push(stack);
