@@ -34,7 +34,9 @@ Standing up OpenSearch on AWS involves VPC networking, security groups, encrypti
 - **Pre-built CloudFormation templates** in every release — deploy without CDK if you prefer
 - **JSON Schema validation** — IDE autocomplete and cross-type field rejection
 
-> **Coming from 0.1.x?** The [v0.1.10 README](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/blob/v0.1.10/README.md) documents the previous API. See [Breaking Changes](#breaking-changes-from-01x) below.
+> **Coming from 0.2.x?** See [Breaking Changes from 0.2.x](#breaking-changes-from-02x) below for the migration guide.
+>
+> **Coming from 0.1.x?** The [v0.1.10 README](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/blob/v0.1.10/README.md) documents the original API. See [Breaking Changes from 0.1.x](#breaking-changes-from-01x) below.
 
 ---
 
@@ -48,6 +50,7 @@ Standing up OpenSearch on AWS involves VPC networking, security groups, encrypti
 - [Secure Defaults](#secure-defaults)
 - [Releasing](#releasing)
 - [Development](#development)
+- [Breaking Changes from 0.2.x](#breaking-changes-from-02x)
 - [Breaking Changes from 0.1.x](#breaking-changes-from-01x)
 - [License](#license)
 
@@ -125,6 +128,9 @@ cdk destroy "*"
 
 ## Deploy Without CDK (CloudFormation Templates)
 
+<details>
+<summary>Deploy using pre-synthesized CloudFormation templates from GitHub Releases</summary>
+
 Every [GitHub Release](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/releases) includes pre-synthesized, minified CloudFormation templates with full parameter support. No CDK, Node.js, or TypeScript required.
 
 **Download the templates** from the latest release, then:
@@ -160,6 +166,8 @@ aws cloudformation create-stack \
 
 **OpenSearchDomainStack:** `Stage`, `SubnetIds`, `SecurityGroupId`, `DomainName`, `EngineVersion`, `DataNodeInstanceType`, `DataNodeCount`, `DedicatedManagerNodeType`, `DedicatedManagerNodeCount`, `EBSVolumeSize`, `EBSVolumeType`, `EBSIops`, `EBSThroughput`
 
+</details>
+
 ---
 
 ## Examples
@@ -180,7 +188,8 @@ cdk deploy "*" --context contextFile=examples/single-domain.json --require-appro
 
 ### Single Managed Domain
 
-A sample config for a single domain with secure defaults:
+<details>
+<summary>A sample config for a single domain with secure defaults</summary>
 
 ```json
 {
@@ -205,9 +214,12 @@ A sample config for a single domain with secure defaults:
 }
 ```
 
+</details>
+
 ### Serverless Collection
 
-Deploy a serverless vector search collection — no VPC, no capacity planning:
+<details>
+<summary>Deploy a serverless vector search collection — no VPC, no capacity planning</summary>
 
 ```json
 {
@@ -226,9 +238,12 @@ Deploy a serverless vector search collection — no VPC, no capacity planning:
 
 Collection types: `SEARCH`, `TIMESERIES`, `VECTORSEARCH`
 
+</details>
+
 ### Multi-Cluster (Managed + Serverless)
 
-Deploy multiple clusters from a single config — the VPC is shared across managed domains, and serverless collections skip VPC entirely:
+<details>
+<summary>Deploy multiple clusters from a single config — VPC shared across managed domains, serverless skips VPC</summary>
 
 ```json
 {
@@ -276,9 +291,12 @@ A single CloudFormation stack `OpenSearch-prod-<region>` containing:
 - Two managed OpenSearch domains (`search` and `logs`)
 - One serverless vector search collection (`vectors`)
 
+</details>
+
 ### Bring Your Own VPC
 
-Use an existing VPC instead of creating one:
+<details>
+<summary>Use an existing VPC instead of creating one</summary>
 
 ```json
 {
@@ -295,6 +313,8 @@ Use an existing VPC instead of creating one:
   ]
 }
 ```
+
+</details>
 
 ---
 
@@ -325,6 +345,9 @@ Use an existing VPC instead of creating one:
 | `domainRemovalPolicy` | string | — | `RETAIN` (default) or `DESTROY` |
 
 ### Managed Domain Options
+
+<details>
+<summary>All options for <code>OPENSEARCH_MANAGED_SERVICE</code> clusters</summary>
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
@@ -358,6 +381,16 @@ Use an existing VPC instead of creating one:
 | `coldStorageEnabled` | boolean | — | Enable UltraWarm cold storage (requires warm nodes + dedicated managers) |
 | `multiAZWithStandbyEnabled` | boolean | — | Enable Multi-AZ with Standby |
 | `offPeakWindowEnabled` | boolean | — | Enable off-peak maintenance window |
+
+</details>
+
+### SAML Authentication Options
+
+<details>
+<summary>Options for SAML-based authentication on managed domains</summary>
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
 | `samlEntityId` | string | — | SAML identity provider entity ID |
 | `samlMetadataContent` | string | — | SAML metadata XML content |
 | `samlMasterUserName` | string | — | SAML master username for Dashboards |
@@ -366,7 +399,12 @@ Use an existing VPC instead of creating one:
 | `samlSubjectKey` | string | — | SAML assertion element for username |
 | `samlSessionTimeoutMinutes` | number | `60` | SAML session timeout (1–1440 minutes) |
 
+</details>
+
 ### Serverless Collection Options
+
+<details>
+<summary>All options for <code>OPENSEARCH_SERVERLESS</code> clusters</summary>
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
@@ -394,7 +432,12 @@ Deploy multiple collections sharing encryption, network, and data-access policie
 
 Each entry creates a separate collection. Per-entry `collectionType` overrides the cluster-level default.
 
+</details>
+
 ### Context Precedence
+
+<details>
+<summary>How configuration values are resolved</summary>
 
 Configuration values are resolved in this order (highest priority first):
 
@@ -402,6 +445,8 @@ Configuration values are resolved in this order (highest priority first):
 2. **Context file** — `--context contextFile=my-cluster.json`
 3. **`cdk.context.json`** — CDK-managed context cache
 4. **`default-values.json` / `default-cluster-values.json`** — project defaults
+
+</details>
 
 ---
 
@@ -450,6 +495,9 @@ Override any default in your cluster config or in `default-cluster-values.json`.
 
 ## Releasing
 
+<details>
+<summary>Automated release process via GitHub Actions</summary>
+
 Automated via GitHub Actions. Each release includes:
 
 | Artifact | Description |
@@ -465,6 +513,8 @@ Automated via GitHub Actions. Each release includes:
 npm version patch
 git push origin main --follow-tags
 ```
+
+</details>
 
 ### CI Pipeline
 
@@ -494,6 +544,9 @@ cdk diff           # Compare with deployed stacks
 
 ### Project Structure
 
+<details>
+<summary>Directory layout</summary>
+
 ```
 ├── bin/
 │   ├── app.ts              # CDK app entry point
@@ -520,7 +573,12 @@ cdk diff           # Compare with deployed stacks
 └── default-cluster-values.json  # Secure defaults
 ```
 
+</details>
+
 ### Using as a Library
+
+<details>
+<summary>Consume this sample as a CDK construct library in your own projects</summary>
 
 This sample can be consumed as a CDK construct library in your own projects.
 
@@ -568,9 +626,49 @@ new OpenSearchStack(app, 'MyOpenSearch', {
 | `constructs` | ≥ 10.4.2 |
 | `cdk-nag` | ≥ 2.28.0 |
 
+</details>
+
+---
+
+## Breaking Changes from 0.2.x
+
+If you're upgrading from 0.2.x, these are the key changes in 0.3.x:
+
+| What changed | 0.2.x | 0.3.x |
+|-------------|-------|-------|
+| Stack architecture | 4 separate stacks (`NetworkStack`, `OpenSearchDomainStack`, `ServerlessCollectionStack`, `MonitoringStack`) | Single `OpenSearchStack` — one `cdk deploy` = one CloudFormation stack |
+| Stack name pattern | `NetworkInfra-<stage>-<region>`, `OpenSearchDomain-<id>-<stage>-<region>`, etc. | `OpenSearch-<stage>-<region>` |
+| Monitoring | `MonitoringStack` with 7 CloudWatch alarms (opt-in via `monitoringEnabled`) | Removed — configure alarms externally if needed |
+| VPC validation Lambda | Custom resource checking VPC mismatch before domain updates | Removed — simpler stack, fewer IAM permissions |
+| JSON Schema | Flat validation — all fields optional on every cluster type | Discriminated `if/then/else` — managed fields rejected on serverless and vice versa |
+| Serverless collections | One collection per `clusterId` | Collection groups via `collections` array — multiple collections sharing policies |
+| Auth | Basic auth, fine-grained access, open access | Added SAML authentication (7 new config fields) |
+| Storage | EBS + UltraWarm | Added cold storage (`coldStorageEnabled`) |
+| HA | Multi-AZ via `vpcAZCount` | Added Multi-AZ with Standby (`multiAZWithStandbyEnabled`) + off-peak window |
+| Data access (serverless) | Account root gets full access | Scoped via `dataAccessPrincipals` (defaults to account root for backward compat) |
+| Deploy script | Manual `cdk deploy` commands | `deploy.sh` with `--stage`, `--context-file`, `--dry-run` |
+| CI | Build, test, cfn-lint, link-checker | Added `cfn-diff` job showing infrastructure changes on PRs |
+| `common-utilities.ts` | Mixed concerns (constants, enums, parsers, secret creation, exports) | Slimmed — `ClusterType` moved to `cluster-config.ts`, `createBasicAuthSecret`/`generateClusterExports` now private on `OpenSearchStack` |
+| Public API | `createBasicAuthSecret`, `generateClusterExports` exported | Removed from public API — now private methods |
+
+<details>
+<summary>Migration steps</summary>
+
+1. **Stack consolidation**: Your existing stacks will need to be replaced. Deploy the new single stack, migrate data, then tear down old stacks. Or destroy and redeploy if data loss is acceptable.
+2. **Remove monitoring config**: Delete `monitoringEnabled` and `snsTopicArn` from your config files.
+3. **Update imports**: If using as a library, replace `NetworkStack`, `OpenSearchDomainStack`, `ServerlessCollectionStack` imports with `OpenSearchStack`.
+4. **Schema validation**: Run `npm run validate` — the discriminated schema will now reject cross-type fields that were silently ignored before.
+
+</details>
+
+> **Previous version docs:** [v0.2.10 README](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/blob/v0.2.10/README.md)
+
 ---
 
 ## Breaking Changes from 0.1.x
+
+<details>
+<summary>Migration guide from 0.1.x to 0.2.x</summary>
 
 If you're upgrading from 0.1.x, these are the key changes:
 
@@ -583,7 +681,9 @@ If you're upgrading from 0.1.x, these are the key changes:
 | NetworkStack | Always created | Only created when managed clusters exist |
 | Cluster types | Managed only | Managed + Serverless |
 
-Full changelog: [CHANGELOG.md](CHANGELOG.md)
+> **Previous version docs:** [v0.1.10 README](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/blob/v0.1.10/README.md)
+
+</details>
 
 ---
 
