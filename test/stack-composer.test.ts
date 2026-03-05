@@ -1,4 +1,5 @@
 import { Template } from "aws-cdk-lib/assertions";
+import { Tags } from "aws-cdk-lib";
 import { OpenSearchDomainStack } from "../lib/opensearch-domain-stack";
 import {createStackComposer, createStackComposerWithSingleDomainContext} from "./test-utils";
 import { describe, afterEach, test, expect, jest } from '@jest/globals';
@@ -257,6 +258,40 @@ describe('Stack Composer Tests', () => {
     expect(networkStacks.length).toBe(1)
     expect(serverlessStacks.length).toBe(1)
     expect(domainStacks.length).toBe(1)
+  })
+
+  test('Test auto-tags and custom tags are applied to all stacks', () => {
+    const contextOptions = {
+      tags: {
+        CostCenter: '12345',
+        Team: 'search-platform',
+      },
+      clusters: [
+        {
+          clusterId: "tagged",
+          clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        }
+      ]
+    }
+
+    const stackComposer = createStackComposer(contextOptions)
+
+    expect(stackComposer.stacks.length).toBe(1)
+    const template = Template.fromStack(stackComposer.stacks[0])
+    // Serverless collection supports tags — check the Collection resource
+    const collections = template.findResources('AWS::OpenSearchServerless::Collection')
+    const collection = Object.values(collections)[0]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tags = (collection as any).Properties.Tags
+    const tagMap = Object.fromEntries(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tags.map((t: any) => [t.Key, t.Value])
+    )
+    expect(tagMap['Environment']).toBe('unit-test')
+    expect(tagMap['ManagedBy']).toBe('CDK')
+    expect(tagMap['Project']).toBe('opensearch-sample')
+    expect(tagMap['CostCenter']).toBe('12345')
+    expect(tagMap['Team']).toBe('search-platform')
   })
 
 })
