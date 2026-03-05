@@ -39,6 +39,18 @@ export interface ManagedClusterConfig extends BaseClusterConfig {
     nodeToNodeEncryptionEnabled?: boolean;
     openAccessPolicyEnabled?: boolean;
     accessPolicies?: object;
+    coldStorageEnabled?: boolean;
+    multiAZWithStandbyEnabled?: boolean;
+    offPeakWindowEnabled?: boolean;
+    /** SAML identity provider entity ID */
+    samlEntityId?: string;
+    /** SAML metadata XML content (inline or file path resolved by caller) */
+    samlMetadataContent?: string;
+    samlMasterUserName?: string;
+    samlMasterBackendRole?: string;
+    samlRolesKey?: string;
+    samlSubjectKey?: string;
+    samlSessionTimeoutMinutes?: number;
 }
 
 /** A single collection within a serverless collection group */
