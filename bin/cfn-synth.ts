@@ -18,8 +18,15 @@ import 'source-map-support/register';
 import { App } from 'aws-cdk-lib';
 import { StackComposer } from '../lib/stack-composer';
 
+const account = process.env.CDK_DEFAULT_ACCOUNT ?? '123456789012';
+const region = process.env.CDK_DEFAULT_REGION ?? 'us-east-1';
+
 const app = new App({
     context: {
+        // Provide AZ context so CDK doesn't need AWS credentials for VPC synthesis
+        [`availability-zones:account=${account}:region=${region}`]: [
+            `${region}a`, `${region}b`,
+        ],
         stage: 'sample',
         vpcAZCount: 2,
         clusters: [
@@ -48,8 +55,8 @@ const app = new App({
 
 new StackComposer(app, {
     env: {
-        account: process.env.CDK_DEFAULT_ACCOUNT ?? '123456789012',
-        region: process.env.CDK_DEFAULT_REGION ?? 'us-east-1',
+        account,
+        region,
     },
 });
 
