@@ -89,4 +89,82 @@ describe('Serverless Collection Tests', () => {
     template.resourceCountIs("AWS::OpenSearchServerless::Collection", 1)
     template.resourceCountIs("AWS::EC2::VPC", 1)
   })
+
+  test('Test collection group creates multiple collections with shared policies', () => {
+    const composer = createStackComposer({
+      clusters: [{
+        clusterId: "group",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        collections: [
+          {collectionName: "logs", collectionType: "TIMESERIES"},
+          {collectionName: "search-data", collectionType: "SEARCH"},
+        ]
+      }]
+    })
+    const template = Template.fromStack(getStack(composer))
+    template.resourceCountIs("AWS::OpenSearchServerless::Collection", 2)
+    // Shared policies: 1 encryption + 1 network
+    template.resourceCountIs("AWS::OpenSearchServerless::SecurityPolicy", 2)
+    // 1 shared data access policy
+    template.resourceCountIs("AWS::OpenSearchServerless::AccessPolicy", 1)
+    template.hasResourceProperties("AWS::OpenSearchServerless::Collection", {
+      Name: "logs", Type: "TIMESERIES",
+    })
+    template.hasResourceProperties("AWS::OpenSearchServerless::Collection", {
+      Name: "search-data", Type: "SEARCH",
+    })
+  })
+
+  test('Test collection group inherits cluster-level collectionType', () => {
+    const composer = createStackComposer({
+      clusters: [{
+        clusterId: "group",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        collectionType: "VECTORSEARCH",
+        collections: [
+          {collectionName: "vectors-a"},
+          {collectionName: "vectors-b"},
+        ]
+      }]
+    })
+    const template = Template.fromStack(getStack(composer))
+    template.resourceCountIs("AWS::OpenSearchServerless::Collection", 2)
+    template.hasResourceProperties("AWS::OpenSearchServerless::Collection", {
+      Name: "vectors-a", Type: "VECTORSEARCH",
+    })
+    template.hasResourceProperties("AWS::OpenSearchServerless::Collection", {
+      Name: "vectors-b", Type: "VECTORSEARCH",
+    })
+  })
+
+  test('Test collection entry overrides cluster-level collectionType', () => {
+    const composer = createStackComposer({
+      clusters: [{
+        clusterId: "mixed",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        collectionType: "SEARCH",
+        collections: [
+          {collectionName: "default-type"},
+          {collectionName: "timeseries-one", collectionType: "TIMESERIES"},
+        ]
+      }]
+    })
+    const template = Template.fromStack(getStack(composer))
+    template.hasResourceProperties("AWS::OpenSearchServerless::Collection", {
+      Name: "default-type", Type: "SEARCH",
+    })
+    template.hasResourceProperties("AWS::OpenSearchServerless::Collection", {
+      Name: "timeseries-one", Type: "TIMESERIES",
+    })
+  })
+
+  test('Test collection group missing collectionName throws error', () => {
+    expect(() => createStackComposer({
+      clusters: [{
+        clusterId: "bad",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        collections: [{collectionType: "SEARCH"}]
+      }]
+    })).toThrow(/collectionName/)
+  })
 })

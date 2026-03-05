@@ -1187,7 +1187,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
       },
     },
     "CollectionArnExportunittestsearch": {
-      "Description": "The ARN of the serverless collection",
+      "Description": "The ARN of the cluster-unit-test-search serverless collection",
       "Export": {
         "Name": "CollectionArn-unit-test-search",
       },
@@ -1199,7 +1199,7 @@ exports[`Snapshot Tests Mixed managed + serverless stack template snapshot 1`] =
       },
     },
     "CollectionEndpointExportunittestsearch": {
-      "Description": "The endpoint URL of the serverless collection",
+      "Description": "The endpoint URL of the cluster-unit-test-search serverless collection",
       "Export": {
         "Name": "CollectionEndpoint-unit-test-search",
       },
@@ -2366,7 +2366,7 @@ exports[`Snapshot Tests Serverless collection stack template snapshot 1`] = `
   "Description": "OpenSearch Service infrastructure — managed domains, serverless collections, and networking",
   "Outputs": {
     "CollectionArnExportunittestsnap": {
-      "Description": "The ARN of the serverless collection",
+      "Description": "The ARN of the cluster-unit-test-snap serverless collection",
       "Export": {
         "Name": "CollectionArn-unit-test-snap",
       },
@@ -2378,7 +2378,7 @@ exports[`Snapshot Tests Serverless collection stack template snapshot 1`] = `
       },
     },
     "CollectionEndpointExportunittestsnap": {
-      "Description": "The endpoint URL of the serverless collection",
+      "Description": "The endpoint URL of the cluster-unit-test-snap serverless collection",
       "Export": {
         "Name": "CollectionEndpoint-unit-test-snap",
       },

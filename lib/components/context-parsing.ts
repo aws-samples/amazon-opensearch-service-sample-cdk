@@ -151,6 +151,12 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
 
     // Return the correct discriminated union variant based on clusterType
     if (clusterType === 'OPENSEARCH_SERVERLESS') {
+        const rawCollections = getContextForType('collections', 'object', defaults, config);
+        const collections = Array.isArray(rawCollections) ? rawCollections.map((c: Record<string, unknown>) => ({
+            collectionName: c.collectionName as string,
+            collectionType: c.collectionType as string | undefined,
+        })) : undefined;
+
         return {
             clusterId,
             clusterType: 'OPENSEARCH_SERVERLESS',
@@ -159,6 +165,7 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
             collectionType: getContextForType('collectionType', 'string', defaults, config),
             standbyReplicas: getContextForType('standbyReplicas', 'string', defaults, config),
             vpcEndpointId: getContextForType('vpcEndpointId', 'string', defaults, config),
+            collections,
         } satisfies ServerlessClusterConfig;
     }
 

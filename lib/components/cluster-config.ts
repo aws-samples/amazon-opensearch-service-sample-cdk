@@ -41,6 +41,12 @@ export interface ManagedClusterConfig extends BaseClusterConfig {
     accessPolicies?: object;
 }
 
+/** A single collection within a serverless collection group */
+export interface CollectionEntry {
+    collectionName: string;
+    collectionType?: string;
+}
+
 /** Configuration for OpenSearch Serverless collections */
 export interface ServerlessClusterConfig extends BaseClusterConfig {
     clusterType: 'OPENSEARCH_SERVERLESS';
@@ -48,6 +54,8 @@ export interface ServerlessClusterConfig extends BaseClusterConfig {
     standbyReplicas?: string;
     /** VPC endpoint ID — when set, disables public access and restricts to this endpoint */
     vpcEndpointId?: string;
+    /** Multiple collections sharing encryption/network/data-access policies */
+    collections?: CollectionEntry[];
 }
 
 /** Discriminated union — use `config.clusterType` to narrow the type */
