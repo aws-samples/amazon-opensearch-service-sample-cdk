@@ -65,8 +65,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
         "InstanceTenancy": "default",
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
       },
@@ -76,8 +88,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
       "Properties": {
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "VpcId": {
@@ -90,8 +114,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
       "Properties": {
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
       },
@@ -148,8 +184,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
       "Properties": {
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-private-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "VpcId": {
@@ -199,8 +247,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
             "Value": "Private",
           },
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-private-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "VpcId": {
@@ -246,8 +306,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
       "Properties": {
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-private-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "VpcId": {
@@ -311,8 +383,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
             "Value": "Private",
           },
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-private-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "VpcId": {
@@ -360,8 +444,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
         "Domain": "vpc",
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-public-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
       },
@@ -386,8 +482,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
         },
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-public-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
       },
@@ -400,8 +508,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
       "Properties": {
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-public-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "VpcId": {
@@ -465,8 +585,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
             "Value": "Public",
           },
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-public-subnet-1-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "VpcId": {
@@ -514,8 +646,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
         "Domain": "vpc",
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-public-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
       },
@@ -540,8 +684,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
         },
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-public-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
       },
@@ -554,8 +710,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
       "Properties": {
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-public-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "VpcId": {
@@ -619,8 +787,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
             "Value": "Public",
           },
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "vpc-public-subnet-2-unit-test",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "VpcId": {
@@ -658,8 +838,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
         "ResourceType": "VPC",
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "networkStack/Vpc/defaultFlowLog",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "TrafficType": "REJECT",
@@ -682,8 +874,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
         },
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "networkStack/Vpc/defaultFlowLog",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
       },
@@ -725,8 +929,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
         "RetentionInDays": 731,
         "Tags": [
           {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
             "Key": "Name",
             "Value": "networkStack/Vpc/defaultFlowLog",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
       },
@@ -753,6 +969,20 @@ exports[`Snapshot Tests NetworkStack template snapshot 1`] = `
             "FromPort": 252,
             "IpProtocol": "icmp",
             "ToPort": 86,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
         "VpcId": {
@@ -935,6 +1165,20 @@ exports[`Snapshot Tests OpenSearchDomainStack template snapshot 1`] = `
         "NodeToNodeEncryptionOptions": {
           "Enabled": true,
         },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
         "VPCOptions": {
           "SecurityGroupIds": [
             {
@@ -1058,6 +1302,20 @@ exports.handler = async (event) => {
           ],
         },
         "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
         "Timeout": 30,
       },
       "Type": "AWS::Lambda::Function",
@@ -1109,6 +1367,20 @@ exports.handler = async (event) => {
                 ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
               ],
             ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
       },
@@ -1221,6 +1493,20 @@ exports.handler = async (event) => {
           ],
         },
         "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
         "Timeout": 900,
       },
       "Type": "AWS::Lambda::Function",
@@ -1272,6 +1558,20 @@ exports.handler = async (event) => {
                 ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
               ],
             ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
           },
         ],
       },
@@ -1427,6 +1727,20 @@ exports[`Snapshot Tests ServerlessCollectionStack template snapshot 1`] = `
       "Properties": {
         "Name": "cluster-unit-test-snap",
         "StandbyReplicas": "DISABLED",
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "unit-test",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "opensearch-sample",
+          },
+        ],
         "Type": "SEARCH",
       },
       "Type": "AWS::OpenSearchServerless::Collection",
