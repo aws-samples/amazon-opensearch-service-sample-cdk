@@ -22,6 +22,9 @@ jobs:
 
       - name: Synthesize CFN templates
         run: npx cdk synth --app "npx ts-node bin/cfn-synth.ts" --no-staging -o cfn.out
+        env:
+          CDK_DEFAULT_ACCOUNT: '123456789012'
+          CDK_DEFAULT_REGION: 'us-east-1'
 
       - name: Minify CFN templates
         run: |
