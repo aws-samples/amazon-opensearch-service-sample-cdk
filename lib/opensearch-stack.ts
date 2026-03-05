@@ -1,5 +1,5 @@
 import {Construct} from "constructs";
-import {CfnOutput, RemovalPolicy, Stack, StackProps, Tags} from "aws-cdk-lib";
+import {CfnOutput, RemovalPolicy, SecretValue, Stack, StackProps, Tags} from "aws-cdk-lib";
 import {
     EbsDeviceVolumeType,
     FlowLogDestination, FlowLogTrafficType,
@@ -19,8 +19,6 @@ import {
 import {NagSuppressions} from "cdk-nag";
 import {VpcDetails} from "./components/vpc-details";
 import {
-    createBasicAuthSecret,
-    generateClusterExports,
     getEngineVersion,
     LATEST_AOS_VERSION,
 } from "./components/common-utilities";
@@ -130,7 +128,7 @@ export class OpenSearchStack extends Stack {
         let adminUserSecret: ISecret | undefined = config.fineGrainedManagerUserSecretARN
             ? Secret.fromSecretCompleteArn(this, `${prefix}-managerSecret`, config.fineGrainedManagerUserSecretARN) : undefined;
         if (config.enableDemoAdmin) {
-            adminUserSecret = createBasicAuthSecret(this, "admin", "myStrongPassword123!", stage, config.clusterId);
+            adminUserSecret = this.createBasicAuthSecret("admin", "myStrongPassword123!", stage, config.clusterId);
         }
 
         const numSubnets = vpcDetails.subnetSelection.subnets;
@@ -241,7 +239,7 @@ export class OpenSearchStack extends Stack {
             {id: 'AwsSolutions-OS9', reason: 'Slow log publishing is user-configurable via loggingAppLogEnabled context option'},
         ]);
 
-        generateClusterExports(this, domain.domainEndpoint, config.clusterId, stage, vpcDetails.subnetSelection, vpcDetails.clusterAccessSecurityGroup?.securityGroupId);
+        this.generateClusterExports(domain.domainEndpoint, config.clusterId, stage, vpcDetails.subnetSelection, vpcDetails.clusterAccessSecurityGroup?.securityGroupId);
     }
 
     private createServerlessCollection(config: ServerlessClusterConfig, stage: string) {
@@ -360,7 +358,7 @@ export class OpenSearchStack extends Stack {
                         'aoss:DescribeIndex', 'aoss:ReadDocument', 'aoss:WriteDocument',
                     ],
                 }],
-                Principal: [`arn:${this.partition}:iam::${this.account}:root`],
+                Principal: config.dataAccessPrincipals ?? [`arn:${this.partition}:iam::${this.account}:root`],
             }]),
         });
     }
@@ -410,6 +408,39 @@ export class OpenSearchStack extends Stack {
         }
         if (config.warmNodeCount && config.warmNodeCount % numAZs !== 0) {
             throw new Error(`The number of warm nodes must be a multiple of the number of Availability Zones. Received 'warmNodesCount' of ${config.warmNodeCount} with AZ count of ${numAZs}`);
+        }
+    }
+
+    private createBasicAuthSecret(username: string, password: string, stage: string, clusterId: string): Secret {
+        return new Secret(this, `${clusterId}ClusterBasicAuthSecret`, {
+            secretName: `${clusterId}-cluster-basic-auth-secret-${stage}`,
+            secretObjectValue: {
+                username: SecretValue.unsafePlainText(username),
+                password: SecretValue.unsafePlainText(password),
+            },
+        });
+    }
+
+    private generateClusterExports(clusterEndpoint: string, clusterId: string, stage: string, subnetSelection: SubnetSelection, clusterAccessSecurityGroupId?: string) {
+        new CfnOutput(this, `ClusterEndpointExport-${stage}-${clusterId}`, {
+            exportName: `ClusterEndpoint-${stage}-${clusterId}`,
+            value: clusterEndpoint,
+            description: 'The endpoint URL of the cluster',
+        });
+        if (subnetSelection.subnets) {
+            const subnetIds = subnetSelection.subnets.map(s => s.subnetId);
+            new CfnOutput(this, `ClusterSubnets-${stage}-${clusterId}`, {
+                exportName: `ClusterSubnets-${stage}-${clusterId}`,
+                value: subnetIds.join(","),
+                description: 'The subnet ids of the deployed cluster',
+            });
+        }
+        if (clusterAccessSecurityGroupId) {
+            new CfnOutput(this, `ClusterAccessSecurityGroupIdExport-${stage}-${clusterId}`, {
+                exportName: `ClusterAccessSecurityGroupId-${stage}-${clusterId}`,
+                value: clusterAccessSecurityGroupId,
+                description: 'The cluster access security group id',
+            });
         }
     }
 }

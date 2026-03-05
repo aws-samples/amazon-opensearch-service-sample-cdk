@@ -5,15 +5,18 @@ import * as defaultValuesJson from "../default-values.json"
 import * as defaultClusterValuesJson from "../default-cluster-values.json"
 import {
     MAX_STAGE_NAME_LENGTH,
+} from "./components/common-utilities";
+import {
     ClusterType,
     parseClusterType,
-} from "./components/common-utilities";
+    ManagedClusterConfig,
+    ServerlessClusterConfig,
+} from "./components/cluster-config";
 import {
     getContextForType, parseClusterConfig,
     parseContextJson,
 } from "./components/context-parsing"
 import {CdkLogger} from "./components/cdk-logger";
-import {ManagedClusterConfig, ServerlessClusterConfig} from "./components/cluster-config";
 
 export class StackComposer {
     public stacks: Stack[] = [];

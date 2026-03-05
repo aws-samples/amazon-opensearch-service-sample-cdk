@@ -294,6 +294,11 @@
             },
             "additionalProperties": false
           }
+        },
+        "dataAccessPrincipals": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "IAM principal ARNs for data access policy (default: account root)"
         }
       },
       "additionalProperties": false

@@ -167,4 +167,21 @@ describe('Serverless Collection Tests', () => {
       }]
     })).toThrow(/collectionName/)
   })
+
+  test('Test custom dataAccessPrincipals', () => {
+    const composer = createStackComposer({
+      clusters: [{
+        clusterId: "scoped",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        dataAccessPrincipals: [
+          "arn:aws:iam::123456789012:role/MyRole",
+          "arn:aws:iam::123456789012:role/OtherRole",
+        ]
+      }]
+    })
+    const template = Template.fromStack(getStack(composer))
+    template.hasResourceProperties("AWS::OpenSearchServerless::AccessPolicy", {
+      Type: "data",
+    })
+  })
 })

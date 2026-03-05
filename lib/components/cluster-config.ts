@@ -1,6 +1,21 @@
 import { TLSSecurityPolicy } from "aws-cdk-lib/aws-opensearchservice";
 import { RemovalPolicy } from "aws-cdk-lib";
 
+export enum ClusterType {
+    OPENSEARCH_MANAGED_SERVICE = 'OPENSEARCH_MANAGED_SERVICE',
+    OPENSEARCH_SERVERLESS = 'OPENSEARCH_SERVERLESS',
+}
+
+export function parseClusterType(input: string, clusterId: string): ClusterType {
+    if (!input) {
+        throw new Error(`The 'clusterType' option must be provided for the '${clusterId}' cluster configuration. The available options are [${Object.values(ClusterType)}]`);
+    }
+    if (Object.values(ClusterType).includes(input as ClusterType)) {
+        return input as ClusterType;
+    }
+    throw new Error(`Invalid 'clusterType' provided in '${clusterId}' cluster configuration: ${input}. The available options are ${Object.values(ClusterType)}`);
+}
+
 /** Fields shared by all cluster types */
 export interface BaseClusterConfig {
     clusterId: string;
@@ -68,6 +83,8 @@ export interface ServerlessClusterConfig extends BaseClusterConfig {
     vpcEndpointId?: string;
     /** Multiple collections sharing encryption/network/data-access policies */
     collections?: CollectionEntry[];
+    /** IAM principal ARNs for data access policy (default: account root) */
+    dataAccessPrincipals?: string[];
 }
 
 /** Discriminated union — use `config.clusterType` to narrow the type */
