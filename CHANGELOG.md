@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## 0.2.8 - 2026-03-05
+
+### Added
+- JSON Schema (`cluster-config.schema.json`) for config validation and editor autocomplete
+- Cross-field validation: warns when serverless clusters have managed-only fields and vice versa
+- `$schema` references in all example configs for IDE support
+
+### Changed
+- **Breaking:** `ClusterConfig` is now a discriminated union (`ManagedClusterConfig | ServerlessClusterConfig`)
+- `parseClusterConfig` returns the correct variant based on `clusterType`
+- `OpenSearchDomainStack` accepts `ManagedClusterConfig`, `ServerlessCollectionStack` accepts `ServerlessClusterConfig`
+- New exports: `ManagedClusterConfig`, `ServerlessClusterConfig`, `BaseClusterConfig`
+
 ## 0.2.7 - 2026-03-05
 
 ### Added
