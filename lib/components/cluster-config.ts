@@ -46,6 +46,8 @@ export interface ServerlessClusterConfig extends BaseClusterConfig {
     clusterType: 'OPENSEARCH_SERVERLESS';
     collectionType?: string;
     standbyReplicas?: string;
+    /** VPC endpoint ID — when set, disables public access and restricts to this endpoint */
+    vpcEndpointId?: string;
 }
 
 /** Discriminated union — use `config.clusterType` to narrow the type */
