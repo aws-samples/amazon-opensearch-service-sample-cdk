@@ -58,6 +58,26 @@ jobs:
       - name: Lint CFN templates
         run: cfn-lint cdk.out/*.template.json
 
+  cfn-diff:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: ${{ env.node-version }}
+      - run: npm ci
+      - name: CDK diff (single-domain example)
+        run: npx cdk diff --no-staging --context contextFile=examples/single-domain.json 2>&1 || true
+        env:
+          CDK_DEFAULT_ACCOUNT: '123456789012'
+          CDK_DEFAULT_REGION: 'us-east-1'
+      - name: CDK diff (serverless example)
+        run: npx cdk diff --no-staging --context contextFile=examples/serverless.json 2>&1 || true
+        env:
+          CDK_DEFAULT_ACCOUNT: '123456789012'
+          CDK_DEFAULT_REGION: 'us-east-1'
+
   link-checker:
     runs-on: ubuntu-latest
     steps:

@@ -28,9 +28,11 @@ Standing up OpenSearch on AWS involves VPC networking, security groups, encrypti
 
 - **Managed domains** with VPC isolation, encryption at rest, node-to-node encryption, and TLS 1.2 enforced by default
 - **Serverless collections** (Search, Time Series, Vector Search) with zero VPC overhead
+- **Collection groups** — multiple serverless collections sharing encryption, network, and data-access policies
 - **Multi-cluster deployments** — mix managed and serverless in one config file
+- **SAML authentication** — integrate with your identity provider
 - **Pre-built CloudFormation templates** in every release — deploy without CDK if you prefer
-- **VPC mismatch protection** — catches dangerous subnet/VPC drift before CloudFormation does
+- **JSON Schema validation** — IDE autocomplete and cross-type field rejection
 
 > **Coming from 0.1.x?** The [v0.1.10 README](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/blob/v0.1.10/README.md) documents the previous API. See [Breaking Changes](#breaking-changes-from-01x) below.
 
@@ -44,7 +46,6 @@ Standing up OpenSearch on AWS involves VPC networking, security groups, encrypti
 - [Configuration Reference](#configuration-reference)
 - [Architecture](#architecture)
 - [Secure Defaults](#secure-defaults)
-- [VPC Mismatch Protection](#vpc-mismatch-protection)
 - [Releasing](#releasing)
 - [Development](#development)
 - [Breaking Changes from 0.1.x](#breaking-changes-from-01x)
@@ -101,7 +102,13 @@ npm run validate -- --context contextFile=my-cluster.json
 ### 5. Deploy
 
 ```bash
-cdk deploy "*" --context contextFile=my-cluster.json --require-approval never --concurrency 3
+./deploy.sh --stage dev --context-file my-cluster.json
+```
+
+Or directly with CDK:
+
+```bash
+cdk deploy --context contextFile=my-cluster.json --require-approval broadening
 ```
 
 This creates a VPC with public/private subnets across 2 AZs, a security group, and an OpenSearch domain — all wired together with secure defaults. Adapt the config to match your requirements.
@@ -264,12 +271,10 @@ Deploy multiple clusters from a single config — the VPC is shared across manag
 
 **What gets created:**
 
-| Stack | Resources |
-|-------|-----------|
-| `NetworkInfra-prod-<region>` | VPC, subnets (3 AZs), NAT gateways, security group |
-| `OpenSearchDomain-search-prod-<region>` | Managed domain (6 data + 3 manager nodes) |
-| `OpenSearchDomain-logs-prod-<region>` | Managed domain (6 data nodes, 2 TiB storage) |
-| `OpenSearchServerless-vectors-prod-<region>` | Serverless collection (no VPC) |
+A single CloudFormation stack `OpenSearch-prod-<region>` containing:
+- VPC with subnets across 3 AZs, NAT gateways, and security group
+- Two managed OpenSearch domains (`search` and `logs`)
+- One serverless vector search collection (`vectors`)
 
 ### Bring Your Own VPC
 
@@ -350,6 +355,16 @@ Use an existing VPC instead of creating one:
 | `loggingAppLogGroupARN` | string | — | CloudWatch log group ARN |
 | `clusterSubnetIds` | string[] | — | Subnet IDs (for imported VPC) |
 | `clusterSecurityGroupIds` | string[] | — | Security group IDs (for imported VPC) |
+| `coldStorageEnabled` | boolean | — | Enable UltraWarm cold storage (requires warm nodes + dedicated managers) |
+| `multiAZWithStandbyEnabled` | boolean | — | Enable Multi-AZ with Standby |
+| `offPeakWindowEnabled` | boolean | — | Enable off-peak maintenance window |
+| `samlEntityId` | string | — | SAML identity provider entity ID |
+| `samlMetadataContent` | string | — | SAML metadata XML content |
+| `samlMasterUserName` | string | — | SAML master username for Dashboards |
+| `samlMasterBackendRole` | string | — | SAML master backend role |
+| `samlRolesKey` | string | — | SAML assertion element for roles |
+| `samlSubjectKey` | string | — | SAML assertion element for username |
+| `samlSessionTimeoutMinutes` | number | `60` | SAML session timeout (1–1440 minutes) |
 
 ### Serverless Collection Options
 
@@ -357,6 +372,27 @@ Use an existing VPC instead of creating one:
 |--------|------|---------|-------------|
 | `collectionType` | string | `SEARCH` | `SEARCH`, `TIMESERIES`, or `VECTORSEARCH` |
 | `standbyReplicas` | string | `ENABLED` | `ENABLED` or `DISABLED` |
+| `vpcEndpointId` | string | — | VPC endpoint ID (disables public access) |
+| `dataAccessPrincipals` | string[] | Account root | IAM principal ARNs for data access policy |
+| `collections` | array | — | Collection group (see below) |
+
+#### Collection Groups
+
+Deploy multiple collections sharing encryption, network, and data-access policies:
+
+```json
+{
+  "clusterId": "my-group",
+  "clusterType": "OPENSEARCH_SERVERLESS",
+  "collectionType": "SEARCH",
+  "collections": [
+    { "collectionName": "logs", "collectionType": "TIMESERIES" },
+    { "collectionName": "search-data" }
+  ]
+}
+```
+
+Each entry creates a separate collection. Per-entry `collectionType` overrides the cluster-level default.
 
 ### Context Precedence
 
@@ -375,25 +411,23 @@ Configuration values are resolved in this order (highest priority first):
 graph TD
     Config["📄 my-cluster.json"]
 
-    Config --> C1["cluster 1<br/><i>managed</i>"]
-    Config --> C2["cluster 2<br/><i>managed</i>"]
-    Config --> C3["cluster 3<br/><i>serverless</i>"]
+    Config --> SC["StackComposer<br/><small>reads config, creates stack</small>"]
 
-    C1 --> SC["StackComposer<br/><small>reads config, creates stacks</small>"]
-    C2 --> SC
-    C3 --> SC
+    SC --> OS["🏗️ OpenSearch Stack<br/><small>Single CloudFormation stack</small>"]
 
-    SC --> NS["🔒 Network Stack<br/><small>VPC, subnets, NAT, SG</small>"]
-    SC --> DS["🔍 OpenSearch Domain Stack(s)<br/><small>Managed domains</small>"]
-    SC --> SS["⚡ Serverless Collection Stack<br/><small>Encryption, network &amp;<br/>data access policies</small>"]
+    OS --> VPC["🔒 VPC<br/><small>subnets, NAT, SG<br/>(only if managed clusters)</small>"]
+    OS --> MD["🔍 Managed Domains"]
+    OS --> SL["⚡ Serverless Collections<br/><small>encryption, network &amp;<br/>data access policies</small>"]
 
-    DS -- "uses VPC" --> NS
+    MD -- "uses" --> VPC
 ```
 
+**Single stack deployment:** Everything goes into one CloudFormation stack (`OpenSearch-<stage>-<region>`).
+
 **Smart VPC handling:**
-- Managed clusters → NetworkStack created automatically (or use `vpcId` to import)
-- Serverless-only → no NetworkStack, no VPC overhead
-- Mixed → NetworkStack shared across all managed clusters
+- Managed clusters → VPC created automatically (or use `vpcId` to import)
+- Serverless-only → no VPC, no VPC overhead
+- Mixed → VPC shared across all managed clusters
 
 ---
 
@@ -411,21 +445,6 @@ Every domain deployed with this sample uses security best practices out of the b
 | Open access policy | ❌ Disabled | Explicit opt-in required |
 
 Override any default in your cluster config or in `default-cluster-values.json`.
-
----
-
-## VPC Mismatch Protection
-
-OpenSearch domains are permanently bound to their VPC — they cannot be moved. If the NetworkStack is recreated with a new VPC while an existing domain remains in the old VPC, this project catches it early with a clear error:
-
-```
-VPC mismatch: OpenSearch domain 'cluster-prod-search' exists in VPC vpc-old123
-but the deployment targets VPC vpc-new456. OpenSearch domains cannot be moved
-between VPCs. Delete the existing domain (and its CloudFormation stack) first,
-then redeploy.
-```
-
-This prevents the confusing CloudFormation error "The subnets must be in the same VPC" that gives no actionable guidance.
 
 ---
 
@@ -455,6 +474,8 @@ Every push and PR runs:
 |-----|-------------|
 | `node-tests` | Lint + Jest across Node 20, 22, 24, 25 |
 | `build` | TypeScript compilation + `npm pack` dry run |
+| `cfn-lint` | Synthesize and lint CloudFormation templates |
+| `cfn-diff` | CDK diff on PRs (shows infrastructure changes) |
 | `link-checker` | Validates all links in docs |
 | `all-ci-checks-pass` | Gate job for branch protection |
 
@@ -480,20 +501,20 @@ cdk diff           # Compare with deployed stacks
 │   └── cfn-synth.ts        # Standalone CFN template synthesizer
 ├── lib/
 │   ├── index.ts            # Public API barrel export
-│   ├── stack-composer.ts   # Orchestrates multi-stack deployments
-│   ├── network-stack.ts    # VPC, subnets, security groups
-│   ├── opensearch-domain-stack.ts    # Managed OpenSearch domain
-│   ├── serverless-collection-stack.ts # Serverless collection
+│   ├── stack-composer.ts   # Reads config, creates single stack
+│   ├── opensearch-stack.ts # VPC + managed domains + serverless collections
 │   └── components/
-│       ├── cluster-config.ts    # ClusterConfig interface
+│       ├── cluster-config.ts    # ClusterConfig types + ClusterType enum
 │       ├── vpc-details.ts       # Immutable VPC details
 │       ├── context-parsing.ts   # CDK context → typed config
-│       ├── common-utilities.ts  # Shared constants & enums
+│       ├── common-utilities.ts  # Engine version + removal policy parsing
 │       └── cdk-logger.ts       # Logging utility
 ├── examples/               # Ready-to-use config files
+├── deploy.sh               # Build + deploy wrapper script
+├── cluster-config.schema.json  # JSON Schema with discriminated validation
 ├── test/                   # Jest test suites
 ├── .github/workflows/
-│   ├── CI.yml              # Lint, test, build, link-check
+│   ├── CI.yml              # Lint, test, build, cfn-lint, cfn-diff
 │   ├── release.yml         # Tag-triggered release
 │   └── version-bump.yml    # One-click version bump
 └── default-cluster-values.json  # Secure defaults
