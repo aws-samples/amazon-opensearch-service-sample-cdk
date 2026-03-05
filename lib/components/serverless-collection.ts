@@ -3,15 +3,17 @@ import {
     CfnAccessPolicy,
     CfnCollection,
     CfnSecurityPolicy,
+    CfnVpcEndpoint,
 } from "aws-cdk-lib/aws-opensearchserverless";
 import {ServerlessClusterConfig} from "./cluster-config";
+import {VpcDetails} from "./vpc-details";
 
 /**
  * Creates serverless OpenSearch collections within the given stack.
  * This is a helper function, not a separate stack — all resources
  * are created in the caller's stack scope.
  */
-export function createServerlessCollection(stack: Stack, config: ServerlessClusterConfig, stage: string): void {
+export function createServerlessCollection(stack: Stack, config: ServerlessClusterConfig, stage: string, vpcDetails?: VpcDetails): void {
     const prefix = config.clusterId;
 
     // Build the list of collections to create.
@@ -52,6 +54,32 @@ export function createServerlessCollection(stack: Stack, config: ServerlessClust
         }),
     });
 
+    // Create VPC endpoint if requested
+    let vpcEndpointId = config.vpcEndpointId;
+    if (config.createVpcEndpoint) {
+        if (!vpcDetails) {
+            throw new Error(
+                `Cluster '${config.clusterId}': 'createVpcEndpoint' requires a VPC. ` +
+                `Either add a managed cluster (which creates a VPC) or provide 'vpcId' at the top level.`
+            );
+        }
+        const vpce = new CfnVpcEndpoint(stack, `${prefix}-VpcEndpoint`, {
+            name: `${config.clusterName}-vpce`,
+            vpcId: vpcDetails.vpc.vpcId,
+            subnetIds: vpcDetails.vpc.selectSubnets(vpcDetails.subnetSelection).subnetIds,
+            securityGroupIds: vpcDetails.clusterAccessSecurityGroup
+                ? [vpcDetails.clusterAccessSecurityGroup.securityGroupId]
+                : undefined,
+        });
+        vpcEndpointId = vpce.attrId;
+
+        new CfnOutput(stack, `VpcEndpointIdExport-${stage}-${prefix}`, {
+            exportName: `VpcEndpointId-${stage}-${prefix}`,
+            value: vpce.attrId,
+            description: `OpenSearch Serverless VPC endpoint ID for ${config.clusterId}`,
+        });
+    }
+
     // Shared network policy
     const networkPolicyRules = [
         {ResourceType: 'collection', Resource: collectionResources},
@@ -60,9 +88,9 @@ export function createServerlessCollection(stack: Stack, config: ServerlessClust
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const networkPolicyEntry: Record<string, any> = {Rules: networkPolicyRules};
-    if (config.vpcEndpointId) {
+    if (vpcEndpointId) {
         networkPolicyEntry.AllowFromPublic = false;
-        networkPolicyEntry.SourceVPCEs = [config.vpcEndpointId];
+        networkPolicyEntry.SourceVPCEs = [vpcEndpointId];
     } else if (config.sourceIPAddresses && config.sourceIPAddresses.length > 0) {
         networkPolicyEntry.AllowFromPublic = false;
         networkPolicyEntry.SourceIPAddresses = config.sourceIPAddresses;

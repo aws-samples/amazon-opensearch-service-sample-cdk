@@ -101,6 +101,8 @@ export interface ServerlessClusterConfig extends BaseClusterConfig {
     standbyReplicas?: string;
     /** VPC endpoint ID — when set, disables public access and restricts to this endpoint */
     vpcEndpointId?: string;
+    /** Create an OpenSearch Serverless VPC endpoint (requires VPC) */
+    createVpcEndpoint?: boolean;
     /** Multiple collections sharing encryption/network/data-access policies */
     collections?: CollectionEntry[];
     /** IAM principal ARNs for data access policy (default: account root) */

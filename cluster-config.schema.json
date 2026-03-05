@@ -314,6 +314,10 @@
           "type": "string",
           "description": "VPC endpoint ID - restricts access to this endpoint (disables public access)"
         },
+        "createVpcEndpoint": {
+          "type": "boolean",
+          "description": "Create an OpenSearch Serverless VPC endpoint (requires VPC via managed cluster or vpcId)"
+        },
         "collections": {
           "type": "array",
           "minItems": 1,
