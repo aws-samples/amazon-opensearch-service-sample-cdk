@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 |--------|-------|---------------|
 | **0.3.x** | Single-stack simplification | 4 stacks → 1 `OpenSearchStack`, removed monitoring + VPC Lambda, discriminated JSON Schema, collection groups, SAML auth, cold storage, deploy script |
 
+## [0.3.8] - 2026-03-27
+
+### Fixed
+- Dedicated manager node validation no longer requires node count to be a multiple of AZ count. Per AWS guidance, dedicated master nodes should be 3 or 5 regardless of AZ configuration.
+
 ## [0.3.4] - 2026-03-05
 
 ### Added
