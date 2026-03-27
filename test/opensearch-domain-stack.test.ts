@@ -30,7 +30,7 @@ describe('Managed Domain Tests', () => {
         dataNodeType: "r6.large.search",
         dataNodeCount: 2,
         dedicatedManagerNodeType: "r6g.large.search",
-        dedicatedManagerNodeCount: 2,
+        dedicatedManagerNodeCount: 3,
         warmNodeType: "ultrawarm1.medium.search",
         warmNodeCount: 2,
         accessPolicies: {
@@ -71,7 +71,7 @@ describe('Managed Domain Tests', () => {
         dataNodeType: "r6.large.search",
         dataNodeCount: "2",
         dedicatedManagerNodeType: "r6g.large.search",
-        dedicatedManagerNodeCount: "2",
+        dedicatedManagerNodeCount: "3",
         warmNodeType: "ultrawarm1.medium.search",
         warmNodeCount: "2",
         accessPolicies: "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::12345678912:user/test-user\"},\"Action\":\"es:ESHttp*\",\"Resource\":\"arn:aws:es:us-east-1:12345678912:domain/cdk-os-service-domain/*\"}]}",
@@ -187,7 +187,7 @@ function assertPrimaryDomainTemplate(template: Template) {
       MasterUserOptions: {MasterUserARN: "arn:aws:iam::12345678912:user/test-user"}
     },
     ClusterConfig: {
-      DedicatedMasterCount: 2, DedicatedMasterEnabled: true, DedicatedMasterType: "r6g.large.search",
+      DedicatedMasterCount: 3, DedicatedMasterEnabled: true, DedicatedMasterType: "r6g.large.search",
       InstanceCount: 2, InstanceType: "r6.large.search",
       WarmCount: 2, WarmType: "ultrawarm1.medium.search",
       ZoneAwarenessConfig: {AvailabilityZoneCount: 2}, ZoneAwarenessEnabled: true
@@ -239,7 +239,7 @@ describe('Cold Storage, Multi-AZ Standby, Off-Peak Window Tests', () => {
       warmNodeType: "ultrawarm1.medium.search",
       warmNodeCount: 2,
       dedicatedManagerNodeType: "r6g.large.search",
-      dedicatedManagerNodeCount: 2,
+      dedicatedManagerNodeCount: 3,
     })
     Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchService::Domain", {
       ClusterConfig: {ColdStorageOptions: {Enabled: true}},
