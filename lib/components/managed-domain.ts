@@ -231,8 +231,8 @@ function validateNodeCounts(numAZs: number, config: ManagedClusterConfig) {
     if (config.dataNodeCount && config.dataNodeCount % numAZs !== 0) {
         throw new Error(`The number of data nodes must be a multiple of the number of Availability Zones. Received 'dataNodeCount' of ${config.dataNodeCount} with AZ count of ${numAZs}`);
     }
-    if (config.dedicatedManagerNodeCount && config.dedicatedManagerNodeCount % numAZs !== 0) {
-        throw new Error(`The number of manager nodes must be a multiple of the number of Availability Zones. Received 'dedicatedManagerNodeCount' of ${config.dedicatedManagerNodeCount} with AZ count of ${numAZs}`);
+    if (config.dedicatedManagerNodeCount && config.dedicatedManagerNodeCount < 3) {
+        throw new Error(`The number of dedicated manager nodes must be at least 3 for high availability. Received 'dedicatedManagerNodeCount' of ${config.dedicatedManagerNodeCount}`);
     }
     if (config.warmNodeCount && config.warmNodeCount % numAZs !== 0) {
         throw new Error(`The number of warm nodes must be a multiple of the number of Availability Zones. Received 'warmNodesCount' of ${config.warmNodeCount} with AZ count of ${numAZs}`);
