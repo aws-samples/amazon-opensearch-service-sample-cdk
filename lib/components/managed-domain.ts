@@ -28,6 +28,14 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
         return;
     }
 
+    if (config.publicAccess && config.openAccessPolicyEnabled) {
+        throw new Error(
+            `Cluster '${prefix}': 'publicAccess' and 'openAccessPolicyEnabled' cannot both be true. ` +
+            `Public domains require a restrictive access policy (e.g. account-scoped SigV4). ` +
+            `Use 'accessPolicies' with a scoped principal instead of 'openAccessPolicyEnabled'.`
+        );
+    }
+
     const version = config.clusterVersion
         ? getEngineVersion(config.clusterVersion)
         : getEngineVersion(LATEST_AOS_VERSION);
