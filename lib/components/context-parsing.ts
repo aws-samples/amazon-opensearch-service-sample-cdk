@@ -135,7 +135,7 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         'samlRolesKey', 'samlSubjectKey', 'samlSessionTimeoutMinutes',
         'cognitoUserPoolId', 'cognitoIdentityPoolId', 'cognitoRoleArn',
         'customEndpoint', 'customEndpointCertificateArn',
-        'autoTuneEnabled', 'allowAllVpcTraffic',
+        'autoTuneEnabled', 'allowAllVpcTraffic', 'publicAccess',
     ];
     const serverlessOnlyFields = ['collectionType', 'standbyReplicas', 'sourceIPAddresses'];
 
@@ -234,6 +234,7 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         customEndpointCertificateArn: getContextForType('customEndpointCertificateArn', 'string', defaults, config),
         autoTuneEnabled: getContextForType('autoTuneEnabled', 'boolean', defaults, config),
         allowAllVpcTraffic: getContextForType('allowAllVpcTraffic', 'boolean', defaults, config),
+        publicAccess: getContextForType('publicAccess', 'boolean', defaults, config),
         slowSearchLogEnabled: getContextForType('slowSearchLogEnabled', 'boolean', defaults, config),
         slowSearchLogGroupARN: getContextForType('slowSearchLogGroupARN', 'string', defaults, config),
         auditLogEnabled: getContextForType('auditLogEnabled', 'boolean', defaults, config),
