@@ -29,16 +29,16 @@ export class OpenSearchStack extends Stack {
         super(scope, id, props);
 
         const {stage, managedClusters, serverlessClusters} = props;
-        const hasManagedClusters = managedClusters.length > 0;
+        const hasVpcManagedClusters = managedClusters.some(c => !c.publicAccess);
         const serverlessNeedsVpc = serverlessClusters.some(c => c.createVpcEndpoint);
 
         // --- VPC (when managed clusters need it or serverless needs a VPC endpoint) ---
         let vpcDetails: VpcDetails | undefined;
-        if (hasManagedClusters || serverlessNeedsVpc) {
+        if (hasVpcManagedClusters || serverlessNeedsVpc) {
             if (props.vpcId) {
-                const clusterId = hasManagedClusters ? managedClusters[0].clusterId : serverlessClusters[0].clusterId;
-                const subnetIds = hasManagedClusters ? managedClusters[0].clusterSubnetIds : undefined;
-                const allowAllVpcTraffic = managedClusters.some(c => c.allowAllVpcTraffic);
+                const clusterId = hasVpcManagedClusters ? managedClusters.filter(c => !c.publicAccess)[0].clusterId : serverlessClusters[0].clusterId;
+                const subnetIds = hasVpcManagedClusters ? managedClusters.filter(c => !c.publicAccess)[0].clusterSubnetIds : undefined;
+                const allowAllVpcTraffic = managedClusters.some(c => !c.publicAccess && c.allowAllVpcTraffic);
                 let sg: SecurityGroup | undefined;
                 if (allowAllVpcTraffic) {
                     const importedVpc = Vpc.fromLookup(this, 'ImportedVpc', { vpcId: props.vpcId });
@@ -57,17 +57,17 @@ export class OpenSearchStack extends Stack {
                 }
                 vpcDetails = VpcDetails.fromVpcLookup(this, props.vpcId, clusterId, subnetIds, sg);
             } else {
-                const allowAllVpcTraffic = managedClusters.some(c => c.allowAllVpcTraffic);
+                const allowAllVpcTraffic = managedClusters.some(c => !c.publicAccess && c.allowAllVpcTraffic);
                 vpcDetails = this.createVpc(stage, props.vpcAZCount, props.vpcCidr, allowAllVpcTraffic, props.supportIpv6);
             }
         }
 
         // --- Managed domains ---
         for (const config of managedClusters) {
-            if (!vpcDetails) {
-                throw new Error("Internal error: VPC details should be resolved for managed clusters");
+            if (!config.publicAccess && !vpcDetails) {
+                throw new Error("Internal error: VPC details should be resolved for VPC-based managed clusters");
             }
-            createManagedDomain(this, config, stage, vpcDetails);
+            createManagedDomain(this, config, stage, config.publicAccess ? undefined : vpcDetails);
         }
 
         // --- Serverless collections ---

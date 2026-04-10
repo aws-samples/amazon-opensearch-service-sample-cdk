@@ -88,6 +88,8 @@ export interface ManagedClusterConfig extends BaseClusterConfig {
     autoTuneEnabled?: boolean;
     /** Allow all traffic from the VPC CIDR to the cluster */
     allowAllVpcTraffic?: boolean;
+    /** Deploy as a public (internet-facing) domain without VPC placement */
+    publicAccess?: boolean;
 }
 
 /** A single collection within a serverless collection group */

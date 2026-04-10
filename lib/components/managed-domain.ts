@@ -20,11 +20,11 @@ import {ManagedClusterConfig} from "./cluster-config";
  * This is a helper function, not a separate stack — all resources
  * are created in the caller's stack scope.
  */
-export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, stage: string, vpcDetails: VpcDetails): void {
+export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, stage: string, vpcDetails?: VpcDetails): void {
     const prefix = config.clusterId;
 
     // Skip for first synthesis stage (dummy VPC from lookup)
-    if (vpcDetails.vpc.vpcId === "vpc-12345") {
+    if (vpcDetails?.vpc.vpcId === "vpc-12345") {
         return;
     }
 
@@ -56,21 +56,26 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
         });
     }
 
-    const numSubnets = vpcDetails.subnetSelection.subnets;
-    if (!numSubnets || numSubnets.length < 1) {
-        throw new Error("Internal error: There should always be at least 1 subnet in the VpcDetails subnet selection");
-    }
-    const numAZs = numSubnets.length;
-    validateNodeCounts(numAZs, config);
-    const zoneAwarenessConfig: ZoneAwarenessConfig | undefined = numAZs > 1
-        ? {enabled: true, availabilityZoneCount: numAZs} : undefined;
-
-    const domainSubnets: SubnetSelection[] = [vpcDetails.subnetSelection];
-
+    let zoneAwarenessConfig: ZoneAwarenessConfig | undefined;
+    let domainSubnets: SubnetSelection[] | undefined;
+    let numAZs: number | undefined;
     const securityGroups: ISecurityGroup[] = [];
-    if (vpcDetails.clusterAccessSecurityGroup) {
-        securityGroups.push(vpcDetails.clusterAccessSecurityGroup);
+
+    if (vpcDetails) {
+        const numSubnets = vpcDetails.subnetSelection.subnets;
+        if (!numSubnets || numSubnets.length < 1) {
+            throw new Error("Internal error: There should always be at least 1 subnet in the VpcDetails subnet selection");
+        }
+        numAZs = numSubnets.length;
+        validateNodeCounts(numAZs, config);
+        zoneAwarenessConfig = numAZs > 1
+            ? {enabled: true, availabilityZoneCount: numAZs} : undefined;
+        domainSubnets = [vpcDetails.subnetSelection];
+        if (vpcDetails.clusterAccessSecurityGroup) {
+            securityGroups.push(vpcDetails.clusterAccessSecurityGroup);
+        }
     }
+
     if (config.clusterSecurityGroupIds) {
         for (let i = 0; i < config.clusterSecurityGroupIds.length; i++) {
             securityGroups.push(SecurityGroup.fromLookupById(stack, `${prefix}-domainSecurityGroup-${i}`, config.clusterSecurityGroupIds[i]));
@@ -152,9 +157,9 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
             auditLogEnabled: config.auditLogEnabled,
             auditLogGroup: auditLG,
         },
-        vpc: vpcDetails.vpc,
+        vpc: vpcDetails?.vpc,
         vpcSubnets: domainSubnets,
-        securityGroups,
+        securityGroups: securityGroups.length > 0 ? securityGroups : undefined,
         zoneAwareness: zoneAwarenessConfig,
         coldStorageEnabled: config.coldStorageEnabled,
         offPeakWindowEnabled: config.offPeakWindowEnabled,
@@ -199,7 +204,7 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
         {id: 'AwsSolutions-OS9', reason: 'Log publishing is user-configurable via loggingAppLogEnabled, slowSearchLogEnabled, and auditLogEnabled context options'},
     ]);
 
-    generateClusterExports(stack, domain, config.clusterId, stage, vpcDetails.subnetSelection, vpcDetails.clusterAccessSecurityGroup?.securityGroupId);
+    generateClusterExports(stack, domain, config.clusterId, stage, vpcDetails?.subnetSelection, vpcDetails?.clusterAccessSecurityGroup?.securityGroupId);
 }
 
 function getEbsVolumeType(ebsVolumeTypeName: string): EbsDeviceVolumeType | undefined {
@@ -239,7 +244,7 @@ function validateNodeCounts(numAZs: number, config: ManagedClusterConfig) {
     }
 }
 
-function generateClusterExports(stack: Stack, domain: Domain, clusterId: string, stage: string, subnetSelection: SubnetSelection, clusterAccessSecurityGroupId?: string) {
+function generateClusterExports(stack: Stack, domain: Domain, clusterId: string, stage: string, subnetSelection?: SubnetSelection, clusterAccessSecurityGroupId?: string) {
     new CfnOutput(stack, `ClusterEndpointExport-${stage}-${clusterId}`, {
         exportName: `ClusterEndpoint-${stage}-${clusterId}`,
         value: domain.domainEndpoint,
@@ -258,7 +263,7 @@ function generateClusterExports(stack: Stack, domain: Domain, clusterId: string,
         description: 'The ARN of the OpenSearch domain',
     });
 
-    if (subnetSelection.subnets) {
+    if (subnetSelection?.subnets) {
         const subnetIds = subnetSelection.subnets.map(s => s.subnetId);
         new CfnOutput(stack, `ClusterSubnets-${stage}-${clusterId}`, {
             exportName: `ClusterSubnets-${stage}-${clusterId}`,
