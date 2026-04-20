@@ -49,8 +49,8 @@
     "config-coverage": "node scripts/config-coverage.js"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.248.0",
-    "cdk-nag": "^2.37.55",
+    "aws-cdk-lib": "2.250.0",
+    "cdk-nag": "^2.37.56",
     "constructs": "^10.6.0",
     "source-map-support": "^0.5.21"
   },
@@ -58,11 +58,11 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "25.6.0",
     "@vitest/coverage-v8": "^4.1.4",
-    "aws-cdk": "2.1118.0",
-    "eslint": "^10.2.0",
+    "aws-cdk": "2.1118.4",
+    "eslint": "^10.2.1",
     "ts-node": "^10.9.2",
-    "typescript": "~6.0.2",
-    "typescript-eslint": "^8.58.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.59.0",
     "vitest": "^4.0.18"
   },
   "peerDependencies": {
