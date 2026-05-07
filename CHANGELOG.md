@@ -8,7 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 | Series | Theme | Key Highlights |
 |--------|-------|---------------|
+| **0.4.x** | Naming cleanup | Dropped `cluster-` prefix from default `clusterName` |
 | **0.3.x** | Single-stack simplification | 4 stacks → 1 `OpenSearchStack`, removed monitoring + VPC Lambda, discriminated JSON Schema, collection groups, SAML auth, cold storage, deploy script |
+
+## [0.4.0] - 2026-05-07
+
+### Breaking Changes
+
+- **Default `clusterName` pattern changed** from `cluster-<stage>-<clusterId>` to `<stage>-<clusterId>`. The `cluster-` prefix is removed. This was [deprecated in 0.3.11](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/pull/137) with a migration path; it is now the default. Any caller that did not set `clusterName` explicitly in their context will see their managed domain name, AOSS collection name, and AOSS policy names shorten by 8 characters.
+
+  **Migration:**
+  - **No action required** if you set `clusterName` explicitly in your context — explicit values have always passed through unchanged and are not affected by this change.
+  - **Action required** if you relied on the default and have external references (IAM policies, CloudWatch dashboards, Terraform imports, runbooks) that reference the literal `cluster-<stage>-<clusterId>` resource names: either set `clusterName` explicitly to preserve the old value, or update the external references to the new `<stage>-<clusterId>` form. Only the AWS-visible resource names change; CFN logical IDs and stack outputs are unaffected.
+  - **Example:**
+    - Old (0.3.x default): `stage="dev"` + `clusterId="search"` → domain name `cluster-dev-search`
+    - New (0.4.0 default): `stage="dev"` + `clusterId="search"` → domain name `dev-search`
+    - To keep the old name: set `"clusterName": "cluster-dev-search"` explicitly in your context.
+
+### Changed
+
+- Stage-budget math in the default-name validation error now reflects the shorter pattern. For a given `clusterId`, the maximum `stage` length is `limit - 1 - clusterId.length` (was `limit - 8 - 1 - clusterId.length`).
 
 ## [0.3.8] - 2026-03-27
 
