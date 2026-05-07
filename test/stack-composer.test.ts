@@ -96,7 +96,7 @@ describe('Stack Composer Tests', () => {
     const composer = createStackComposer({
       clusters: [
         {clusterId: "managed", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE},
-        {clusterId: "serverless", clusterType: ClusterType.OPENSEARCH_SERVERLESS},
+        {clusterId: "aoss", clusterType: ClusterType.OPENSEARCH_SERVERLESS},
       ]
     })
     expect(composer.stacks.length).toBe(1)
@@ -121,5 +121,34 @@ describe('Stack Composer Tests', () => {
     expect(tagMap['Project']).toBe('opensearch-sample')
     expect(tagMap['CostCenter']).toBe('12345')
     expect(tagMap['Team']).toBe('search-platform')
+  })
+
+  test('Test default clusterName overflow for managed domain produces stage-aware error', () => {
+    // stage under MAX_STAGE_NAME_LENGTH (15) but default pattern 'cluster-<stage>-source'
+    // exceeds the 28-char managed domain limit: cluster-(8) + stage(14) + '-'(1) + 'source'(6) = 29.
+    expect(() => createStackComposer({
+      stage: "fourteen-chars",
+      clusters: [{clusterId: "source", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE}]
+    })).toThrow(/'stage' must be at most 13 characters/)
+  })
+
+  test('Test default clusterName overflow for serverless produces stage-aware error', () => {
+    // cluster-(8) + stage(11) + '-'(1) + target(6) = 26 chars,
+    // but with '-access' suffix for AOSS policy = 33 chars → exceeds 32-char policy limit.
+    expect(() => createStackComposer({
+      stage: "eleven-char",
+      clusters: [{clusterId: "target", clusterType: ClusterType.OPENSEARCH_SERVERLESS}]
+    })).toThrow(/AOSS policy name.*'stage' must be at most 10 characters/s)
+  })
+
+  test('Test default clusterName that fits the limit is accepted', () => {
+    // cluster-(8) + stage(13) + '-'(1) + source(6) = 28 chars exactly — at the managed limit.
+    const composer = createStackComposer({
+      stage: "thirteen-chrs",
+      clusters: [{clusterId: "source", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE}]
+    })
+    Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchService::Domain", {
+      DomainName: "cluster-thirteen-chrs-source",
+    })
   })
 })

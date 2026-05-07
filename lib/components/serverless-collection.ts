@@ -7,6 +7,7 @@ import {
 } from "aws-cdk-lib/aws-opensearchserverless";
 import {ServerlessClusterConfig} from "./cluster-config";
 import {VpcDetails} from "./vpc-details";
+import {MAX_AOSS_CLUSTER_NAME_LENGTH, MAX_AOSS_COLLECTION_NAME_LENGTH, MIN_OPENSEARCH_NAME_LENGTH} from "./common-utilities";
 
 /**
  * Creates serverless OpenSearch collections within the given stack.
@@ -16,12 +17,39 @@ import {VpcDetails} from "./vpc-details";
 export function createServerlessCollection(stack: Stack, config: ServerlessClusterConfig, stage: string, vpcDetails?: VpcDetails): void {
     const prefix = config.clusterId;
 
+    // Fail fast: AOSS appends '-enc'/'-net'/'-access' to clusterName for policy names; longest is '-access' at 7 chars.
+    if (config.clusterName.length < MIN_OPENSEARCH_NAME_LENGTH) {
+        throw new Error(
+            `Cluster '${config.clusterId}': AOSS clusterName '${config.clusterName}' is ${config.clusterName.length} characters, ` +
+            `below the AWS minimum of ${MIN_OPENSEARCH_NAME_LENGTH}. Set 'clusterName' to at least ${MIN_OPENSEARCH_NAME_LENGTH} characters.`
+        );
+    }
+    if (config.clusterName.length > MAX_AOSS_CLUSTER_NAME_LENGTH) {
+        throw new Error(
+            `Cluster '${config.clusterId}': AOSS clusterName '${config.clusterName}' is ${config.clusterName.length} characters, ` +
+            `exceeding the maximum of ${MAX_AOSS_CLUSTER_NAME_LENGTH} (32-char AOSS policy limit minus '-access' suffix). ` +
+            `Set a shorter 'clusterName' or reduce 'stage'.`
+        );
+    }
+
     // Build the list of collections to create.
     const entries: { name: string; type: string }[] = [];
     if (config.collections && config.collections.length > 0) {
         for (const c of config.collections) {
             if (!c.collectionName) {
                 throw new Error(`Each entry in 'collections' for cluster '${config.clusterId}' must have a 'collectionName'`);
+            }
+            if (c.collectionName.length < MIN_OPENSEARCH_NAME_LENGTH) {
+                throw new Error(
+                    `Cluster '${config.clusterId}': collection name '${c.collectionName}' is ${c.collectionName.length} characters, ` +
+                    `below the AWS AOSS minimum of ${MIN_OPENSEARCH_NAME_LENGTH}.`
+                );
+            }
+            if (c.collectionName.length > MAX_AOSS_COLLECTION_NAME_LENGTH) {
+                throw new Error(
+                    `Cluster '${config.clusterId}': collection name '${c.collectionName}' is ${c.collectionName.length} characters, ` +
+                    `exceeding the AWS AOSS collection name limit of ${MAX_AOSS_COLLECTION_NAME_LENGTH}.`
+                );
             }
             entries.push({
                 name: c.collectionName,

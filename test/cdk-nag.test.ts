@@ -38,7 +38,7 @@ describe('cdk-nag AWS Solutions Checks', () => {
     test('Serverless collection stack has no errors', () => {
         const composer = createNagApp({
             clusters: [{
-                clusterId: 'nag-serverless',
+                clusterId: 'nag-sls',
                 clusterType: 'OPENSEARCH_SERVERLESS',
                 collectionType: 'SEARCH',
             }],
@@ -63,7 +63,7 @@ describe('cdk-nag AWS Solutions Checks', () => {
                     ebsEnabled: true,
                 },
                 {
-                    clusterId: 'serverless',
+                    clusterId: 'aoss',
                     clusterType: 'OPENSEARCH_SERVERLESS',
                     collectionType: 'VECTORSEARCH',
                 },

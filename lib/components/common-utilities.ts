@@ -3,6 +3,19 @@ import {EngineVersion} from "aws-cdk-lib/aws-opensearchservice";
 
 export const MAX_STAGE_NAME_LENGTH = 15;
 export const MAX_CLUSTER_ID_LENGTH = 15;
+
+/** AWS OpenSearch minimum name length for domains and AOSS collections. */
+export const MIN_OPENSEARCH_NAME_LENGTH = 3;
+
+/** AWS OpenSearch managed (AOS) domain name limit. @see https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createupdatedomains.html */
+export const MAX_AOS_DOMAIN_NAME_LENGTH = 28;
+
+/** AWS OpenSearch Serverless (AOSS) collection name limit. @see https://docs.aws.amazon.com/opensearch-service/latest/ServerlessAPIReference/API_CreateCollection.html */
+export const MAX_AOSS_COLLECTION_NAME_LENGTH = 32;
+
+/** Effective `clusterName` limit for serverless clusters: 32-char AOSS policy-name cap minus the longest appended suffix (`-access`, 7 chars). */
+export const MAX_AOSS_CLUSTER_NAME_LENGTH = 25;
+
 export const LATEST_AOS_VERSION = "OS_2.19"
 
 export function getEngineVersion(engineVersionString: string) : EngineVersion {

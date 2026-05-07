@@ -3,7 +3,7 @@ import {readFileSync} from "fs";
 import {CdkLogger} from "./cdk-logger";
 import {ClusterConfig, ManagedClusterConfig, ServerlessClusterConfig} from "./cluster-config";
 import {TLSSecurityPolicy} from "aws-cdk-lib/aws-opensearchservice";
-import {MAX_CLUSTER_ID_LENGTH, parseRemovalPolicy} from "./common-utilities";
+import {MAX_AOS_DOMAIN_NAME_LENGTH, MAX_AOSS_CLUSTER_NAME_LENGTH, MAX_CLUSTER_ID_LENGTH, parseRemovalPolicy} from "./common-utilities";
 
 /**
  * Coerce a CLI-provided string value to the expected type.
@@ -153,6 +153,21 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
     }
 
     const clusterName = config.clusterName ?? `cluster-${stage}-${config.clusterId}`;
+
+    // Stage-aware check for the default-name path; explicit clusterName is validated downstream.
+    if (config.clusterName === undefined) {
+        const isServerless = clusterType === 'OPENSEARCH_SERVERLESS';
+        const limit = isServerless ? MAX_AOSS_CLUSTER_NAME_LENGTH : MAX_AOS_DOMAIN_NAME_LENGTH;
+        if (clusterName.length > limit) {
+            const stageBudget = Math.max(0, limit - 'cluster-'.length - 1 /* dash */ - config.clusterId.length);
+            throw new Error(
+                `Cluster '${config.clusterId}': default clusterName '${clusterName}' is ${clusterName.length} characters, ` +
+                `exceeding the ${isServerless ? 'AOSS policy name' : 'AOS domain name'} limit of ${limit}. ` +
+                `With clusterId='${config.clusterId}', 'stage' must be at most ${stageBudget} characters for the default ` +
+                `'cluster-<stage>-<clusterId>' pattern, or set 'clusterName' explicitly.`
+            );
+        }
+    }
 
     const domainRemovalPolicyName = getContextForType('domainRemovalPolicy', 'string', defaults, config)
     const domainRemovalPolicy = parseRemovalPolicy("domainRemovalPolicy", domainRemovalPolicyName)
