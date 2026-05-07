@@ -1093,7 +1093,7 @@ exports[`Snapshot Tests > Managed domain stack template snapshot 1`] = `
           "EnforceHTTPS": true,
           "TLSSecurityPolicy": "Policy-Min-TLS-1-2-2019-07",
         },
-        "DomainName": "cluster-unit-test-snap",
+        "DomainName": "unit-test-snap",
         "EBSOptions": {
           "EBSEnabled": true,
           "VolumeSize": 100,
@@ -1223,7 +1223,7 @@ exports[`Snapshot Tests > Mixed managed + serverless stack template snapshot 1`]
       },
     },
     "CollectionArnExportunittestsearch": {
-      "Description": "The ARN of the cluster-unit-test-search serverless collection",
+      "Description": "The ARN of the unit-test-search serverless collection",
       "Export": {
         "Name": "CollectionArn-unit-test-search",
       },
@@ -1235,7 +1235,7 @@ exports[`Snapshot Tests > Mixed managed + serverless stack template snapshot 1`]
       },
     },
     "CollectionEndpointExportunittestsearch": {
-      "Description": "The endpoint URL of the cluster-unit-test-search serverless collection",
+      "Description": "The endpoint URL of the unit-test-search serverless collection",
       "Export": {
         "Name": "CollectionEndpoint-unit-test-search",
       },
@@ -2291,7 +2291,7 @@ exports[`Snapshot Tests > Mixed managed + serverless stack template snapshot 1`]
           "EnforceHTTPS": true,
           "TLSSecurityPolicy": "Policy-Min-TLS-1-2-2019-07",
         },
-        "DomainName": "cluster-unit-test-domain",
+        "DomainName": "unit-test-domain",
         "EBSOptions": {
           "EBSEnabled": true,
           "VolumeSize": 100,
@@ -2347,7 +2347,7 @@ exports[`Snapshot Tests > Mixed managed + serverless stack template snapshot 1`]
         "searchNetworkPolicy",
       ],
       "Properties": {
-        "Name": "cluster-unit-test-search",
+        "Name": "unit-test-search",
         "StandbyReplicas": "DISABLED",
         "Tags": [
           {
@@ -2369,12 +2369,12 @@ exports[`Snapshot Tests > Mixed managed + serverless stack template snapshot 1`]
     },
     "searchDataAccessPolicy": {
       "Properties": {
-        "Name": "cluster-unit-test-search-access",
+        "Name": "unit-test-search-access",
         "Policy": {
           "Fn::Join": [
             "",
             [
-              "[{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-search"],"Permission":["aoss:CreateCollectionItems","aoss:DeleteCollectionItems","aoss:UpdateCollectionItems","aoss:DescribeCollectionItems"]},{"ResourceType":"index","Resource":["index/cluster-unit-test-search/*"],"Permission":["aoss:CreateIndex","aoss:DeleteIndex","aoss:UpdateIndex","aoss:DescribeIndex","aoss:ReadDocument","aoss:WriteDocument"]}],"Principal":["arn:",
+              "[{"Rules":[{"ResourceType":"collection","Resource":["collection/unit-test-search"],"Permission":["aoss:CreateCollectionItems","aoss:DeleteCollectionItems","aoss:UpdateCollectionItems","aoss:DescribeCollectionItems"]},{"ResourceType":"index","Resource":["index/unit-test-search/*"],"Permission":["aoss:CreateIndex","aoss:DeleteIndex","aoss:UpdateIndex","aoss:DescribeIndex","aoss:ReadDocument","aoss:WriteDocument"]}],"Principal":["arn:",
               {
                 "Ref": "AWS::Partition",
               },
@@ -2388,16 +2388,16 @@ exports[`Snapshot Tests > Mixed managed + serverless stack template snapshot 1`]
     },
     "searchEncryptionPolicy": {
       "Properties": {
-        "Name": "cluster-unit-test-search-enc",
-        "Policy": "{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-search"]}],"AWSOwnedKey":true}",
+        "Name": "unit-test-search-enc",
+        "Policy": "{"Rules":[{"ResourceType":"collection","Resource":["collection/unit-test-search"]}],"AWSOwnedKey":true}",
         "Type": "encryption",
       },
       "Type": "AWS::OpenSearchServerless::SecurityPolicy",
     },
     "searchNetworkPolicy": {
       "Properties": {
-        "Name": "cluster-unit-test-search-net",
-        "Policy": "[{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-search"]},{"ResourceType":"dashboard","Resource":["collection/cluster-unit-test-search"]}],"AllowFromPublic":true}]",
+        "Name": "unit-test-search-net",
+        "Policy": "[{"Rules":[{"ResourceType":"collection","Resource":["collection/unit-test-search"]},{"ResourceType":"dashboard","Resource":["collection/unit-test-search"]}],"AllowFromPublic":true}]",
         "Type": "network",
       },
       "Type": "AWS::OpenSearchServerless::SecurityPolicy",
@@ -2438,7 +2438,7 @@ exports[`Snapshot Tests > Serverless collection stack template snapshot 1`] = `
   "Description": "OpenSearch Service infrastructure - managed domains, serverless collections, and networking",
   "Outputs": {
     "CollectionArnExportunittestsnap": {
-      "Description": "The ARN of the cluster-unit-test-snap serverless collection",
+      "Description": "The ARN of the unit-test-snap serverless collection",
       "Export": {
         "Name": "CollectionArn-unit-test-snap",
       },
@@ -2450,7 +2450,7 @@ exports[`Snapshot Tests > Serverless collection stack template snapshot 1`] = `
       },
     },
     "CollectionEndpointExportunittestsnap": {
-      "Description": "The endpoint URL of the cluster-unit-test-snap serverless collection",
+      "Description": "The endpoint URL of the unit-test-snap serverless collection",
       "Export": {
         "Name": "CollectionEndpoint-unit-test-snap",
       },
@@ -2477,7 +2477,7 @@ exports[`Snapshot Tests > Serverless collection stack template snapshot 1`] = `
         "snapNetworkPolicy",
       ],
       "Properties": {
-        "Name": "cluster-unit-test-snap",
+        "Name": "unit-test-snap",
         "StandbyReplicas": "DISABLED",
         "Tags": [
           {
@@ -2500,12 +2500,12 @@ exports[`Snapshot Tests > Serverless collection stack template snapshot 1`] = `
     },
     "snapDataAccessPolicy": {
       "Properties": {
-        "Name": "cluster-unit-test-snap-access",
+        "Name": "unit-test-snap-access",
         "Policy": {
           "Fn::Join": [
             "",
             [
-              "[{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-snap"],"Permission":["aoss:CreateCollectionItems","aoss:DeleteCollectionItems","aoss:UpdateCollectionItems","aoss:DescribeCollectionItems"]},{"ResourceType":"index","Resource":["index/cluster-unit-test-snap/*"],"Permission":["aoss:CreateIndex","aoss:DeleteIndex","aoss:UpdateIndex","aoss:DescribeIndex","aoss:ReadDocument","aoss:WriteDocument"]}],"Principal":["arn:",
+              "[{"Rules":[{"ResourceType":"collection","Resource":["collection/unit-test-snap"],"Permission":["aoss:CreateCollectionItems","aoss:DeleteCollectionItems","aoss:UpdateCollectionItems","aoss:DescribeCollectionItems"]},{"ResourceType":"index","Resource":["index/unit-test-snap/*"],"Permission":["aoss:CreateIndex","aoss:DeleteIndex","aoss:UpdateIndex","aoss:DescribeIndex","aoss:ReadDocument","aoss:WriteDocument"]}],"Principal":["arn:",
               {
                 "Ref": "AWS::Partition",
               },
@@ -2519,16 +2519,16 @@ exports[`Snapshot Tests > Serverless collection stack template snapshot 1`] = `
     },
     "snapEncryptionPolicy": {
       "Properties": {
-        "Name": "cluster-unit-test-snap-enc",
-        "Policy": "{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-snap"]}],"AWSOwnedKey":true}",
+        "Name": "unit-test-snap-enc",
+        "Policy": "{"Rules":[{"ResourceType":"collection","Resource":["collection/unit-test-snap"]}],"AWSOwnedKey":true}",
         "Type": "encryption",
       },
       "Type": "AWS::OpenSearchServerless::SecurityPolicy",
     },
     "snapNetworkPolicy": {
       "Properties": {
-        "Name": "cluster-unit-test-snap-net",
-        "Policy": "[{"Rules":[{"ResourceType":"collection","Resource":["collection/cluster-unit-test-snap"]},{"ResourceType":"dashboard","Resource":["collection/cluster-unit-test-snap"]}],"AllowFromPublic":true}]",
+        "Name": "unit-test-snap-net",
+        "Policy": "[{"Rules":[{"ResourceType":"collection","Resource":["collection/unit-test-snap"]},{"ResourceType":"dashboard","Resource":["collection/unit-test-snap"]}],"AllowFromPublic":true}]",
         "Type": "network",
       },
       "Type": "AWS::OpenSearchServerless::SecurityPolicy",

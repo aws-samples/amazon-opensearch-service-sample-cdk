@@ -152,20 +152,19 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         }
     }
 
-    // Default 'cluster-' prefix is deprecated; set 'clusterName' to opt out before the default changes.
-    const clusterName = config.clusterName ?? `cluster-${stage}-${config.clusterId}`;
+    const clusterName = config.clusterName ?? `${stage}-${config.clusterId}`;
 
     // Stage-aware check for the default-name path; explicit clusterName is validated downstream.
     if (config.clusterName === undefined) {
         const isServerless = clusterType === 'OPENSEARCH_SERVERLESS';
         const limit = isServerless ? MAX_AOSS_CLUSTER_NAME_LENGTH : MAX_AOS_DOMAIN_NAME_LENGTH;
         if (clusterName.length > limit) {
-            const stageBudget = Math.max(0, limit - 'cluster-'.length - 1 /* dash */ - config.clusterId.length);
+            const stageBudget = Math.max(0, limit - 1 /* dash */ - config.clusterId.length);
             throw new Error(
                 `Cluster '${config.clusterId}': default clusterName '${clusterName}' is ${clusterName.length} characters, ` +
                 `exceeding the ${isServerless ? 'AOSS policy name' : 'AOS domain name'} limit of ${limit}. ` +
                 `With clusterId='${config.clusterId}', 'stage' must be at most ${stageBudget} characters for the default ` +
-                `'cluster-<stage>-<clusterId>' pattern, or set 'clusterName' explicitly.`
+                `'<stage>-<clusterId>' pattern, or set 'clusterName' explicitly.`
             );
         }
     }
