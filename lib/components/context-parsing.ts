@@ -152,6 +152,7 @@ export function parseClusterConfig(config: Record<string, any>, defaults: Record
         }
     }
 
+    // Default 'cluster-' prefix is deprecated; set 'clusterName' to opt out before the default changes.
     const clusterName = config.clusterName ?? `cluster-${stage}-${config.clusterId}`;
 
     // Stage-aware check for the default-name path; explicit clusterName is validated downstream.
