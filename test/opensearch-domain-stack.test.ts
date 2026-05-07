@@ -284,4 +284,36 @@ describe('Cold Storage, Multi-AZ Standby, Off-Peak Window Tests', () => {
       },
     })
   })
+
+  test('Test explicit clusterName over 28 chars throws managed-domain limit error', () => {
+    expect(() => createStackComposerWithSingleDomainContext({
+      clusterName: "a".repeat(29),
+    })).toThrow(/AOS domain name.*exceeding the AWS limit of 28/)
+  })
+
+  test('Test explicit clusterName at the 28-char limit is accepted', () => {
+    const composer = createStackComposerWithSingleDomainContext({
+      clusterName: "a".repeat(28),
+    })
+    Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchService::Domain", {
+      DomainName: "a".repeat(28),
+    })
+  })
+
+  test('Test explicit clusterName below 3-char AWS minimum throws (covers empty string + below 3)', () => {
+    for (const name of ["", "ab"]) {
+      expect(() => createStackComposerWithSingleDomainContext({
+        clusterName: name,
+      })).toThrow(/AOS domain name.*below the AWS minimum of 3/)
+    }
+  })
+
+  test('Test explicit clusterName at the 3-char minimum is accepted', () => {
+    const composer = createStackComposerWithSingleDomainContext({
+      clusterName: "abc",
+    })
+    Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchService::Domain", {
+      DomainName: "abc",
+    })
+  })
 })

@@ -12,7 +12,7 @@ import {ISecret, Secret} from "aws-cdk-lib/aws-secretsmanager";
 import {CfnDomain} from "aws-cdk-lib/aws-opensearchservice";
 import {NagSuppressions} from "cdk-nag";
 import {VpcDetails} from "./vpc-details";
-import {getEngineVersion, LATEST_AOS_VERSION} from "./common-utilities";
+import {getEngineVersion, LATEST_AOS_VERSION, MAX_AOS_DOMAIN_NAME_LENGTH, MIN_OPENSEARCH_NAME_LENGTH} from "./common-utilities";
 import {ManagedClusterConfig} from "./cluster-config";
 
 /**
@@ -120,6 +120,20 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
             subjectKey: config.samlSubjectKey,
             sessionTimeoutMinutes: config.samlSessionTimeoutMinutes,
         };
+    }
+
+    // Fail fast: CFN rejects domain names outside 3-28 chars with a generic InvalidParameter error.
+    if (config.clusterName.length < MIN_OPENSEARCH_NAME_LENGTH) {
+        throw new Error(
+            `Cluster '${config.clusterId}': AOS domain name '${config.clusterName}' is ${config.clusterName.length} characters, ` +
+            `below the AWS minimum of ${MIN_OPENSEARCH_NAME_LENGTH}. Set 'clusterName' to at least ${MIN_OPENSEARCH_NAME_LENGTH} characters.`
+        );
+    }
+    if (config.clusterName.length > MAX_AOS_DOMAIN_NAME_LENGTH) {
+        throw new Error(
+            `Cluster '${config.clusterId}': AOS domain name '${config.clusterName}' is ${config.clusterName.length} characters, ` +
+            `exceeding the AWS limit of ${MAX_AOS_DOMAIN_NAME_LENGTH}. Set a shorter 'clusterName' or reduce 'stage'.`
+        );
     }
 
     const domain = new Domain(stack, `${prefix}-Domain`, {

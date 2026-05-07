@@ -80,7 +80,7 @@
         "clusterType": true,
         "clusterName": {
           "type": "string",
-          "description": "Custom name for the cluster (default: cluster-<stage>-<clusterId>)"
+          "description": "Custom name for the cluster (default: cluster-<stage>-<clusterId>). The 'cluster-' prefix in the default is deprecated; set this explicitly to opt out before the default changes."
         },
         "domainRemovalPolicy": {
           "type": "string",
@@ -301,7 +301,7 @@
         "clusterType": true,
         "clusterName": {
           "type": "string",
-          "description": "Custom name for the cluster (default: cluster-<stage>-<clusterId>)"
+          "description": "Custom name for the cluster (default: cluster-<stage>-<clusterId>). The 'cluster-' prefix in the default is deprecated; set this explicitly to opt out before the default changes."
         },
         "domainRemovalPolicy": {
           "type": "string",

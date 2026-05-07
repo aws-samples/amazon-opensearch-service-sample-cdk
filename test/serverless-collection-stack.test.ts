@@ -58,7 +58,7 @@ describe('Serverless Collection Tests', () => {
 
   test('Test serverless collection with DESTROY removal policy', () => {
     const composer = createStackComposer({
-      clusters: [{clusterId: "ephemeral", clusterType: ClusterType.OPENSEARCH_SERVERLESS, domainRemovalPolicy: "DESTROY"}]
+      clusters: [{clusterId: "ephem", clusterType: ClusterType.OPENSEARCH_SERVERLESS, domainRemovalPolicy: "DESTROY"}]
     })
     Template.fromStack(getStack(composer)).hasResource("AWS::OpenSearchServerless::Collection", {DeletionPolicy: "Delete"})
   })
@@ -81,7 +81,7 @@ describe('Serverless Collection Tests', () => {
     const composer = createStackComposer({
       clusters: [
         {clusterId: "managed", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE},
-        {clusterId: "serverless", clusterType: ClusterType.OPENSEARCH_SERVERLESS},
+        {clusterId: "aoss", clusterType: ClusterType.OPENSEARCH_SERVERLESS},
       ]
     })
     expect(composer.stacks.length).toBe(1)
@@ -183,5 +183,77 @@ describe('Serverless Collection Tests', () => {
     template.hasResourceProperties("AWS::OpenSearchServerless::AccessPolicy", {
       Type: "data",
     })
+  })
+
+  test('Test explicit clusterName over 25 chars throws serverless policy-budget error', () => {
+    expect(() => createStackComposer({
+      clusters: [{
+        clusterId: "search",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        clusterName: "a".repeat(26),
+      }]
+    })).toThrow(/AOSS clusterName.*exceeding the maximum of 25/)
+  })
+
+  test('Test explicit clusterName at the 25-char limit is accepted', () => {
+    const composer = createStackComposer({
+      clusters: [{
+        clusterId: "search",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        clusterName: "a".repeat(25),
+      }]
+    })
+    Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchServerless::Collection", {
+      Name: "a".repeat(25),
+    })
+  })
+
+  test('Test collection group entry name over 32 chars throws', () => {
+    expect(() => createStackComposer({
+      clusters: [{
+        clusterId: "group",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        collections: [
+          {collectionName: "a".repeat(33), collectionType: "SEARCH"},
+        ]
+      }]
+    })).toThrow(/exceeding the AWS AOSS collection name limit of 32/)
+  })
+
+  test('Test explicit clusterName below 3-char AWS minimum throws (covers empty string + below 3)', () => {
+    for (const name of ["", "ab"]) {
+      expect(() => createStackComposer({
+        clusters: [{
+          clusterId: "search",
+          clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+          clusterName: name,
+        }]
+      })).toThrow(/AOSS clusterName.*below the AWS minimum of 3/)
+    }
+  })
+
+  test('Test explicit clusterName at the 3-char minimum is accepted', () => {
+    const composer = createStackComposer({
+      clusters: [{
+        clusterId: "search",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        clusterName: "abc",
+      }]
+    })
+    Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchServerless::Collection", {
+      Name: "abc",
+    })
+  })
+
+  test('Test collection group entry below 3-char AOSS minimum throws', () => {
+    expect(() => createStackComposer({
+      clusters: [{
+        clusterId: "group",
+        clusterType: ClusterType.OPENSEARCH_SERVERLESS,
+        collections: [
+          {collectionName: "ab", collectionType: "SEARCH"},
+        ]
+      }]
+    })).toThrow(/collection name 'ab'.*below the AWS AOSS minimum of 3/)
   })
 })
