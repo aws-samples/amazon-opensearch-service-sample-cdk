@@ -181,7 +181,7 @@ function assertPrimaryDomainTemplate(template: Template) {
   template.resourceCountIs("AWS::OpenSearchService::Domain", 1)
   template.hasResourceProperties("AWS::OpenSearchService::Domain", {
     EngineVersion: "OpenSearch_2.3",
-    DomainName: "cluster-unittest-dev-search",
+    DomainName: "unittest-dev-search",
     AdvancedSecurityOptions: {
       Enabled: true,
       MasterUserOptions: {MasterUserARN: "arn:aws:iam::12345678912:user/test-user"}

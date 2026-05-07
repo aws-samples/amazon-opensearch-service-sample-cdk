@@ -17,7 +17,7 @@ describe('Serverless Collection Tests', () => {
     const template = Template.fromStack(getStack(composer))
     template.resourceCountIs("AWS::OpenSearchServerless::Collection", 1)
     template.hasResourceProperties("AWS::OpenSearchServerless::Collection", {
-      Name: "cluster-unit-test-search", Type: "SEARCH", StandbyReplicas: "ENABLED",
+      Name: "unit-test-search", Type: "SEARCH", StandbyReplicas: "ENABLED",
     })
     template.resourceCountIs("AWS::OpenSearchServerless::SecurityPolicy", 2)
     template.resourceCountIs("AWS::OpenSearchServerless::AccessPolicy", 1)

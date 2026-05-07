@@ -124,31 +124,29 @@ describe('Stack Composer Tests', () => {
   })
 
   test('Test default clusterName overflow for managed domain produces stage-aware error', () => {
-    // stage under MAX_STAGE_NAME_LENGTH (15) but default pattern 'cluster-<stage>-source'
-    // exceeds the 28-char managed domain limit: cluster-(8) + stage(14) + '-'(1) + 'source'(6) = 29.
+    // With MAX_CLUSTER_ID_LENGTH=15 clusterId: stage(13) + '-'(1) + 15 = 29 > 28
     expect(() => createStackComposer({
-      stage: "fourteen-chars",
-      clusters: [{clusterId: "source", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE}]
-    })).toThrow(/'stage' must be at most 13 characters/)
+      stage: "a-13-char-yes",
+      clusters: [{clusterId: "max-length-test", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE}]
+    })).toThrow(/'stage' must be at most 12 characters/)
   })
 
   test('Test default clusterName overflow for serverless produces stage-aware error', () => {
-    // cluster-(8) + stage(11) + '-'(1) + target(6) = 26 chars,
-    // but with '-access' suffix for AOSS policy = 33 chars → exceeds 32-char policy limit.
+    // stage(10) + '-'(1) + clusterId(15) = 26 > 25-char AOSS clusterName limit
     expect(() => createStackComposer({
-      stage: "eleven-char",
-      clusters: [{clusterId: "target", clusterType: ClusterType.OPENSEARCH_SERVERLESS}]
-    })).toThrow(/AOSS policy name.*'stage' must be at most 10 characters/s)
+      stage: "10-char-yo",
+      clusters: [{clusterId: "max-length-test", clusterType: ClusterType.OPENSEARCH_SERVERLESS}]
+    })).toThrow(/AOSS policy name.*'stage' must be at most 9 characters/s)
   })
 
   test('Test default clusterName that fits the limit is accepted', () => {
-    // cluster-(8) + stage(13) + '-'(1) + source(6) = 28 chars exactly — at the managed limit.
+    // stage(12) + '-'(1) + clusterId(15) = 28 exactly (at managed limit)
     const composer = createStackComposer({
-      stage: "thirteen-chrs",
-      clusters: [{clusterId: "source", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE}]
+      stage: "twelve-chars",
+      clusters: [{clusterId: "max-length-test", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE}]
     })
     Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchService::Domain", {
-      DomainName: "cluster-thirteen-chrs-source",
+      DomainName: "twelve-chars-max-length-test",
     })
   })
 })

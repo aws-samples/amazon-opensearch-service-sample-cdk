@@ -343,7 +343,7 @@ A single CloudFormation stack `OpenSearch-prod-<region>` containing:
 |--------|------|:--------:|-------------|
 | `clusterId` | string | ✅ | Unique identifier (max 15 chars). |
 | `clusterType` | string | ✅ | `OPENSEARCH_MANAGED_SERVICE` or `OPENSEARCH_SERVERLESS` |
-| `clusterName` | string | — | Custom domain name. Default: `cluster-<stage>-<clusterId>` |
+| `clusterName` | string | — | Custom domain name. Default: `<stage>-<clusterId>` |
 | `domainRemovalPolicy` | string | — | `RETAIN` (default) or `DESTROY` |
 
 ### Managed Domain Options
