@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 | **0.4.x** | Naming cleanup | Dropped `cluster-` prefix from default `clusterName` |
 | **0.3.x** | Single-stack simplification | 4 stacks → 1 `OpenSearchStack`, removed monitoring + VPC Lambda, discriminated JSON Schema, collection groups, SAML auth, cold storage, deploy script |
 
+## [0.4.1] - 2026-05-12
+
+### Fixed
+- AccessPolicy IAM propagation race when a stack deploys multiple managed OpenSearch domains with `accessPolicies`. CDK's `Custom::OpenSearchAccessPolicy` resources share one Lambda service role across domains; in parallel execution the second domain's custom resource could invoke before its just-attached `es:UpdateDomainConfig` permission had fully propagated, producing `AccessDenied`. `createManagedDomain` now threads a dependency edge between consecutive `AccessPolicy` constructs to serialize policy application while leaving domain creation itself parallel. ([#141](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/pull/141))
+
 ## [0.4.0] - 2026-05-07
 
 ### Breaking Changes
