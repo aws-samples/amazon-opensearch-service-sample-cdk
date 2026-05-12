@@ -1,4 +1,5 @@
 import {CfnOutput, SecretValue, Stack} from "aws-cdk-lib";
+import {IConstruct} from "constructs";
 import {
     EbsDeviceVolumeType,
     ISecurityGroup,
@@ -19,8 +20,29 @@ import {ManagedClusterConfig} from "./cluster-config";
  * Creates a managed OpenSearch domain within the given stack.
  * This is a helper function, not a separate stack — all resources
  * are created in the caller's stack scope.
+ *
+ * AccessPolicy serialization: when a stack creates multiple managed domains that
+ * each set `accessPolicies`, CDK emits one `Custom::OpenSearchAccessPolicy` per
+ * domain, all backed by the same Lambda role with per-domain IAM policy
+ * attachments. If the policy applications run in parallel, the second domain's
+ * custom resource can fire before its just-attached `es:UpdateDomainConfig`
+ * IAM policy has propagated, producing an `AccessDenied` at deploy time. To
+ * serialize these across calls, the caller threads the previous invocation's
+ * returned `AccessPolicy` construct in via `previousAccessPolicy`; this function
+ * wires a `node.addDependency` edge so each domain's policy application waits
+ * for the previous one to complete (domain creation itself — the slow part —
+ * remains parallel).
+ *
+ * @param previousAccessPolicy  The `AccessPolicy` construct returned by a prior
+ *     `createManagedDomain` call in the same stack, or `undefined` for the first
+ *     call in the chain.
+ * @returns The `AccessPolicy` construct created for this domain (to be threaded
+ *     into the next call), or `undefined` when no AccessPolicy was created —
+ *     either because this is a first-synth dummy-VPC stub (CDK `Vpc.fromLookup`
+ *     returns `vpc-12345` before the context cache is populated) or because
+ *     `accessPolicies` / `openAccessPolicyEnabled` were not set on the config.
  */
-export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, stage: string, vpcDetails?: VpcDetails): void {
+export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, stage: string, vpcDetails?: VpcDetails, previousAccessPolicy?: IConstruct): IConstruct | undefined {
     const prefix = config.clusterId;
 
     // Skip for first synthesis stage (dummy VPC from lookup)
@@ -227,6 +249,13 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
     ]);
 
     generateClusterExports(stack, domain, config.clusterId, stage, vpcDetails?.subnetSelection, vpcDetails?.clusterAccessSecurityGroup?.securityGroupId);
+
+    // Thread AccessPolicy into the serialization chain (see function JSDoc for rationale).
+    const accessPolicy = domain.node.tryFindChild('AccessPolicy');
+    if (accessPolicy && previousAccessPolicy) {
+        accessPolicy.node.addDependency(previousAccessPolicy);
+    }
+    return accessPolicy;
 }
 
 function getEbsVolumeType(ebsVolumeTypeName: string): EbsDeviceVolumeType | undefined {

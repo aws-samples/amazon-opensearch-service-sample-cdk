@@ -1,4 +1,4 @@
-import { Template } from "aws-cdk-lib/assertions";
+import { Match, Template } from "aws-cdk-lib/assertions";
 import {createStackComposer, createStackComposerWithSingleDomainContext, getStack} from "./test-utils";
 import { describe, afterEach, test, expect, vi } from 'vitest';
 import {ClusterType} from "../lib/components/common-utilities";
@@ -147,6 +147,38 @@ describe('Stack Composer Tests', () => {
     })
     Template.fromStack(getStack(composer)).hasResourceProperties("AWS::OpenSearchService::Domain", {
       DomainName: "twelve-chars-max-length-test",
+    })
+  })
+
+  test('Test AccessPolicy custom resources are serialized across managed domains to avoid IAM propagation race', () => {
+    // When multiple managed domains each have accessPolicies, CDK creates one
+    // Custom::OpenSearchAccessPolicy resource per domain, all sharing the same
+    // Lambda service role. Running them in parallel risks an IAM eventual-consistency
+    // race where the second domain's policy is invoked before its just-attached
+    // es:UpdateDomainConfig permission has propagated. createManagedDomain chains
+    // each AccessPolicy construct to the previous via node.addDependency, forcing
+    // serial execution. This test asserts the resulting CFN DependsOn edge.
+    const samplePolicy = {
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Principal": {"AWS": "arn:aws:iam::123456789012:root"},
+        "Action": "es:*",
+        "Resource": "*"
+      }]
+    }
+    const template = Template.fromStack(getStack(createStackComposer({
+      clusters: [
+        {clusterId: "source", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE, publicAccess: true, accessPolicies: samplePolicy},
+        {clusterId: "target", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE, publicAccess: true, accessPolicies: samplePolicy},
+      ]
+    })))
+    template.resourceCountIs("Custom::OpenSearchAccessPolicy", 2)
+    // Assert the serialization edge: an AccessPolicy exists whose DependsOn references
+    // another AccessPolicy by logical-id prefix. (CDK derives logical ids from construct
+    // paths, so `sourceDomainAccessPolicy*` is the stable id for source's custom resource.)
+    template.hasResource("Custom::OpenSearchAccessPolicy", {
+      DependsOn: Match.arrayWith([Match.stringLikeRegexp("^sourceDomainAccessPolicy")]),
     })
   })
 })

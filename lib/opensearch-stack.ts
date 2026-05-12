@@ -1,4 +1,4 @@
-import {Construct} from "constructs";
+import {Construct, IConstruct} from "constructs";
 import {CfnOutput, Fn, Stack, StackProps, Tags} from "aws-cdk-lib";
 import {
     CfnInternetGateway, CfnNatGateway, CfnEIP, CfnRouteTable,
@@ -63,11 +63,15 @@ export class OpenSearchStack extends Stack {
         }
 
         // --- Managed domains ---
+        // Thread previousAccessPolicy through each call so createManagedDomain can
+        // serialize AccessPolicy custom resources across domains (see managed-domain.ts
+        // for the IAM race rationale).
+        let previousAccessPolicy: IConstruct | undefined;
         for (const config of managedClusters) {
             if (!config.publicAccess && !vpcDetails) {
                 throw new Error("Internal error: VPC details should be resolved for VPC-based managed clusters");
             }
-            createManagedDomain(this, config, stage, config.publicAccess ? undefined : vpcDetails);
+            previousAccessPolicy = createManagedDomain(this, config, stage, config.publicAccess ? undefined : vpcDetails, previousAccessPolicy);
         }
 
         // --- Serverless collections ---
