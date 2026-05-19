@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 | **0.4.x** | Naming cleanup | Dropped `cluster-` prefix from default `clusterName` |
 | **0.3.x** | Single-stack simplification | 4 stacks → 1 `OpenSearchStack`, removed monitoring + VPC Lambda, discriminated JSON Schema, collection groups, SAML auth, cold storage, deploy script |
 
+## [0.4.2] - 2026-05-19
+
+### Fixed
+- AccessPolicy IAM propagation race resolved at the source. The `Custom::OpenSearchAccessPolicy` resource that the L2 `Domain` construct emits to apply `accessPolicies` is now bypassed: `createManagedDomain` writes its access policies directly onto the underlying `AWS::OpenSearchService::Domain` CFN resource via `cfnDomain.accessPolicies`. CloudFormation natively supports inline `AccessPolicies` on `AWS::OpenSearchService::Domain`, so the Lambda-backed custom resource (and the IAM race it created) is no longer needed. The 0.4.1 dependency edge between `AccessPolicy` constructs is removed because the `AccessPolicy` constructs themselves are gone. ([#146](https://github.com/aws-samples/amazon-opensearch-service-sample-cdk/pull/146))
+
 ## [0.4.1] - 2026-05-12
 
 ### Fixed
