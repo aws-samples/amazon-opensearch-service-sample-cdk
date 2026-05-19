@@ -1,4 +1,4 @@
-import { Template } from 'aws-cdk-lib/assertions';
+import { Match, Template } from 'aws-cdk-lib/assertions';
 import {createStackComposer, createStackComposerWithSingleDomainContext, getStack} from "./test-utils";
 import {describe, afterEach, test, vi, expect} from 'vitest';
 import {ClusterType} from "../lib/components/common-utilities";
@@ -111,9 +111,13 @@ describe('Managed Domain Tests', () => {
     assertAlternateDomainTemplate(Template.fromStack(getStack(composer)))
   })
 
-  test('Test openAccessPolicy creates access policy when enabled', () => {
+  test('Test openAccessPolicy applies inline access policy when enabled', () => {
     const composer = createStackComposerWithSingleDomainContext({openAccessPolicyEnabled: true})
-    Template.fromStack(getStack(composer)).resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
+    const template = Template.fromStack(getStack(composer))
+    template.resourceCountIs("Custom::OpenSearchAccessPolicy", 0)
+    template.hasResourceProperties("AWS::OpenSearchService::Domain", {
+      AccessPolicies: Match.objectLike({Version: "2012-10-17"}),
+    })
   })
 
   test('Test openAccessPolicy does not create access policy when disabled', () => {
@@ -177,7 +181,7 @@ describe('Managed Domain Tests', () => {
 })
 
 function assertPrimaryDomainTemplate(template: Template) {
-  template.resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
+  template.resourceCountIs("Custom::OpenSearchAccessPolicy", 0)
   template.resourceCountIs("AWS::OpenSearchService::Domain", 1)
   template.hasResourceProperties("AWS::OpenSearchService::Domain", {
     EngineVersion: "OpenSearch_2.3",
@@ -213,7 +217,7 @@ function assertPrimaryDomainTemplate(template: Template) {
 }
 
 function assertAlternateDomainTemplate(template: Template) {
-    template.resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
+    template.resourceCountIs("Custom::OpenSearchAccessPolicy", 0)
     template.resourceCountIs("AWS::OpenSearchService::Domain", 1)
     template.hasResourceProperties("AWS::OpenSearchService::Domain", {
         AdvancedSecurityOptions: {

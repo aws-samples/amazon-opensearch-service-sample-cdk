@@ -6,11 +6,9 @@ import {
 } from "aws-cdk-lib/aws-ec2";
 import {Domain, SAMLOptionsProperty, ZoneAwarenessConfig} from "aws-cdk-lib/aws-opensearchservice";
 import {IKey, Key} from "aws-cdk-lib/aws-kms";
-import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
 import {ISecret, Secret} from "aws-cdk-lib/aws-secretsmanager";
 import {CfnDomain} from "aws-cdk-lib/aws-opensearchservice";
-import {AwsCustomResource} from "aws-cdk-lib/custom-resources";
 import {NagSuppressions} from "cdk-nag";
 import {VpcDetails} from "./vpc-details";
 import {getEngineVersion, LATEST_AOS_VERSION, MAX_AOS_DOMAIN_NAME_LENGTH, MIN_OPENSEARCH_NAME_LENGTH} from "./common-utilities";
@@ -21,23 +19,17 @@ import {ManagedClusterConfig} from "./cluster-config";
  * This is a helper function, not a separate stack — all resources
  * are created in the caller's stack scope.
  *
- * AccessPolicy IAM eventual-consistency: when a stack creates multiple managed
- * domains that each set `accessPolicies`, CDK emits one
- * `Custom::OpenSearchAccessPolicy` per domain, all backed by the same singleton
- * Lambda role (`AwsCustomResource`'s shared provider). Each L2 attaches its own
- * inline `AWS::IAM::Policy` (scoped to that domain's ARN) to that role just
- * before invoking `UpdateDomainConfig`. The 2nd-onwards attachment can race
- * IAM's PutRolePolicy → STS-visibility propagation, producing
- * `AccessDenied: es:UpdateDomainConfig` at deploy time — even when the policy
- * resource shows `CREATE_COMPLETE` in CloudFormation.
- *
- * Mitigation: pre-grant `es:UpdateDomainConfig` with a `domain/*` wildcard on
- * the singleton role via `addToPrincipalPolicy`. CDK collects these calls into
- * the role's single auto-managed `DefaultPolicy`, which is created and attached
- * once at the role's first reference — well before any custom-resource
- * invocation. Subsequent per-domain inline policies remain in the template
- * (they're emitted by the L2 itself and are correctly scoped) but they're no
- * longer on the IAM-propagation critical path.
+ * Access policies are written directly to `CfnDomain.AccessPolicies` rather
+ * than passed to the L2 `Domain` construct. The L2 construct synthesizes
+ * `accessPolicies` through a Lambda-backed `Custom::OpenSearchAccessPolicy`
+ * resource that calls `es:UpdateDomainConfig` after the domain is created;
+ * that path is sensitive to IAM eventual consistency on the per-domain inline
+ * policy that grants the custom-resource Lambda its API permission, and has
+ * been observed to produce `AccessDenied: es:UpdateDomainConfig` at deploy
+ * time. CFN natively supports inline access policies on
+ * `AWS::OpenSearchService::Domain.AccessPolicies`, so we bake the policy into
+ * the `CreateDomain` call itself — no Lambda, no second-step UpdateDomainConfig,
+ * no IAM propagation race possible.
  */
 export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, stage: string, vpcDetails?: VpcDetails): void {
     const prefix = config.clusterId;
@@ -115,16 +107,19 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
         || ebsVolumeType === EbsDeviceVolumeType.IO2;
     const supportsThroughput = ebsVolumeType === EbsDeviceVolumeType.GP3;
 
-    let accessPolicies: PolicyStatement[] | undefined;
+    let accessPolicyDoc: Record<string, unknown> | undefined;
     if (config.openAccessPolicyEnabled) {
-        accessPolicies = [new PolicyStatement({
-            effect: Effect.ALLOW,
-            principals: [new AnyPrincipal()],
-            actions: ["es:*"],
-            resources: [`arn:${stack.partition}:es:${stack.region}:${stack.account}:domain/${config.clusterName}/*`],
-        })];
-    } else {
-        accessPolicies = config.accessPolicies ? parseAccessPolicies(config.accessPolicies, config.clusterId) : undefined;
+        accessPolicyDoc = {
+            Version: "2012-10-17",
+            Statement: [{
+                Effect: "Allow",
+                Principal: {AWS: "*"},
+                Action: "es:*",
+                Resource: `arn:${stack.partition}:es:${stack.region}:${stack.account}:domain/${config.clusterName}/*`,
+            }],
+        };
+    } else if (config.accessPolicies) {
+        accessPolicyDoc = validateAccessPolicies(config.accessPolicies, config.clusterId);
     }
 
     // SAML authentication
@@ -158,7 +153,6 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
     const domain = new Domain(stack, `${prefix}-Domain`, {
         version,
         domainName: config.clusterName,
-        accessPolicies,
         useUnsignedBasicAuth: config.useUnsignedBasicAuth,
         capacity: {
             dataNodeInstanceType: config.dataNodeType,
@@ -214,6 +208,23 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
     // Configure L1 properties not exposed by L2 construct
     const cfnDomain = domain.node.defaultChild as CfnDomain;
 
+    // Set access policies inline on the domain. When useUnsignedBasicAuth is set,
+    // L2 auto-creates an AccessPolicy custom resource with an unsigned ESHttp* policy;
+    // remove it and merge the unsigned statement into our inline document instead.
+    if (config.useUnsignedBasicAuth) {
+        domain.node.tryRemoveChild('AccessPolicy');
+        accessPolicyDoc = accessPolicyDoc ?? {Version: "2012-10-17", Statement: []};
+        (accessPolicyDoc.Statement as unknown[]).push({
+            Effect: "Allow",
+            Principal: {AWS: "*"},
+            Action: "es:ESHttp*",
+            Resource: `arn:${stack.partition}:es:${stack.region}:${stack.account}:domain/${config.clusterName}/*`,
+        });
+    }
+    if (accessPolicyDoc) {
+        cfnDomain.accessPolicies = accessPolicyDoc;
+    }
+
     // Auto-Tune
     if (config.autoTuneEnabled !== undefined) {
         cfnDomain.addPropertyOverride('AutoTuneOptions', {
@@ -246,21 +257,6 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
     ]);
 
     generateClusterExports(stack, domain, config.clusterId, stage, vpcDetails?.subnetSelection, vpcDetails?.clusterAccessSecurityGroup?.securityGroupId);
-
-    // Pre-grant es:UpdateDomainConfig with a domain/* wildcard on the singleton AwsCustomResource
-    // Lambda role (see function JSDoc for race rationale). This addToPrincipalPolicy call lands in
-    // the role's auto-managed DefaultPolicy, attached once at the role's first reference, well
-    // before any Custom::OpenSearchAccessPolicy invocation — eliminating the IAM propagation race
-    // by construction. The per-domain inline CustomResourcePolicy resources emitted by the L2
-    // remain in the template (correctly scoped), but they're no longer on the critical path.
-    const accessPolicy = domain.node.tryFindChild('AccessPolicy') as AwsCustomResource | undefined;
-    if (accessPolicy) {
-        accessPolicy.grantPrincipal.addToPrincipalPolicy(new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['es:UpdateDomainConfig'],
-            resources: [`arn:${stack.partition}:es:${stack.region}:${stack.account}:domain/*`],
-        }));
-    }
 }
 
 function getEbsVolumeType(ebsVolumeTypeName: string): EbsDeviceVolumeType | undefined {
@@ -272,20 +268,23 @@ function getEbsVolumeType(ebsVolumeTypeName: string): EbsDeviceVolumeType | unde
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function parseAccessPolicies(jsonObject: Record<string, any>, clusterId: string): PolicyStatement[] {
-    const accessPolicies: PolicyStatement[] = [];
+function validateAccessPolicies(jsonObject: Record<string, any>, clusterId: string): Record<string, unknown> {
     const statements = jsonObject['Statement'];
-    if (!statements || statements.length < 1) {
+    if (!statements) {
         throw new Error(`Invalid accessPolicies for cluster '${clusterId}': JSON must have a non-empty 'Statement' element. See AWS IAM policy documentation for proper format: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_statement.html`);
     }
-    if (Array.isArray(statements)) {
-        for (const statementBlock of statements) {
-            accessPolicies.push(PolicyStatement.fromJson(statementBlock));
-        }
-    } else {
-        accessPolicies.push(PolicyStatement.fromJson(statements));
+    const statementList = Array.isArray(statements) ? statements : [statements];
+    if (statementList.length < 1) {
+        throw new Error(`Invalid accessPolicies for cluster '${clusterId}': 'Statement' must be a non-empty array or object. See AWS IAM policy documentation for proper format: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_statement.html`);
     }
-    return accessPolicies;
+    for (const s of statementList) {
+        if (!s || typeof s !== 'object' || !('Effect' in s) || !('Action' in s)) {
+            throw new Error(`Invalid accessPolicies for cluster '${clusterId}': each Statement must include at least 'Effect' and 'Action'. See AWS IAM policy documentation for proper format: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_statement.html`);
+        }
+    }
+    // Pass user-supplied JSON through verbatim — CFN's
+    // AWS::OpenSearchService::Domain.AccessPolicies accepts an inline IAM policy document.
+    return jsonObject;
 }
 
 function validateNodeCounts(numAZs: number, config: ManagedClusterConfig) {

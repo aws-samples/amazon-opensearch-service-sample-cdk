@@ -63,9 +63,6 @@ export class OpenSearchStack extends Stack {
         }
 
         // --- Managed domains ---
-        // Domains run in parallel; the IAM-eventual-consistency race that previously required
-        // serializing AccessPolicy custom resources is now eliminated inside createManagedDomain
-        // by pre-granting es:UpdateDomainConfig on the singleton role's DefaultPolicy.
         for (const config of managedClusters) {
             if (!config.publicAccess && !vpcDetails) {
                 throw new Error("Internal error: VPC details should be resolved for VPC-based managed clusters");
