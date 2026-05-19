@@ -1,5 +1,4 @@
 import {CfnOutput, SecretValue, Stack} from "aws-cdk-lib";
-import {IConstruct} from "constructs";
 import {
     EbsDeviceVolumeType,
     ISecurityGroup,
@@ -11,6 +10,7 @@ import {AnyPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {ILogGroup, LogGroup} from "aws-cdk-lib/aws-logs";
 import {ISecret, Secret} from "aws-cdk-lib/aws-secretsmanager";
 import {CfnDomain} from "aws-cdk-lib/aws-opensearchservice";
+import {AwsCustomResource} from "aws-cdk-lib/custom-resources";
 import {NagSuppressions} from "cdk-nag";
 import {VpcDetails} from "./vpc-details";
 import {getEngineVersion, LATEST_AOS_VERSION, MAX_AOS_DOMAIN_NAME_LENGTH, MIN_OPENSEARCH_NAME_LENGTH} from "./common-utilities";
@@ -21,28 +21,25 @@ import {ManagedClusterConfig} from "./cluster-config";
  * This is a helper function, not a separate stack — all resources
  * are created in the caller's stack scope.
  *
- * AccessPolicy serialization: when a stack creates multiple managed domains that
- * each set `accessPolicies`, CDK emits one `Custom::OpenSearchAccessPolicy` per
- * domain, all backed by the same Lambda role with per-domain IAM policy
- * attachments. If the policy applications run in parallel, the second domain's
- * custom resource can fire before its just-attached `es:UpdateDomainConfig`
- * IAM policy has propagated, producing an `AccessDenied` at deploy time. To
- * serialize these across calls, the caller threads the previous invocation's
- * returned `AccessPolicy` construct in via `previousAccessPolicy`; this function
- * wires a `node.addDependency` edge so each domain's policy application waits
- * for the previous one to complete (domain creation itself — the slow part —
- * remains parallel).
+ * AccessPolicy IAM eventual-consistency: when a stack creates multiple managed
+ * domains that each set `accessPolicies`, CDK emits one
+ * `Custom::OpenSearchAccessPolicy` per domain, all backed by the same singleton
+ * Lambda role (`AwsCustomResource`'s shared provider). Each L2 attaches its own
+ * inline `AWS::IAM::Policy` (scoped to that domain's ARN) to that role just
+ * before invoking `UpdateDomainConfig`. The 2nd-onwards attachment can race
+ * IAM's PutRolePolicy → STS-visibility propagation, producing
+ * `AccessDenied: es:UpdateDomainConfig` at deploy time — even when the policy
+ * resource shows `CREATE_COMPLETE` in CloudFormation.
  *
- * @param previousAccessPolicy  The `AccessPolicy` construct returned by a prior
- *     `createManagedDomain` call in the same stack, or `undefined` for the first
- *     call in the chain.
- * @returns The `AccessPolicy` construct created for this domain (to be threaded
- *     into the next call), or `undefined` when no AccessPolicy was created —
- *     either because this is a first-synth dummy-VPC stub (CDK `Vpc.fromLookup`
- *     returns `vpc-12345` before the context cache is populated) or because
- *     `accessPolicies` / `openAccessPolicyEnabled` were not set on the config.
+ * Mitigation: pre-grant `es:UpdateDomainConfig` with a `domain/*` wildcard on
+ * the singleton role via `addToPrincipalPolicy`. CDK collects these calls into
+ * the role's single auto-managed `DefaultPolicy`, which is created and attached
+ * once at the role's first reference — well before any custom-resource
+ * invocation. Subsequent per-domain inline policies remain in the template
+ * (they're emitted by the L2 itself and are correctly scoped) but they're no
+ * longer on the IAM-propagation critical path.
  */
-export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, stage: string, vpcDetails?: VpcDetails, previousAccessPolicy?: IConstruct): IConstruct | undefined {
+export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, stage: string, vpcDetails?: VpcDetails): void {
     const prefix = config.clusterId;
 
     // Skip for first synthesis stage (dummy VPC from lookup)
@@ -250,12 +247,20 @@ export function createManagedDomain(stack: Stack, config: ManagedClusterConfig, 
 
     generateClusterExports(stack, domain, config.clusterId, stage, vpcDetails?.subnetSelection, vpcDetails?.clusterAccessSecurityGroup?.securityGroupId);
 
-    // Thread AccessPolicy into the serialization chain (see function JSDoc for rationale).
-    const accessPolicy = domain.node.tryFindChild('AccessPolicy');
-    if (accessPolicy && previousAccessPolicy) {
-        accessPolicy.node.addDependency(previousAccessPolicy);
+    // Pre-grant es:UpdateDomainConfig with a domain/* wildcard on the singleton AwsCustomResource
+    // Lambda role (see function JSDoc for race rationale). This addToPrincipalPolicy call lands in
+    // the role's auto-managed DefaultPolicy, attached once at the role's first reference, well
+    // before any Custom::OpenSearchAccessPolicy invocation — eliminating the IAM propagation race
+    // by construction. The per-domain inline CustomResourcePolicy resources emitted by the L2
+    // remain in the template (correctly scoped), but they're no longer on the critical path.
+    const accessPolicy = domain.node.tryFindChild('AccessPolicy') as AwsCustomResource | undefined;
+    if (accessPolicy) {
+        accessPolicy.grantPrincipal.addToPrincipalPolicy(new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['es:UpdateDomainConfig'],
+            resources: [`arn:${stack.partition}:es:${stack.region}:${stack.account}:domain/*`],
+        }));
     }
-    return accessPolicy;
 }
 
 function getEbsVolumeType(ebsVolumeTypeName: string): EbsDeviceVolumeType | undefined {
