@@ -37,7 +37,11 @@ describe('Stack Composer Tests', () => {
         ]
       }
     })
-    Template.fromStack(getStack(composer)).resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
+    const template = Template.fromStack(getStack(composer))
+    template.resourceCountIs("Custom::OpenSearchAccessPolicy", 0)
+    template.hasResourceProperties("AWS::OpenSearchService::Domain", {
+      AccessPolicies: Match.objectLike({Version: "2012-10-17"}),
+    })
   })
 
   test('Test access policy is parsed for proper block format', () => {
@@ -47,7 +51,11 @@ describe('Stack Composer Tests', () => {
         "Statement": {"Effect": "Allow", "Principal": {"AWS": "*"}, "Action": "es:ESHttp*", "Resource": "arn:aws:es:us-east-1:12345678912:domain/test-os-domain/*"}
       }
     })
-    Template.fromStack(getStack(composer)).resourceCountIs("Custom::OpenSearchAccessPolicy", 1)
+    const template = Template.fromStack(getStack(composer))
+    template.resourceCountIs("Custom::OpenSearchAccessPolicy", 0)
+    template.hasResourceProperties("AWS::OpenSearchService::Domain", {
+      AccessPolicies: Match.objectLike({Version: "2012-10-17"}),
+    })
   })
 
   test('Test access policy missing Statement throws error', () => {
@@ -150,14 +158,12 @@ describe('Stack Composer Tests', () => {
     })
   })
 
-  test('Test AccessPolicy custom resources are serialized across managed domains to avoid IAM propagation race', () => {
-    // When multiple managed domains each have accessPolicies, CDK creates one
-    // Custom::OpenSearchAccessPolicy resource per domain, all sharing the same
-    // Lambda service role. Running them in parallel risks an IAM eventual-consistency
-    // race where the second domain's policy is invoked before its just-attached
-    // es:UpdateDomainConfig permission has propagated. createManagedDomain chains
-    // each AccessPolicy construct to the previous via node.addDependency, forcing
-    // serial execution. This test asserts the resulting CFN DependsOn edge.
+  test('Test access policies are inlined on the domain (no Custom::OpenSearchAccessPolicy resource)', () => {
+    // Access policies are written to AWS::OpenSearchService::Domain.AccessPolicies
+    // directly, not via a Lambda-backed Custom::OpenSearchAccessPolicy custom resource.
+    // Inlining the policy into CreateDomain eliminates the IAM eventual-consistency race
+    // that the second-step UpdateDomainConfig path is sensitive to when multiple managed
+    // domains are created in the same stack.
     const samplePolicy = {
       "Version": "2012-10-17",
       "Statement": [{
@@ -173,12 +179,10 @@ describe('Stack Composer Tests', () => {
         {clusterId: "target", clusterType: ClusterType.OPENSEARCH_MANAGED_SERVICE, publicAccess: true, accessPolicies: samplePolicy},
       ]
     })))
-    template.resourceCountIs("Custom::OpenSearchAccessPolicy", 2)
-    // Assert the serialization edge: an AccessPolicy exists whose DependsOn references
-    // another AccessPolicy by logical-id prefix. (CDK derives logical ids from construct
-    // paths, so `sourceDomainAccessPolicy*` is the stable id for source's custom resource.)
-    template.hasResource("Custom::OpenSearchAccessPolicy", {
-      DependsOn: Match.arrayWith([Match.stringLikeRegexp("^sourceDomainAccessPolicy")]),
+    template.resourceCountIs("Custom::OpenSearchAccessPolicy", 0)
+    template.resourceCountIs("AWS::OpenSearchService::Domain", 2)
+    template.allResourcesProperties("AWS::OpenSearchService::Domain", {
+      AccessPolicies: Match.objectLike({Version: "2012-10-17"}),
     })
   })
 })
